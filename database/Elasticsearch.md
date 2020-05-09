@@ -627,3 +627,9 @@ GET /order*/_search?from=2&size=2
   - 格式转化: 日like，也可以将likes搜索出来
   - 大小写
   - 同义词：如果like，也可以将love搜索出来
+
+## 倒排索引分析
+
+通俗的说，就是通过value找key
+
+首先，会分词，分词后做同义词等处理，这时，查找时，先搜索到value，再找到key
