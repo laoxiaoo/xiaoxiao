@@ -1,4 +1,4 @@
-﻿* [首页](/README.md)
+﻿* [首页](/)
 * java
 	* [java8](/java/java8.md)
 	* [jenkin](/java/jenkin.md)

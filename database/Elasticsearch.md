@@ -616,7 +616,7 @@ GET /order*/_search?from=2&size=2
 
 # mapping
 
-当我们PUT /order/product/1一条数据时，es会自动给我们建立一个dynamic mapping，里面包括了分词或者搜索的行为
+当我们PUT /order/product/1一条数据时，es会自动给我们建立一个dynamic mapping，里面包括了分词或者搜索的行为,mapping会自定义每个field的数据类型
 
 在es中，搜索分两种
 
@@ -628,8 +628,111 @@ GET /order*/_search?from=2&size=2
   - 大小写
   - 同义词：如果like，也可以将love搜索出来
 
+分词之后，会将exact 或full建立到倒排索引中(**不同类型的filed会有不同的搜索类型**)
+
+搜索时候，搜索的词根据的类型，进行分词，搜索到对应的doc中
+
 ## 倒排索引分析
 
-通俗的说，就是通过value找key
+通俗的说，就是通过value找key 首先，会分词，分词后做同义词等处理，这时，查找时，先搜索到value，再找到key
 
-首先，会分词，分词后做同义词等处理，这时，查找时，先搜索到value，再找到key
+## 测试分词
+
+```json
+GET /_analyze
+{
+  "analyzer": "standard", //分词类型
+  "text": ["test the analyze"] //待分的词
+}
+```
+
+返回
+
+```json
+{
+  "tokens" : [
+    {
+      "token" : "test",
+      "start_offset" : 0,
+      "end_offset" : 4,
+      "type" : "<ALPHANUM>",
+      "position" : 0
+    },
+    {
+      "token" : "the",
+      "start_offset" : 5,
+      "end_offset" : 8,
+      "type" : "<ALPHANUM>",
+      "position" : 1
+    },
+    {
+      "token" : "analyze",
+      "start_offset" : 9,
+      "end_offset" : 16,
+      "type" : "<ALPHANUM>",
+      "position" : 2
+    }
+  ]
+}
+```
+
+## 手动建立mapping
+
+**只能创建index时手动建立mapping，或者新增field mapping，但是不能update field mapping**
+
+type:字段类型
+
+analyzer;分词类型
+
+"index": false 不建立倒排索引
+
+```json
+PUT /website
+{
+  "mappings": {
+    "properties": {
+       "author_id": {
+          "type": "long"
+        },
+        "title": {
+          "type": "text",
+          "analyzer": "english"
+        },
+        "content": {
+          "type": "text"
+        },
+        "post_date": {
+          "type": "date"
+        },
+        "publisher_id": {
+          "type": "text",
+          "index": false
+        }
+    }
+  }
+}
+```
+
+新增已存在的mapping字段
+
+```json
+PUT /website/_mapping
+{
+  "properties":{
+    "name" : {
+        "type" : "text"
+    }
+  }
+}
+```
+
+测试建立的mapping
+
+```JSON
+GET /website/_analyze
+{
+  "field": "title",
+  "text": "my-dogs" 
+}
+```
+
