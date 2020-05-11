@@ -357,11 +357,17 @@ GET /order/product/_search
 }
 ```
 
+- 多个组合条件搜索
+
+
+
 ## query filter
 
 must:必须满足
 
 filter： 过滤要求
+
+filter只会过滤数据，不会计算相关度，所以，性能要高些
 
 ```shell
 GET /order/product/_search
@@ -684,7 +690,7 @@ type:字段类型
 
 analyzer;分词类型
 
-"index": false 不建立倒排索引
+"index": false 不分词
 
 ```json
 PUT /website
@@ -736,3 +742,4 @@ GET /website/_analyze
 }
 ```
 
+## dynamic mapping
