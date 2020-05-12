@@ -361,6 +361,22 @@ GET /order/product/_search
 
 
 
+- range
+
+```json
+GET /order/_search
+{
+  "query": {
+    "range": {
+      "ooprice": {
+        "gte": 1000,
+        "lte": 2000
+      }
+    }
+  }
+}
+```
+
 ## query filter
 
 must:必须满足
@@ -419,6 +435,41 @@ GET /order/product/_search
   }
 }
 ```
+
+## 字段不进行分词
+
+term表示字段不能进行分词，一定要全部匹配
+
+```json
+GET /order/_search
+{
+  "query": {
+    "term": {
+      "desc": {
+        "value": "Simple to use"
+      }
+    }
+  }
+}
+```
+
+## 不合法查询定位
+
+```json
+GET /order/_search?explain
+{
+  "query": {
+    "range1": {
+      "ooprice": {
+        "gte": 1000,
+        "lte": 2000
+      }
+    }
+  }
+}
+```
+
+
 
 ## 分组查询
 
@@ -509,6 +560,100 @@ GET /order/_mget
   ]
 }
 ```
+
+## 如何定制排序
+
+默认情况下，是按照score排序的
+
+sort可以定制查询
+
+```shell
+GET /order/_search?explain
+{
+  "query": {
+    "match": {
+      "desc": "use"
+    }
+  }
+  , "sort": [
+    {
+      "_id": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+```
+
+## 对已经分词的字符串排序
+
+默认情况下，排序会按照分词后的某个词来排序
+
+如果我们想安装完整的字符串排序，可以建立两个field，一个分词用来搜索，一个不分词用来排序
+
+建立：
+
+"fields": {
+            "raw": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          },
+          "fielddata": true
+
+来进行不分词
+
+```json
+PUT /website 
+{
+  "mappings": {
+    "article": {
+      "properties": {
+        "title": {
+          "type": "text",
+          "fields": {
+            "raw": {
+              "type": "string",
+              "index": "not_analyzed"
+            }
+          },
+          "fielddata": true
+        },
+        "content": {
+          "type": "text"
+        },
+        "post_date": {
+          "type": "date"
+        },
+        "author_id": {
+          "type": "long"
+        }
+      }
+    }
+  }
+}
+```
+
+查询的时候
+
+```json
+GET /website/article/_search
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [
+    {
+      "title.raw": {
+        "order": "desc"
+      }
+    }
+  ]
+}
+
+```
+
+
 
 # 批量增删改
 
@@ -743,3 +888,10 @@ GET /website/_analyze
 ```
 
 ## dynamic mapping
+
+
+
+# TF/IDF算法相关度评分
+
+- 搜索的词条在文本中出现的次数越多，相关度越高
+- 搜索的的词条，在整个索引中，所有文档中，次数越多，越不相关
