@@ -653,6 +653,33 @@ GET /website/article/_search
 
 ```
 
+## bouncing results问题
+
+## 使用scoll滚动查询大量数据
+
+使用scoll搜索一批又一批数据
+
+```
+GET /test_index/test_type/_search?scroll=1m
+{
+  "query": {
+    "match_all": {}
+  },
+  "sort": [ "_doc" ],
+  "size": 3
+}
+```
+
+第二次搜去带scorell_id
+
+```json
+GET /_search/scroll
+{
+    "scroll": "1m", 
+    "scroll_id" : ""
+}
+```
+
 
 
 # 批量增删改
@@ -889,9 +916,64 @@ GET /website/_analyze
 
 ## dynamic mapping
 
+## 手动创建索引
+
+创建一个my_index的索引
+
+shard数量为1，副本数量为0
+
+```json
+PUT /my_index
+{
+  "settings": {
+    "number_of_shards": 1
+    , "number_of_replicas": 0
+  }
+  , "mappings": {
+    "properties": {
+      "my_field":{
+        "type": "text"
+      }
+    }
+  }
+}
+```
+
+## 修改索引setting
+
+## 定制自己的分词器
+
+默认的分词器
+
+standard
+
+standard tokenizer：以单词边界进行切分
+standard token filter：什么都不做
+lowercase token filter：将所有字母转换为小写
+stop token filer（默认被禁用）：移除停用词，比如a the it等等
+
+## 修改分词器
+
+```json
+PUT /my_indexs
+{
+  "settings": {
+    "analysis": {
+      "es_sta":{
+        "type": "standard",
+         "stopwords": "_english_"
+      }
+    }
+  }
+}
+```
+
 
 
 # TF/IDF算法相关度评分
 
 - 搜索的词条在文本中出现的次数越多，相关度越高
 - 搜索的的词条，在整个索引中，所有文档中，次数越多，越不相关
+
+
+
