@@ -939,6 +939,90 @@ PUT /my_index
 }
 ```
 
+## 自定义dynamic策略
+
+**elasticsearch7默认不在支持指定索引类型，默认索引类型是_doc**
+
+true：遇到陌生字段，就进行dynamic mapping
+false：遇到陌生字段，就忽略
+strict：遇到陌生字段，就报错
+
+```json
+PUT /my_index
+{
+  "mappings": {
+    "dynamic": "strict",
+      "properties": {
+        "name":{
+          "type": "text"
+        }
+      }
+  }
+}
+```
+
+- put数据，如果超过字段就会报错(mapping set to strict)
+
+```json
+PUT /my_index/_doc/1
+{
+  "name":"xiaoxiao"
+}
+```
+
+
+
+## 定制mapping策略
+
+- date_detection
+
+默认会按照一定格式识别date，比如yyyy-MM-dd。但是如果某个field先过来一个2017-01-01的值，就会被自动dynamic mapping成date，后面如果再来一个"hello world"之类的值，就会报错。可以手动关闭某个type的date_detection，如果有需要，自己手动指定某个field为date类型。
+
+```json
+PUT /my_index
+{
+  "mappings": {
+    "date_detection": false
+  }
+}
+```
+
+- 通配符来匹配不同的模板
+
+当某个字段是*en时，用下面这个模板，分词用English
+
+```json
+PUT /my_index
+{
+  "mappings": {
+    "dynamic_templates":[
+      {
+        "en":{
+          "match":"*en",
+          "match_mapping_type":"string",
+          "mapping":{
+            "type":"text",
+            "analyzer":"english"
+          }
+        }
+      }  
+    ] 
+  }
+}
+```
+
+插入数据
+
+```json
+PUT /my_index/_doc/1
+{
+  "name_en":"my name is xiaoxiao",
+  "name":"my name is xiaoxiao"
+}
+```
+
+ 如果查询，name_en，is是停用词，是查询不到的，而name是可以查询到的
+
 ## 修改索引setting
 
 ## 定制自己的分词器
@@ -965,6 +1049,47 @@ PUT /my_indexs
       }
     }
   }
+}
+```
+
+## 重建索引
+
+索引是不能修改的，如果想要修改，。则需要重新建立索引，然后将旧索引数据导入新的索引
+
+- 建立新索引
+
+```json
+PUT /my_index_new
+{
+  "mappings": {
+    "properties": {
+      "name":{
+        "type": "text"
+      }
+    }  
+  }
+}
+```
+
+- 采用scoll查询出批量数据，然后再采用bulk将数据批量插入
+
+- 先给新索引取别名，删除旧索引的别名，让java应用能无缝切换新索引
+
+```json
+POST /_aliases
+{
+  "actions": [
+    {
+      "add": {
+        "index": "my_index_new",
+        "alias": "goodindex"
+      },
+      "remove": {
+        "index": "my_index",
+        "alias": "goodindex"
+      }
+    }
+  ]
 }
 ```
 
