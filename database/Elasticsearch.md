@@ -80,13 +80,28 @@ master 选举，将一个node变为master
 
 <https://thans.cn/mirror/elasticsearch.html>
 
+### 文件目录
+
+- config
+  - log4j2 日志文件
+  - jvm 
+  - elasticsearch.yml 配置文文件
+
+
+
 修改配置文件
 
 ```yaml
+## 集群名字，同一个集群必须相等
 cluster.name: myes
+## 当前节点名字
 node.name: node-1
 cluster.initial_master_nodes: ["node-1"]
 network.host: 192.168.1.131
+
+## 解决跨域问题
+http.cors.enabled: true
+http.cors.allow-origin: "*"
 ```
 
 可能需要修改
@@ -130,6 +145,8 @@ vm.max_map_count=655360
 ```yaml
 server.host: "192.168.1.131"
 elasticsearch.hosts: ["http://192.168.1.131:9200"]
+#语音为中文
+i18n.locale: "zh-CN"
 ```
 
 启动
@@ -141,6 +158,12 @@ myes@localhost home]$ ./kibana-7.3.2/bin/kibana
 访问dev_tool
 
 <http://192.168.1.131:5601/app/kibana#/dev_tools/console?_g=()>
+
+## 可视化HEAD
+
+
+
+
 
 ## 横向扩容
 
@@ -381,6 +404,8 @@ GET /order/_search
 
 must:必须满足
 
+should：里面有一个条件满足就可以
+
 filter： 过滤要求
 
 filter只会过滤数据，不会计算相关度，所以，性能要高些
@@ -404,6 +429,8 @@ GET /order/product/_search
 - 全文检索
 
 他会将搜索的词进行拆分，然后在进行匹配
+
+当然，如果想一个字段多个条件，也可以用空格隔开，只要有一个结果，就会被查出来
 
 ```shell
 GET /order/product/_search
@@ -709,6 +736,19 @@ POST /_bulk
 
 
 
+# ES REST风格总结
+
+| method | URL                    | DESC                            |
+| ------ | ---------------------- | ------------------------------- |
+| PUT    | /index/type/id         | 创建文档（指定文档id）/替换文档 |
+| POST   | /index/type            | 创建文档（随机文档id）          |
+| POST   | /index/type/id/_update | 修改文档（修改某个字段）        |
+| POST   | /index/type/_search    | 查询所有数据                    |
+| DELETE | /index/type/id         | s删除                           |
+| GET    | /index/type/id         | c查询                           |
+
+
+
 # 并发处理方案
 
 ES中用的是乐观锁并发方案
@@ -718,6 +758,8 @@ ES中用的是乐观锁并发方案
 如果A线程操作数据，version=1，回写数据后version=2
 
 B线程修改数据，version=1，回写数据发现version不相等，则会将这条数据扔掉，不会让后修改的数据覆盖
+
+
 
 ## 乐观锁
 
@@ -792,7 +834,7 @@ GET /order*/_search?from=2&size=2
 
 - deep paging问题（深度分页）
 
-# mapping
+# mapping（映射规则）
 
 当我们PUT /order/product/1一条数据时，es会自动给我们建立一个dynamic mapping，里面包括了分词或者搜索的行为,mapping会自定义每个field的数据类型
 
@@ -809,6 +851,10 @@ GET /order*/_search?from=2&size=2
 分词之后，会将exact 或full建立到倒排索引中(**不同类型的filed会有不同的搜索类型**)
 
 搜索时候，搜索的词根据的类型，进行分词，搜索到对应的doc中
+
+## 字段类型
+
+text会被分词解析，keyword不会被分词
 
 ## 倒排索引分析
 
@@ -1101,4 +1147,139 @@ POST /_aliases
 - 搜索的的词条，在整个索引中，所有文档中，次数越多，越不相关
 
 
+
+# 优化
+
+数据写入os cache，并被打开搜索的过程，叫做refresh，默认是1秒
+
+如果我们对数据的时效性要求比较低，那么可以时间设长
+
+```json
+PUT /my_index
+{
+  "settings": {
+    "refresh_interval": "30s" 
+  }
+}
+
+```
+
+fsync+清空translog，将os cache数据写入disk，这就是flush，默认30异常，或者translog过大执行一次
+
+tanslog每隔5s会写入磁盘，当且是同步的
+
+如果，我我们允许部分数据丢失，可以设置异步的写入
+
+```json
+PUT /my_index/_settings
+{
+    "index.translog.durability": "async",
+    "index.translog.sync_interval": "5s"
+}
+```
+
+# java 操作
+
+## insert
+
+```json
+ public static void main(String[] args) throws Exception {
+        RestHighLevelClient client = new RestHighLevelClient(
+                RestClient.builder(
+                        new HttpHost("192.168.1.131", 9200, "http")));
+
+        Test test = new Test();
+        test.sourceIndex(client);
+        client.close();
+    }
+
+    public IndexResponse sourceIndex(RestHighLevelClient client) {
+        try{
+            IndexRequest request = new IndexRequest("post");
+            Map map = new HashMap();
+            map.put("user", "laoxiao");
+            request.index("test_index").id("1").source(map, XContentType.JSON);
+            IndexResponse response = client.index(request, RequestOptions.DEFAULT);
+            return response;
+        }catch (Exception e){
+        }
+        return null;
+    }
+```
+
+# ELK
+
+ELK是Elasticsearch、Logstash、Kibana的简称，这三者是核心套件，但并非全部
+
+Logstash是一个用来搜集、分析、过滤日志的工具
+
+# 安装ik分词器
+
+将下载的压缩包。放入插件文件夹下，建立文件夹ik
+
+```shell
+[root@localhost plugins]# pwd
+/home/elasticsearch-7.3.2/plugins
+[root@localhost plugins]# mkdir ik
+
+## 查看插件
+[root@localhost bin]# ./elasticsearch-plugin list
+ik
+```
+
+安装插件后，启动es时，也能看到集群对应有
+
+[node-1] loaded plugin [analysis-ik]
+
+字样
+
+ik分词器提供了两种分词算法：
+
+ik_smart ：最少切分
+
+ik_max_word：最细粒度切分
+
+- 测试
+
+```json
+GET /_analyze
+{
+  "analyzer": "ik_smart",
+  "text": "我是帅哥"
+}
+```
+
+```json
+GET /_analyze
+{
+  "analyzer": "ik_max_word",
+  "text": "我是一个帅哥"
+}
+```
+
+## IK配置
+
+进入配置
+
+```shell
+[root@localhost ~]# cd /home/elasticsearch-7.3.2/plugins/ik/config/
+[root@localhost config]# vim IKAnalyzer.cfg.xml
+```
+
+ext_dict:同目录下一个xx.dic文件，
+
+```xml
+<properties>
+        <comment>IK Analyzer 扩展配置</comment>
+        <!--用户可以在这里配置自己的扩展字典 -->
+        <entry key="ext_dict"></entry>
+         <!--用户可以在这里配置自己的扩展停止词字典-->
+        <entry key="ext_stopwords"></entry>
+        <!--用户可以在这里配置远程扩展字典 -->
+        <!-- <entry key="remote_ext_dict">words_location</entry> -->
+        <!--用户可以在这里配置远程扩展停止词字典-->
+        <!-- <entry key="remote_ext_stopwords">words_location</entry> -->
+</properties>
+
+```
 
