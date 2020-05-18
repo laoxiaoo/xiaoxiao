@@ -1283,3 +1283,69 @@ ext_dict:同目录下一个xx.dic文件，
 
 ```
 
+# Spring Boot Api
+
+## 基础配置
+
+```java
+@Bean
+public RestHighLevelClient restHighLevelClient(){
+    return new RestHighLevelClient(
+        RestClient.builder(
+            new HttpHost("192.168.1.131",9200, "http")
+        )
+    );
+}
+```
+
+## 创建索引
+
+```java
+@Test
+void creatIndex() throws IOException {
+    //创建索引
+    CreateIndexRequest request = new CreateIndexRequest(INDEX_NAME);
+//指向客户端请求，获取响应
+CreateIndexResponse response = restHighLevelClient.indices().create(request, RequestOptions.DEFAULT);
+}
+```
+
+## 删除索引
+
+```java
+@Test
+void deleteIndex() throws IOException {
+    DeleteIndexRequest request = new DeleteIndexRequest(INDEX_NAME);
+    AcknowledgedResponse response = restHighLevelClient.indices().delete(request, RequestOptions.DEFAULT);
+    System.out.println(response.isAcknowledged());
+}
+```
+
+## 判断索引是否存在
+
+```java
+@Test
+void getIndex() throws IOException {
+   //判断索引是否存在
+   GetIndexRequest request = new GetIndexRequest(INDEX_NAME);
+   Boolean response = restHighLevelClient.indices().exists(request, RequestOptions.DEFAULT);
+   System.out.println(response);
+}
+```
+
+## 新增文档
+
+```java
+@Test
+void addDocument() throws IOException {
+   User user = new User("小肖", "123456");
+   //put /index/_doc/1
+   IndexRequest request = new IndexRequest(INDEX_NAME);
+   request.id("1")//id
+         .timeout(TimeValue.timeValueSeconds(1));//超时时间
+   request.source(JSONUtil.toJsonStr(user), XContentType.JSON);
+   IndexResponse response = restHighLevelClient.index(request, RequestOptions.DEFAULT);
+   System.out.println(response.status());
+}
+```
+
