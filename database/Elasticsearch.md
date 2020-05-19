@@ -1349,3 +1349,17 @@ void addDocument() throws IOException {
 }
 ```
 
+## 批量新增
+
+```java
+@Test
+void bulkDocument() throws IOException {
+   BulkRequest bulkRequest = new BulkRequest();
+   bulkRequest.timeout(TimeValue.timeValueSeconds(1));
+   for(int i=0; i<10; i++){
+      bulkRequest.add(new IndexRequest(INDEX_NAME)
+      .source(JSONUtil.toJsonStr(new User("name+"+i, String.valueOf(i))),XContentType.JSON));
+   }
+   restHighLevelClient.bulk(bulkRequest, RequestOptions.DEFAULT);
+}
+```
