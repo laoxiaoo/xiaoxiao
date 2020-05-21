@@ -74,3 +74,53 @@ app.wxss 全局样式文件
 每个路径配置下都有json文件
 
 他的配置，和全局json配置一样，能改变局部的顶部样式
+
+# 数据渲染
+
+## for循环
+
+默认情况
+
+wx:for-item="item" wx:for-index="index"
+
+wx:key="id"，id是数组的唯一值
+
+也可以
+
+wx:key="*this", *this标识数组的当前项
+
+```js
+data: {
+      list:[
+        {id: 1, name: 'xiaoxiao'},
+        {id:2, name :'xiao1'}
+      ]
+  },
+```
+
+```html
+<view >
+    <view wx:for="{{list}}" wx:for-item="item" wx:for-index="index" wx:key="id">
+        下标：{{index}}
+        数据：{{item.name}}
+    </view>
+</view>
+```
+
+对象也是可以循环的
+
+wx:for-item="对象值" wx:for-index="对象属性"
+
+## block
+
+当需要循环某些数据，就可以使用这个标签，当页面渲染时，会将这个标签去掉
+
+```html
+<view >
+    <block wx:for="{{list}}" wx:for-item="item" wx:for-index="index" wx:key="id">
+        下标：{{index}}
+        数据：{{item.name}}
+    </block>
+</view>
+```
+
