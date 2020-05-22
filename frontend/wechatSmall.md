@@ -124,3 +124,29 @@ wx:for-item="对象值" wx:for-index="对象属性"
 </view>
 ```
 
+## 数据绑定
+
+当text数据改变时，触发handleinput方法
+
+```html
+<input type="text" bindinput="handleinput"/>
+```
+
+```js
+handleinput(e){
+    console.log(e)
+}
+```
+
+当点击button时，触发按钮，并且能获取data中的值
+
+```html
+<button bindtap="handletap" data-operation="{{12}}">+</button>
+```
+
+```js
+handletap(e) {
+    console.log(e);
+}
+```
+
