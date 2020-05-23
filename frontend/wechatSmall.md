@@ -150,3 +150,27 @@ handletap(e) {
 }
 ```
 
+# WXSS样式
+
+rpx 能够根据屏幕是适配
+
+当屏宽（设计稿）375px时
+
+1rpx=0.5px
+
+假如设计稿存在一个宽度100px，做适配则可以这样
+
+page px = 750 rpx
+
+100px=750rpx*100/page
+
+可以利用css样式calc计算，这里设计稿是375. 注意rpx不能空格
+
+```css
+view {
+    width: calc(750rpx * 100 / 375);
+    height: 200rpx;
+    background-color: aquamarine;
+}
+```
+
