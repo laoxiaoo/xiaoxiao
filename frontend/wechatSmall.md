@@ -174,3 +174,12 @@ view {
 }
 ```
 
+## 样式引入
+
+在wxss文件中
+
+```css
+
+@import "../../style/common.wxss";
+```
+
