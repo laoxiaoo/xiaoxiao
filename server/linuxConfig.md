@@ -1,4 +1,6 @@
-# centos7 虚拟机NET网络配置
+# 网络配置
+
+## 配置文件方式
 
 ```shell
 # 编辑DNS
@@ -22,6 +24,28 @@ GATEWAY=192.168.94.2
 # 重启网卡
 service network restart
 ```
+
+## 可视化方式
+
+- centos7
+
+```shell
+[root@localhost ~]# nmtui
+```
+
+Edit a connection: 设置一个连接，可以添加删除网络配置
+
+Activate a connection： 激活一个连接，可以启用禁用网络配置
+
+Set system hostname: 设置hostname
+
+- centos6
+
+```shell
+setup
+```
+
+
 
 # 关闭防火墙
 
