@@ -32,3 +32,55 @@
   - 重启前，建议对外的网络断掉
   - 重启前，建议指向sync命令
   - 重启命令建议用：shutdown -r now
+
+# 常见命令
+
+## ls
+
+```shell
+[root@localhost home]# ls --help
+Usage: ls [OPTION]... [FILE]...
+-a 显示所有文件
+-h 按照习惯显示文件大小，默认全是byte
+
+```
+
+## mkdir
+
+```shell
+## 递归建立目录
+[root@localhost home]# mkdir -p a/b/c/d
+```
+
+## stat查看文件详情
+
+```shell
+[root@localhost home]# stat derby.log 
+  File: ‘derby.log’
+  Size: 686       	Blocks: 8          IO Block: 4096   regular file
+Device: fd00h/64768d	Inode: 50803096    Links: 1
+Access: (0644/-rw-r--r--)  Uid: (    0/    root)   Gid: (    0/    root)
+Context: unconfined_u:object_r:home_root_t:s0
+## 最后访问时间
+Access: 2020-03-27 11:49:13.739673217 -0400
+## 最后数据修改时间
+Modify: 2020-04-03 21:21:19.130301270 -0400
+## 最后修改状态时间，如权限等
+Change: 2020-04-03 21:21:19.130301270 -0400
+ Birth: -
+```
+
+## cat
+
+```shell
+## 显示行号
+cat -n
+```
+
+## less 分行显示
+
+向上箭头 ：向上走
+
+## hard显示文件头
+
+和tail对应
