@@ -84,3 +84,51 @@ cat -n
 ## hard显示文件头
 
 和tail对应
+
+## ln链接
+
+### 硬链接
+
+建立一个硬链接，查看，发现两个文件的**i节点**是一样的
+
+```shell
+[root@localhost ~]# echo aaaa >> a
+[root@localhost ~]# ln a /home/a_a
+[root@localhost ~]# ls -ild a /home/a_a
+33574992 -rw-r--r--. 3 root root 5 May 30 11:33 a
+33574992 -rw-r--r--. 3 root root 5 May 30 11:33 /home/a_a
+```
+
+硬链接特点
+
+- 源文件和链接文件inode和block相同
+- 任意一个修改，另一个也会修改
+- 删除一个，另一个还能使用
+- 硬链接不能夸分区
+
+原理：因为他们的inode 相同
+
+**不建议使用，因为他的标记不清楚，它不能链接目录**
+
+## 软链接
+
+建立软连接，发现他们的inode不一样。 **骚年，记得用绝对路径**
+
+```shell
+[root@localhost ~]# echo ddd d
+ddd d
+[root@localhost ~]# echo ddd >> d
+[root@localhost ~]# ln -s /root/d /home/d_s
+[root@localhost ~]# ls -il /root/d /home/d_s
+53234855 lrwxrwxrwx. 1 root root 7 May 30 11:54 /home/d_s -> /root/d
+33575679 -rw-r--r--. 1 root root 4 May 30 11:54 /root/d
+```
+
+特性
+
+- 任意一个修改，另一个也会修改
+- 删除源文件，软链接失效
+- 不论源文件多大，软链接不变
+- 软连接可以链目录
+
+原理：软链接的block里面，存放的是源文件的inode
