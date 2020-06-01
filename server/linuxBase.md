@@ -225,7 +225,13 @@ grep是使用正则表达式匹配，find是使用通配符匹配
 [root@localhost home]# grep -v 'a' a_a
 ```
 
+## 命令别名
 
+alias 别名=“原命令”
+
+alias： 查询别名
+
+想要永久生效，编辑 ~/.bashrc
 
 # 权限
 
