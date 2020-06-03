@@ -233,6 +233,40 @@ alias： 查询别名
 
 想要永久生效，编辑 ~/.bashrc
 
+## 压缩
+
+- zip
+
+```shell
+## 压缩
+[root@localhost ~]# zip a.zip a
+# 将a.zip文件解压到tmp文件夹中
+[root@localhost ~]# unzip -d tmp a.zip 
+Archive:  a.zip
+ extracting: tmp/a 
+```
+
+- gzip
+
+gzip不会打包，也就是压缩文件夹，他会将里面的文件一个个压缩
+
+```shell
+#将b文件压缩成b.gz文件（会删除原文件）
+[root@localhost ~]# gzip b
+# 解压
+[root@localhost ~]# gzip -d b.gz
+```
+
+- bzip2
+
+不能压缩文件夹，算法比gzip更快，压缩比更好
+
+-d:解压
+
+-k:压缩时，保留源文件
+
+-v:显示压缩过程
+
 # 权限
 
 linux靠权限来区分文件类型
