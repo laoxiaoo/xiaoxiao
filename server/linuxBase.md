@@ -267,6 +267,24 @@ gzip不会打包，也就是压缩文件夹，他会将里面的文件一个个�
 
 -v:显示压缩过程
 
+- tar
+
+打包命令，不压缩
+
+```shell
+# -c: 打包 -v 显示打包过程 -f 指定压缩包的文件名 -x 解压缩
+[root@localhost ~]# tar -cvf acdf.tar a b c f
+```
+
+打包和压缩
+
+```shell
+# 将当前文件打包压缩是啥        
+[root@localhost ~]# tar -zcvf a.tar.gz ./*
+```
+
+
+
 # 权限
 
 linux靠权限来区分文件类型
