@@ -246,7 +246,7 @@ Archive:  a.zip
  extracting: tmp/a 
 ```
 
-- gzip
+- gzip（不会打包）
 
 gzip不会打包，也就是压缩文件夹，他会将里面的文件一个个压缩
 
@@ -267,7 +267,7 @@ gzip不会打包，也就是压缩文件夹，他会将里面的文件一个个�
 
 -v:显示压缩过程
 
-- tar
+- tar （不会压缩）
 
 打包命令，不压缩
 
@@ -281,6 +281,88 @@ gzip不会打包，也就是压缩文件夹，他会将里面的文件一个个�
 ```shell
 # 将当前文件打包压缩是啥        
 [root@localhost ~]# tar -zcvf a.tar.gz ./*
+```
+
+解压
+
+```shell
+# 解压到tmp文件夹     
+[root@localhost ~]# tar -zxvf a.tar.gz /tmp/
+```
+
+只查看不解压
+
+```shell
+[root@localhost home]# tar -ztvf b.tar.gz
+-rw-r--r-- root/root         8 2020-05-30 11:50 b
+
+```
+
+解压到指定目录
+
+```shell
+[root@localhost home]# tar -zxvf b.tar.gz -C /tmp/
+b
+
+```
+
+## 刷新文件缓存区
+
+一开始，文件可能会写入内存中，没写入硬盘
+
+重启时使用
+
+```shell
+[root@localhost home]# sync
+```
+
+## 系统痕迹命令
+
+### w命令
+
+当前正在登录的命令
+
+当前系统1 2 5 分钟前的负载，一般超过核心数高负载
+
+load average: 0.02, 0.02, 0.05
+
+WHAT：当前正在干嘛
+
+```shell
+[root@localhost mail]# w
+ 12:39:09 up 18 min,  1 user,  load average: 0.02, 0.02, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    192.168.1.105    12:26    5.00s  0.04s  0.00s w
+
+```
+
+### last命令
+
+系统登录过用户
+
+```shell
+[root@localhost mail]# last
+root     pts/0        192.168.1.105    Sat Jun  6 12:26   still logged in   
+reboot   system boot  3.10.0-957.el7.x Sat Jun  6 12:20 - 12:43  (00:22)
+```
+
+### 所有用户
+
+所有用户以及登录时间
+
+```shell
+[root@localhost mail]# lastlog
+Username         Port     From             Latest
+root             pts/0    192.168.1.105    Sat Jun  6 12:26:53 -0400 2020
+```
+
+### 登陆被拒绝用户
+
+```shell
+[root@localhost mail]# lastb
+
+btmp begins Sat Jun  6 12:20:56 2020
+
 ```
 
 
@@ -413,6 +495,16 @@ u=rwx,g=rx,o=rx
 [root@localhost home]# useradd user1
 ## 给用户添加密码
 [root@localhost home]# passwd user1
+
+```
+
+## 查看当前登录用户
+
+```shell
+[root@localhost ~]# w
+ 12:33:51 up 13 min,  1 user,  load average: 0.00, 0.01, 0.05
+USER     TTY      FROM             LOGIN@   IDLE   JCPU   PCPU WHAT
+root     pts/0    192.168.1.105    12:26    7.00s  0.04s  0.01s w
 
 ```
 
