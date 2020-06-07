@@ -24,6 +24,7 @@
 * 服务器
 	* [Docker](/server/docker)
 	* [Linux配置](/server/linuxConfig)
+	* [Linux基础](/server/linuxBase)
 	* [Shell](/server/shell)
 * 数据库
 	* [Elasticsearch](/database/Elasticsearch.md)
