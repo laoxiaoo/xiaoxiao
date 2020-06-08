@@ -573,3 +573,63 @@ o: 换行插入
 | :ab 字符  替换的字符   | 当vim中输入字符后，回车就变成了替换字符       |
 | ：ab email 2123@qq.com | 如，这个输入email后，回车就变成了后面得字符了 |
 
+# 软件安装
+
+## rpm
+
+- 安装命令
+
+```shell
+rpm -ivh 软件名
+```
+
+- 默认安装路径
+
+| /etc           | 一些配置档放置的目录，例如 /etc/crontab |
+| -------------- | --------------------------------------- |
+| /usr/bin       | 一些可运行文件                          |
+| /usr/lib       | 一些程序使用的动态函式库                |
+| /usr/share/doc | 一些基本的软件使用手册与说明档          |
+| /usr/share/man | 一些 man page 文件                      |
+
+- 常用命令
+
+```shell
+# 查询是否安装过
+rpm -q 包名
+# 查询安装的所有包
+rpm -qa
+
+```
+
+## rpm在线安装（yum）
+
+### yum源文件解析
+
+默认情况，base.repo文件生效
+
+```shell
+[root@localhost ~]# ls /etc/yum.repos.d/
+CentOS-Base.repo 
+```
+
+文件内容
+
+```shell
+[base] ## 容器名称，一定要放在[]中
+## 容器说明
+name=CentOS-$releasever - Base - mirrors.aliyun.com
+#
+failovermethod=priority
+baseurl=http://mirrors.aliyun.com/centos/$releasever/os/$basearch/
+        http://mirrors.aliyuncs.com/centos/$releasever/os/$basearch/
+        http://mirrors.cloud.aliyuncs.com/centos/$releasever/os/$basearch/
+## 唯一标识数字证书生效，0表示不生效
+gpgcheck=1
+#数字证书公钥保存位置
+gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
+#是否生效，不写或者1表示生效
+enabled=0
+
+```
+
