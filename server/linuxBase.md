@@ -651,6 +651,8 @@ CentOS-Base.repo
 
 文件内容
 
+baseurl:基本地址，mirrorlist:镜像地址（两个只能有一个生效）
+
 ```shell
 [base] ## 容器名称，一定要放在[]中
 ## 容器说明
@@ -662,10 +664,12 @@ baseurl=http://mirrors.aliyun.com/centos/$releasever/os/$basearch/
         http://mirrors.cloud.aliyuncs.com/centos/$releasever/os/$basearch/
 ## 唯一标识数字证书生效，0表示不生效
 gpgcheck=1
-#数字证书公钥保存位置
+#数字证书公钥保存位置（验证的）
 gpgkey=http://mirrors.aliyun.com/centos/RPM-GPG-KEY-CentOS-7
 #是否生效，不写或者1表示生效
 enabled=0
 
 ```
+
+## 搭建本地yum源
 
