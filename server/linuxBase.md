@@ -673,3 +673,58 @@ enabled=0
 
 ## 搭建本地yum源
 
+- 挂载光盘
+
+```shell
+##先建立挂载点
+[root@localhost ~]# cd /mnt/cdrom/
+#挂载光盘
+[root@localhost cdrom]# mount /dev/cdrom /mnt/cdrom/
+mount: /dev/sr0 is write-protected, mounting read-only
+
+```
+
+- 配置yum源
+
+```shell
+[root@localhost mnt]# cd /etc/yum.repos.d/
+## 将默认的都更改文件名
+[root@localhost yum.repos.d]# mv CentOS-Base.repo CentOS-Base.repo.bak
+[root@localhost yum.repos.d]# mv CentOS-CR.repo CentOS-CR.repo.bak
+[root@localhost yum.repos.d]# mv CentOS-Debuginfo.repo CentOS-Debuginfo.repo.bak
+[root@localhost yum.repos.d]# mv CentOS-fasttrack.repo CentOS-fasttrack.repo.bak
+[root@localhost yum.repos.d]# mv CentOS-Sources.repo CentOS-Sources.repo.bak
+[root@localhost yum.repos.d]# mv CentOS-Vault.repo CentOS-Vault.repo.bak
+##备份要修改的
+[root@localhost yum.repos.d]# cp CentOS-Media.repo CentOS-Media.repo.bak
+```
+
+- 修改文件
+
+```shell
+[c7-media]
+name=CentOS-$releasever - Media
+baseurl=file:///mnt/cdrom/
+#        file:///media/cdrom/
+#        file:///media/cdrecorder/
+gpgcheck=1
+enabled=1
+gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
+```
+
+- 生效
+
+```shell
+#清空yum已存在的原信息（缓存）
+[root@localhost yum.repos.d]# yum clean all
+# 建立yum资源缓存
+[root@localhost yum.repos.d]# yum makecache
+```
+
+## yum 组管理
+
+```shell
+#能看出当前系统装了什么样的组（如最小化安装、桌面等）
+yum grouplist
+```
+
