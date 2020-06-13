@@ -1,6 +1,7 @@
 ﻿* [首页](/)
 * java
 	* [java8](/java/java8.md)
+	* [java基础](/java/javaBase.md)
 	* [jenkin](/java/jenkin.md)
 	* [mybatis](/java/mybatis.md)
 	* [MybatisPlus](/java/MybatisPlus.md)

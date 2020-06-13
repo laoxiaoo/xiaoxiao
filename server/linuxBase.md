@@ -2,6 +2,17 @@
 
 ------
 
+# shell上传下载
+
+```shell
+## 安装命令
+[root@localhost home]# yum install -y lrzsz
+#上传
+[root@localhost home]# rz
+# 下载
+[root@localhost home]# sz 3.pdf
+```
+
 
 
 # linux 目录结构
@@ -727,4 +738,27 @@ gpgkey=file:///etc/pki/rpm-gpg/RPM-GPG-KEY-CentOS-7
 #能看出当前系统装了什么样的组（如最小化安装、桌面等）
 yum grouplist
 ```
+
+## 源码包安装
+
+一般源码包必须制定安装路径
+
+/usr/local/*
+
+目的是为了安装方便
+
+### 步骤
+
+- 解压缩源码包
+- 进入解压缩目录
+- ./configure     编译前准备
+  - 这个命令是当前软件包提供的
+  - ./configure --prefix=安装路径
+  - 执行后，将结果写入makefile文件中，后续编译和安装会依赖这个文件的内容
+- make    编译
+  - 调用gcc编译器
+- make clean   清空编译内容（非必须步骤）
+  - 如果上面两个步骤有一个报错，一定要执行这个命令来情况makefile和.o的头文件
+- make install    编译安装
+  - 真正的安装过程，会清楚记录安装位置，可以记录下来以备以后删除应用
 

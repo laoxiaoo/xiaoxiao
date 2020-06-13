@@ -199,3 +199,15 @@ Disk /dev/sda: 21.5 GB, 21474836480 bytes, 41943040 sectors
 
 ```
 
+# 配置中文
+
+```shell
+## 查看安装中文没
+[root@localhost ~]# locale -a | grep zh
+## 编辑
+[root@localhost ~]# vim /etc/locale.conf
+LANG="zh_CN.utf8"
+
+
+```
+
