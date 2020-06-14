@@ -62,3 +62,52 @@ root:x:0:
 
 添加用户后，没密码的用户不允许登录的
 
+- useradd
+
+```shell
+-G 指定附加组
+-d 添加描述
+```
+
+- useradd配置文件
+
+这个文件保存即可生效
+
+```shell
+[root@localhost ~]# vim /etc/default/useradd 
+
+# useradd defaults file
+GROUP=100
+HOME=/home
+INACTIVE=-1  ## 密码到期时间，建议修改成0，一过期就生效
+EXPIRE=
+SHELL=/bin/bash
+SKEL=/etc/skel
+CREATE_MAIL_SPOOL=yes ## 给每个用户创建邮箱
+
+```
+
+```shell
+[root@localhost ~]# vim /etc/login.defs 
+## 密码过期时间，建议180
+PASS_MAX_DAYS   99999
+## 过期提醒天数， 建议7
+PASS_MIN_DAYS   0
+PASS_MIN_LEN    5
+PASS_WARN_AGE   7
+
+```
+
+- userdel 
+
+删除用户
+
+## 修改密码
+
+```shell
+[root@localhost home]# passwd 
+更改用户 root 的密码 。
+新的 密码：
+
+```
+
