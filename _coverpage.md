@@ -9,6 +9,6 @@
 * 后端：JAVA、NODEJS、Mysql....
 
 [GitHub](https://github.com/lonelyxiao)
-[Get Started](/java/java8)
+[Get Started](/README)
 
 ![color](#F0FFFF)
