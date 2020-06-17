@@ -526,6 +526,95 @@ root     pts/0    192.168.1.105    12:26    7.00s  0.04s  0.01s w
 
 ```
 
+## ACL权限管理
+
+### 概述
+
+为了解决文档对身份不足的问题
+
+**一个文件只能有一个所属用户和所属组**
+
+### 开启ACL
+
+centos7 xfs文件系统貌似已经强制开启ACL权限了
+
+### 设置ACL权限
+
+```shell
+#新建文件夹
+[root@localhost data]# mkdir test
+#只给用户user1给读和执行的权限
+[root@localhost data]# setfacl -m u:user1:5 test/
+##查看发现user1已经有了对应权限
+[root@localhost data]# getfacl test
+# file: test
+# owner: root
+# group: root
+user::rwx
+user:user1:r-x
+group::r-x
+mask::r-x
+other::r-x
+
+## 递归加上ACL权限
+[root@localhost data]# setfacl -m u:user1:5 -R test/
+
+## 加个d, 给目录加个ACL权限的模板，以后在这个目录下新建的文件都有ACL权限
+[root@localhost data]# setfacl -m d:u:user1:5 -R test/
+```
+
+```shell
+## 发现文件多了个+
+# 表示这个文件有ACL的权限
+[root@localhost data]# ll
+总用量 0
+drwxr-xr-x+ 2 root root 6 6月  17 02:48 test
+
+```
+
+### 删除ACL权限
+
+```shell
+[root@localhost data]# setfacl -d u:user1:5 test/
+```
+
+## sudo授权
+
+给普通用户授予部分管理员权限
+
+/sbin   /usr/sbin  两个目录下的命令只有超级用户才能使用
+
+### 授权
+
+输入visudo，进入sudo文件
+
+```shell
+## 用户名   被管理者的ip    授权命令（绝对命令）
+root    ALL=(ALL)       ALL
+## 组名
+%wheel  ALL=(ALL)       ALL
+```
+
+给user1授予重启的权限（这个all表示被管理者ip）
+
+```shell
+user1 ALL=/usr/sbin/shutdown -r now
+```
+
+进入user1查看
+
+```shell
+[user1@localhost root]$ sudo -l
+```
+
+测试user1的权限(**必须要加sudo**)
+
+```shell
+[user1@localhost root]$ sudo /usr/sbin/shutdown -h now
+```
+
+
+
 # vim
 
 - vim输入模式

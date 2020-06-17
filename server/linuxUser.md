@@ -149,3 +149,20 @@ userdel -r user1
 su - user1
 ```
 
+## 将用户添加进入组
+
+```shell
+## 将user1 添加进入group1组
+gpasswd -a user1 group1
+##将user1 从 group1组 中删除
+gpasswd -d user1 group1
+## 删除组
+groupdel group1
+```
+
+## 查看用户的基本信息
+
+```shell
+id user1
+```
+
