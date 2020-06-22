@@ -203,3 +203,31 @@ cpu需要不停的切换线程，这个时候切换回来，知道它执行到�
 
 ## 虚拟机栈
 
+- 一个栈针对应着一个方法
+- 生命周期和线程一致
+- 主要用于保存方法的局部变量和部分结果和返回
+
+### 栈常见异常
+
+- stackoverflowerror
+  - 栈如果是固定的，栈满了，就会抛出
+  - 一般递归
+- outofmemoryerror
+  - 栈如果是动态扩展，如果去申请内存，没有内存了就会抛出
+
+### 设置栈大小
+
+<https://docs.oracle.com/en/java/javase/11/tools/tools-and-command-reference.html>
+
+-main tools -java 
+
+找到xss
+
+```shell
+-Xss size
+##举例
+-Xss1m
+-Xss1024k
+-Xss1048576
+
+```
