@@ -12,9 +12,11 @@
 	* [Spring注解](/java/Spring注解.md)
 	* [工作流](/java/workflow.md)
 	* [设计模式](/java/设计模式.md)
-* 前端
+* 前端frontend
 	* [Angular](/frontend/angular)
 	* [Vue](/frontend/vue)
+	* [nodejs](/frontend/nodejs)
+	* [小程序](/frontend/wechatSmall)
 * 消息队列
 	* [ActiveMq](/message/activeMq)
 	* [Kafka](/message/kafka)
