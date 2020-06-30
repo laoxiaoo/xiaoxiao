@@ -223,7 +223,7 @@ cpu需要不停的切换线程，这个时候切换回来，知道它执行到�
 
 ### 设置栈大小
 
-<https://docs.oracle.com/en/java/javase/11/tools/tools-and-command-reference.html>
+https://docs.oracle.com/en/java/javase/11/tools/tools-and-command-reference.html
 
 -main tools -java 
 
@@ -401,6 +401,64 @@ native 方法，是一个java方法，但是是由非java语言实现的
 
 # 堆
 
+![](../image/java/jvm/20200630234840.jpg)
+
 ### 堆的核心概述
 
 - 堆是线程共享的，但还是有划分私有的堆空间
+
+### 内存细分
+
+- 7以前：新生代+老年代+永久区
+  - 新生代：
+- 8以后：新生代+老年代+元空间
+
+## 设置堆空间大小
+
+**建议设置xms和xmx设置一样大**，避免GC之后造成堆内存减少，消耗性能
+
+- 设置的是年轻代+老年代
+- -X：jvm运行参数，ms是memory start
+
+- -Xms:堆区的起始内存，默认 物理/64
+- -Xmx:堆区最大的内存， 默认 物理/4
+
+```java
+public static void main(String[] args) {
+    //堆内存总量
+    long totalMemory = Runtime.getRuntime().totalMemory() / 1024 / 1024;
+    //最大堆内存
+    long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+
+    System.out.println("-Xms:" + totalMemory + "M");
+    System.out.println("-Xmx:" + maxMemory + "M");
+
+    System.out.println("系统内存大小:" + totalMemory*64 + "M");
+    System.out.println("系统内存大小:" + maxMemory*4 + "M");
+}
+```
+
+查看gc
+
+- 方式1
+
+```shell
+C:\Users\alonePc>jps
+12192
+14296 Jps
+15192 HeapSpace
+9720 Launcher
+# 老年代， OC:总量 OU：使用的数量（kb）/1024=M
+C:\Users\alonePc>jstat -gc 15192
+ S0C    S1C    S0U    S1U      EC       EU        OC         OU       MC     MU    CCSC   CCSU   YGC     YGCT    FGC    FGCT     GCT
+10752.0 10752.0  0.0    0.0   65536.0   5243.8   175104.0     0.0     4480.0 781.2  384.0   75.9       0    0.000   0      0.000    0.000
+```
+
+- 方式2
+
+设置启动参数
+
+```shell
+-XX:+PrintGCDetails
+```
+
