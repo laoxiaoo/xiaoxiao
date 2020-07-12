@@ -547,6 +547,92 @@ C:\Users\alonePc>jstat -gc 15192
 
 首先标记出所需回收的对象，在标记完成后统一回收掉所有被标记的对象，**它的标记过程其实就是前面的可达性分析算法中判定垃圾对象的标记过程**
 
+## 常用参数
+
+```
+-Xms 设置堆的初始值(默认物理内存的1/64)
+-Xmx 设置堆的最大值（默认物理内存的1/4）
+-Xmn 设置新生代的大小
+-XX:NewRatio 新生代与老年代的比例
+-XX:+PrintGCDetails 打印 垃圾回收 的细节
+```
+
+## 逃逸分析
+
+一个对象，如果没有发生逃逸，则他的内存可以在堆上分配
+
+判断逃逸：如果一个方法里的对象，可能被其他方法调用，则new 的对象发生逃逸
+
+结论
+
+能使用局部变量的，不要在方法外定义（堆上分配不需要GC）
+
+# 方法区
+
+https://docs.oracle.com/javase/specs/jvms/se8/html/index.html
+
+## 栈堆方法区交互关系
+
+- 类结构放在方法区
+
+- new的对象放在堆空间
+
+- 对象所在的方法的栈帧存在栈区
+
+## 方法区介绍
+
+- 线程共享的
+- 方法区（Metaspace）大小，决定系统可以保存多少个类
+
+## 设置固定大小
+
+https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html#BGBCIEFC
+
+设置元空间最大值
+
+-XX:MaxMetaspaceSize=size
+
+设置初始大小
+
+-XX:MetaspaceSize=size
+
+## 方法区的溢出
+
+方法区存的是类的定义
+
+可以通过ClassWriter来动态生成类
+
+## 方法去存储内容
+
+- 类型信息
+  - 类class，接口。枚举，注解
+- 常量
+- 静态变量
+
+## static final 常量
+
+```java
+static int a=1;
+static final int b=2;
+```
+
+这种常量在编译阶段就已经赋值了
+
+其他static 变量在init阶段赋值
+
+## 运行时常量池
+
+- constant pool 
+
+  - 字面量信息
+  - 类型、域、方法的符号引用
+
+- 为什么需要常量池
+
+  - jvm 在栈帧(frame) 中进行操作数和方法的动态链接(link)，为了便于链接，jvm 使用常量池来保存跟踪当前类中引用的其他类及其成员变量和成员方法。
+
+    每个栈帧(frame)都包含一个运行常量池的引用，这个引用指向当前栈帧需要执行的方法，jvm使用这个引用来进行动态链接
+
 # 常用调优工具
 
 ## jprofiler
