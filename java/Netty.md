@@ -97,6 +97,14 @@ Microsoft Telnet>
 
 ![](../image/java/Netty/20200729223449.png)
 
+### 代码介绍
+
+- NIO有三个核心部分channel(通道)， buffer(缓冲区), selector(选择器)
+- 每一个channel对应一个buffer，channel可以通过buffer进行读写，程序只与buffer进行交互
+
+![](../image/java/Netty/20200731085919.png)
+
 ## AIO
 
 - 异步非阻塞
+
