@@ -97,12 +97,40 @@ Microsoft Telnet>
 
 ![](../image/java/Netty/20200729223449.png)
 
-### 代码介绍
+### 介绍
 
 - NIO有三个核心部分channel(通道)， buffer(缓冲区), selector(选择器)
 - 每一个channel对应一个buffer，channel可以通过buffer进行读写，程序只与buffer进行交互
 
 ![](../image/java/Netty/20200731085919.png)
+
+### Buffer
+
+以intbuffer为例
+
+```java
+@Slf4j
+public class TestBuffer {
+    public static void main(String[] args) {
+        //创建一个buffer，可以存放5个int
+        IntBuffer intBuffer = IntBuffer.allocate(5);
+        //将i设置进入buffer，将buffer塞满
+        for(int i=0; i<intBuffer.capacity(); i++){
+            intBuffer.put(i);
+        }
+        //转化读操作
+        intBuffer.flip();
+        while (intBuffer.hasRemaining()) {
+            log.info("取出数据：{}", intBuffer.get());
+        }
+
+    }
+}
+```
+
+### NIO和BIO比较
+
+- NIO 以块的方式处理数据，BIO以流的方式处理
 
 ## AIO
 
