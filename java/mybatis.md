@@ -1,3 +1,62 @@
+# 原生JDBC
+
+## 步骤
+
+- 加载JDBC驱动程序
+  - 为啥要执行 Class.forName("com.mysql.jdbc.Driver");
+  - 查看Driver源码，得知他只是为了将Driver加载jvm中，执行静态代码块
+  - ps:JDK不负责和数据库连接打交道，也没必要，只提供一个具体的接口Driver，告诉所有第三方，要连接数据库，就去实现这个接口，然后通过DriverManager注册一下，到时候连接某个数据库的时候，你已经在我这里注册了，我会调用你注册进来的Driver里面的方法去对指定数据库进行连接的。然后Mysql就实现自己的Driver，Oracle就实现自己的Driver，通过static块注册一下，再然后，就没有然后了
+
+```java
+static {
+    try {
+        java.sql.DriverManager.registerDriver(new Driver());
+    } catch (SQLException E) {
+        throw new RuntimeException("Can't register driver!");
+    }
+}
+```
+
+- 创建数据库的连接  
+  - DriverManager获取连接
+  - DataSource数据源方式获取连接
+- 创建一个preparedStatement
+  - 要执行SQL语句，必须获得java.sql.Statement实例，Statement实例分为以下3 种类型：    
+          1、执行静态SQL语句。通常通过Statement实例实现。    
+          2、执行动态SQL语句。通常通过PreparedStatement实例实现。    
+          3、执行数据库存储过程。通常通过CallableStatement实例实现。  
+- 执行SQL语句 ， Statement接口提供了三种执行SQL语句的方法：executeQuery 、executeUpdate和execute
+- 遍历结果集
+- 处理异常，关闭JDBC对象资源  
+
+```java
+Connection connection = null;
+Statement statement = null;
+ResultSet resultSet = null;
+try {
+    Class.forName("com.mysql.jdbc.Driver");
+    connection = DriverManager.getConnection(url, username, password);
+    statement = connection.createStatement();
+    resultSet = statement.executeQuery(sql);
+    while (resultSet.next()) {
+        System.out.println(resultSet.getString(1)+" "
+                +resultSet.getString(2));
+    }
+} finally {
+    resultSet.close();
+    statement.close();
+    connection.close();
+}
+```
+
+## DatabaseMetaData
+
+- 获取数据源信息
+- 确定数据源是否支持某一特性或功能
+- 获取数据源的限制
+- 确定数据源包含哪些SQL对象以及这些对象的属性
+- 获取数据源对事务的支持
+
 # 入门
 
 ## helloword
@@ -30,6 +89,19 @@ public void test1() throws Exception{
 }
 ```
 
+## 原理
+
+初始化SqlSessionFactory所做的事
+
+- 获取xml的配置的流
+- 进入build方法 -->XMLConfigBuilder构造方法-->XPathParser方法-->createDocument构造方法
+
+- 采用DocumentBuilderFactory解析xml获取Document
+- 从xml中获取配置信息和sql
+- 获取xml中配置的Mapper,将mapper的namespace的class当成是MapperRegistry的里面的map的key
+
+
+
 ## 接口开发
 
 1.接口类路径与xml namespace相同
@@ -61,7 +133,105 @@ public void testInterface() throws Exception{
 }
 ```
 
+## ScriptRunner执行脚本
+
+执行对应的脚本文件
+
+```java
+ScriptRunner scriptRunner = new ScriptRunner(connection);
+scriptRunner.runScript(Resources.getResourceAsReader("create-table.sql"));
+```
+
+## 反射工具类
+
+### MetaObject
+
+- 是MyBatis中的反射工具类
+
+- 使用MetaObject工具类，我们可以很优雅地获取和设置对象的属性值
+
+### MetaClass
+
+- ### MetaClass用于获取类相关的信息
+
+- 使用MetaClass判断某个类是否有默认构造方法，还可以判断类的属性是否有对应的Getter/Setter方法
+
+# MyBatis核心组件
+
+## Configuration
+
+- MyBatis的主配置信息，其他组件需要获取配置信息时，直接通过Configuration对象获取
+- Executor、StatementHandler、ResultSetHandler、ParameterHandler组件的工厂类
+
+- mapperRegistry：用于注册Mapper接口信息，建立Mapper接口的Class对象和MapperProxyFactory对象之间的关系，其中MapperProxyFactory对象用于创建Mapper动态代理对象。
+  - interceptorChain：用于注册MyBatis插件信息，MyBatis插件实际上就是一个拦截器
+  - keyGenerators：用于注册KeyGenerator，KeyGenerator是MyBatis的主键生成器，MyBatis中提供了3种KeyGenerator，即Jdbc3KeyGenerator（数据库自增主键）、NoKeyGenerator（无自增主键）、SelectKeyGenerator（通过select语句查询自增主键，例如oracle的sequence）
+  
+- MappedStatement
+  - MappedStatement用于描述Mapper中的SQL配置信息，是对Mapper XML配置文件中<select|update|delete|insert>等标签或者@Select/@Update等注解配置信息的封装
+
+## Executor
+
+- SqlSession是MyBatis提供的操作数据库的API，但是真正执行SQL的是Executor组件
+
+![](..\image\java\mybaits\20201111090756.png)
+
+- SimpleExecutor是基础的Executor，能够完成基本的增删改查操作
+- ResueExecutor对JDBC中的Statement对象做了缓存，当执行相同的SQL语句时，直接从缓存中取出Statement对象进行复用，避免了频繁创建和销毁Statement对象
+- BatchExecutor则会对调用同一个Mapper执行的update、insert和delete操作，调用Statement对象的批量操作功能
+- **当MyBatis开启了二级缓存功能时，会使用CachingExecutor对SimpleExecutor、ResueExecutor、BatchExecutor进行装饰**
+
+直接使用executor来执行
+
+```java
+String resource = "mybatis-config.xml";
+InputStream inputStream = Resources.getResourceAsStream(resource);
+SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+SqlSession sqlSession = sqlSessionFactory.openSession();
+Configuration configuration = sqlSession.getConfiguration();
+//获取statement, 里面包含执行的xml，接口等信息
+MappedStatement mappedStatement = configuration.getMappedStatement("com.xiao.dao.StudentMapper.selectStudent");
+//获取执行器
+Executor executor = configuration.newExecutor(new JdbcTransaction(sqlSession.getConnection()), ExecutorType.REUSE);
+List<Object> query = executor.query(mappedStatement, 2, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+log.debug(cn.hutool.core.util.ArrayUtil.toString(query));
+```
+
+## StatementHandler
+
+StatementHandler组件封装了对JDBC Statement的操作，例如设置Statement对象的fetchSize属性、设置查询超时时间、调用JDBC Statement与数据库交互等
+
+## TypeHandler
+
+处理JDBC类型与Java类型之间的转换，如给PreparedStatement设置占位符
+
+```java
+public interface TypeHandler<T> {
+ //设置参数
+  void setParameter(PreparedStatement ps, int i, T parameter, JdbcType jdbcType) throws SQLException;
+	//根据列名获取参数
+  T getResult(ResultSet rs, String columnName) throws SQLException;
+	//根据下表获取参数
+  T getResult(ResultSet rs, int columnIndex) throws SQLException;
+
+  T getResult(CallableStatement cs, int columnIndex) throws SQLException;
+
+}
+```
+
+- MyBatis通过TypeHandlerRegistry建立JDBC类型、Java类型与TypeHandler之间的映射关系
+
+```java
+//可以通过这种方式来注册参数
+TypeHandlerRegistry typeHandlerRegistry = configuration.getTypeHandlerRegistry();
+typeHandlerRegistry.register(LocalDateTimeTypeHandler.class);
+```
+
+- 在TypeHandlerRegistry中，通过Map对象保存JDBC类型、Java类型与TypeHandler之间的关系
+
 # 全局配置文件
+
+
 
 ## 别名处理器
 
@@ -169,9 +339,18 @@ public Configuration() {
 
 ## mapper注册sql映射文件
 
+mybatis加载mapper有三种方式
+
 mapper属性：
 
 - resource：引用类路径下的sql映射文件
+
+```xml
+<mappers>
+    <mapper resource="org/mybatis/example/BlogMapper.xml"/>
+</mappers>
+```
+
 - url：引用网路路径或者磁盘路径下的sql映射文件
 - class：引用（注册）接口（一般基于注解版的）
   - 有sql映射文件，映射文件名必须和接口同名，并且放在与接口同一目录下
@@ -187,9 +366,72 @@ mapper属性：
 
 # 映射文件
 
+## Mapper接口
+
+1. 执行查询的过程
+
+```java
+String resource = "mybatis-config.xml";
+InputStream inputStream = Resources.getResourceAsStream(resource);
+SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+SqlSession sqlSession = sqlSessionFactory.openSession();
+StudentMapper studentMapper = sqlSession.getMapper(StudentMapper.class);
+Student student = studentMapper.selectStudent(2l);
+```
+
+2. 可以看到studentMapper对象为org.apache.ibatis.binding.MapperProxy@346d61be代理对象
+3. MapperProxy类实现动态代理
+
+- invoke方法片段
+
+```java
+ final MapperMethod mapperMethod = cachedMapperMethod(method);
+ return mapperMethod.execute(sqlSession, args);
+```
+
+4. MapperMethod.execute具体执行对应的sql
+5. SqlCommand对象用于获取SQL语句的类型、Mapper的Id等信息
+
+- 类似代码
+
+```java
+interface BlogMapper {
+    @Select("SELECT name FROM blog WHERE id = #{id}")
+    String selectBlog(int id);
+}
+
+
+@org.junit.Test
+public void testMybatisMapper() {
+    //通过反射的方式，执行对应的sql
+    BlogMapper blogMapper = (BlogMapper)Proxy.newProxyInstance(ClassLoader.getSystemClassLoader(), new Class[] {BlogMapper.class}, (proxy, method, args) -> {
+        Select select = method.getAnnotation(Select.class);
+        String[] value = select.value();
+        System.out.printf(ArrayUtil.toString(value));
+        System.out.println(ArrayUtil.toString(args));
+        return "执行结果";
+    });
+    String blog = blogMapper.selectBlog(1);
+    System.out.println(blog);
+}
+```
+
+```sequence
+participant MapperProxy
+participant MapperMethod
+participant SqlCommand
+
+MapperProxy -> MapperMethod:mapperMethod.execute
+SqlCommand -> SqlCommand:获取方法的签名信息
+MapperMethod -> SqlCommand:转换sql参数
+
+```
+
+
+
 ## 增删改
 
-mybatis允许增删改直接定义返回以下类型
+m··ybatis允许增删改直接定义返回以下类型
 
 ​	interger long  boolean void
 
@@ -722,6 +964,10 @@ sqlSession级别的缓存。一级缓存是一直开启的
 
 sqlSession.clearCache()
 
+
+
+**在分布式环境下，务必将MyBatis的localCacheScope属性设置为STATEMENT，避免其他应用节点执行SQL更新语句后，本节点缓存得不到刷新而导致的数据一致性问题。**
+
 ## 二级缓存
 
 基于namespace级别的缓存：一个namespace对应一个二级缓存
@@ -755,6 +1001,12 @@ cacheEnabled=true：false：关闭缓存（二级缓存关闭）(一级缓存一
 localCacheScope：本地缓存作用域：（一级缓存SESSION）；当前会话的所有数据保存在会话缓存中；
 
 STATEMENT：可以禁用一级缓存；
+
+## 缓存实现类
+
+org.apache.ibatis.cache.Cache
+
+
 
 # 运行原理
 
@@ -812,6 +1064,18 @@ private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionI
 ```
 
 最终返回包含了executor和Configuration的DefaultSqlSessionFactory
+
+## Mapper方法调用过程
+
+``` java
+SqlSession sqlSession = sqlSessionFactory.openSession();
+StudentMapper studentMapper = sqlSession.getMapper(StudentMapper.class);
+Student student = studentMapper.selectStudent(2l);
+```
+
+- 为了执行Mapper接口中定义的方法，先需要调用SqlSession对象的getMapper()方法获取一个动态代理对象
+- getMapper->configuration.getMapper->MapperRegistry.getMapper(type, sqlSession)
+- 
 
 ## getMapper流程
 
@@ -972,3 +1236,30 @@ public class MyFirstPlugin implements Interceptor{
 </plugins>
 ```
 
+# 基础原理
+
+在创建一个Mapper的时候，其实实现的就是代理模式，通过invoke获取配置文件，或者注解获取其sql来执行
+
+## 基础代码
+
+```java
+
+```
+
+## 设计图
+
+```mermaid
+graph TD
+	配置类[配置类] -- 保存在 --> Mapper注册中心[Mapper注册中心]
+	Mapper注册中心[Mapper注册中心] -- 获取和解析sql -->执行器[执行器]
+	执行器[执行器] -- 执行sql --> statementHandler[statementHandler]
+	statementHandler[statementHandler] -- 获取结果集 封装 --> 结果集合handler[结果集合handler]
+```
+
+## session
+
+- 将原生的jdbc连接等一系列操作封装成了会话 session
+
+- SqlSession是一个接口
+
+- 通过这个接口，您可以执行命令、获取映射器和管理事务。

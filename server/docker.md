@@ -42,7 +42,9 @@ sudo yum-config-manager --add-repo http://mirrors.aliyun.com/docker-ce/linux/cen
 # Step 3: 更新并安装Docker-CE
 sudo yum makecache fast
 sudo yum -y install docker-ce
-
+## 或者也可以搜索对应版本进行安装
+[root@k8smaster ~]# yum list docker-ce --showduplicates | sort -r
+[root@k8smaster ~]# yum install -y docker-ce-18.06.3.ce-3.el7
 3、输入y确认安装
 4、启动docker
 [root@localhost ~]# systemctl start docker
@@ -54,6 +56,14 @@ Created symlink from /etc/systemd/system/multi-user.target.wants/docker.service 
 6、停止docker
 systemctl stop docker
 ```
+
+ps:也可以这样快速安装
+
+```shell
+curl -fsSL https://get.docker.com | bash -s docker --mirror Aliyun
+```
+
+
 
 # 阿里云镜像加速
 
@@ -74,6 +84,69 @@ Registry Mirrors:
  https://.mirror.aliyuncs.com/
 
 ```
+
+## daemon配置
+
+- bip
+
+  - 由于 docker 本身是默认使用 B 类地址（172.xx.0.0/16)， 大部分情况下会和公司网络产生冲突。
+  - 为了解决这个问题，需要在 `/etc/docker/daemon.json` 中增加 `"bip":"169.254.31.1/24"` 指定容器使用的网络。
+
+  ```json
+  {
+      "bip":"169.254.31.1/24"
+  }
+  ```
+
+# 私用镜像仓库
+
+- 下载harbo源码
+
+```shell
+[root@k8sm opt]# mkdir src
+[root@k8sm src]# wget https://github.com/goharbor/harbor/releases/download/v1.8.6/harbor-offline-installer-v1.8.6.tgz
+```
+
+- 安装
+
+```shell
+[root@k8sm src]# mkdir /opt/harbor
+[root@k8sm src]# tar -zxvf harbor-offline-installer-v1.10.1.tgz  -C /opt/
+## 解压之后，做一个版本标识，然后做软连接，方便后续升级
+[root@k8sm opt]# mv harbor harbor-1.10.1
+[root@k8sm opt]# ln -s harbor-1.10.1 harbor
+```
+
+- 编辑harbor.yml文件
+
+```shell
+[root@k8sm harbor]# vim harbor.yml
+##修改
+hostname: m.host.com
+## 端口修改
+ port: 180
+ 
+## 密码
+harbor_admin_password: Harbor12345
+
+```
+
+- 安装docker环境
+
+```shell
+## 安装epel环境
+yum install epel-release
+#安装docker-compose
+[root@k8sm home]# yum install docker-compose -y
+#执行
+[root@k8sm harbor]# ./install.sh
+
+## 查看相关记录
+[root@k8sm harbor]# docker-compose ps
+
+```
+
+- 查看http://192.168.1.143:180/   admin  harbor12345
 
 # docker helloword
 
@@ -114,8 +187,10 @@ docker守护进程运行在主机上，客户端通过socket与之相连，守�
 
 
 
+# Docker命令
 
-# docker 镜像操作
+
+## 镜像命令
 
 | 操作 | 命令                                            | 说明                                                     |
 | ---- | ----------------------------------------------- | -------------------------------------------------------- |
@@ -164,7 +239,21 @@ https://docs.docker.com/engine/reference/commandline/docker/
 
 ```
 
-# 容器命令（拉取centos为例）
+## 容器命令
+
+| 命令                  | 描述                                                         |
+| :-------------------- | ------------------------------------------------------------ |
+| docker run 镜像名     | 创建并运行容器命令，如果docker主机已经下载过tomcat，则该命令会直接创建一个tomcat的容器实例，否则会先去hub端拉取该tomcat镜像， |
+| docker run -it 镜像名 | -i : 表示创建要给交互式容器，-t：表示运行容器的同时创建一个伪终端，-d: 后台守护进程的方式运行； 一般与 -i 一起使用 |
+| docker ps             | 查看当前正在运行的容器对象                                   |
+| docker ps -l          | -l(小写的L) ： 默认的查看只会查看正在运行中的容器信息，而ps -l 会显示最近运行的一条容器信息 |
+| docker ps -a          | -a : 显示所有运行过的镜像信息                                |
+
+
+
+# 命令举例
+
+## 拉取镜像
 
 ```shell
 #获取centos
@@ -186,6 +275,7 @@ Usage:	docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
 
 ---
 
+## 运行容器
 ```shell
 ##启动容器，发现启动centos，并且进入centos的终端界面，
 #这就是-it的效果
@@ -194,14 +284,6 @@ Usage:	docker run [OPTIONS] IMAGE [COMMAND] [ARG...]
 ```
 
 --name：为容器起一个别名
-
-```shell
-
-```
-
----
-
-
 
 ```shell
 #查看所有运行中的容器
@@ -223,7 +305,7 @@ ctrl+p+q:容器不停止退出
 
 ---
 
-启动容器
+- 启动容器
 
 ```shell
 [root@localhost ~]# docker ps -n 2
@@ -246,9 +328,7 @@ cranky_shirley
 
 ```
 
-## 重要命令
-
-### 后台运行容器
+## 后台运行容器
 
 ```shell
 [root@localhost ~]# docker run -d centos
@@ -269,7 +349,7 @@ hello
 
 ```
 
- ### 查看容器日志
+ ## 查看容器日志
 
 ```shell
 
@@ -282,15 +362,15 @@ hello
 --tail 数字  显示最后N条日志
 ```
 
-### 查看容器内运行的进程
+## 查看容器内运行的进程
 
 docker top 容器id
 
-### 查看容器内部细节
+## 查看容器内部细节
 
 docker inspect 容器id
 
-### 在容器内命令行交互
+## 在容器内命令行交互
 
 ```shell
 [root@localhost ~]# docker start 132c9b24081e
@@ -309,7 +389,7 @@ total 4
 
 ```
 
-### 将容器内容拷贝到宿主机
+## 将容器内容拷贝到宿主机
 
 ```shell
 #docker cp 容器id：容器文件目录 宿主机目录
@@ -317,13 +397,29 @@ total 4
 
 ```
 
-### 映射端口
+## 映射端口
 
 ```shell
 #将8088端口映射到docker启动的容器的8080端口上，
 #直接访问tomcat：http://192.168.94.129:8088/
 [root@localhost home]# docker run -p 8088:8080 tomcat
 ```
+
+
+
+## 修改容器挂载
+
+export为镜像，在重新构建新容器
+
+```shell
+[root@localhost home]# docker container export -o ./jk.docker jenkins
+[root@localhost home]# docker import ./jk.docker jk
+##运行导入镜像时要带 command
+[root@localhost home]# docker run -d -p 8080:8080 -p 10241:50000 -v /home/jenkins_node:/var/jenkins_home -v /etc/localtime:/etc/localtime -v /var/run/docker.sock:/var/run/docker.sock --name jk jk /bin/bash
+
+```
+
+
 
 
 
@@ -386,23 +482,13 @@ docker run -it -v /宿主机目录：/容器目录 镜像名
 
 docker run -it -v /宿主机目录：/容器目录:ro 镜像名
 
-# 数据卷容器
-
-实现容器与容器间的传递
-
-```shell
-[root@localhost _data]# docker run -it --name d1 mydf/centos
-[root@localhost _data]# docker run -it --name d2 --volumes-from d1 mydf/centos
-#这样就实现了d2继承了d1，在d1中的容器卷修改，会同步d2,d2也会同步d1
-```
-
 
 
 # dockerFile
 
 构建镜像的文件
 
-## dockerfile建立数据卷
+## 示例
 
 ```shell
 #建立一个文件
@@ -457,25 +543,39 @@ docker run -it -v /宿主机目录：/容器目录:ro 镜像名
 
 执行类似 docker commit的操作提交一个新的镜像层
 
-基于敢提交的镜像运行一个新的容器
+基于刚提交的镜像运行一个新的容器
 
 执行下条指令
 
-## 保留字指令
+## 指令
 
-| FROM       | 基础镜像，当前新镜像是基于哪个镜像的                         |
-| ---------- | ------------------------------------------------------------ |
-| MAINTAINER | 镜像维护者的姓名和邮箱地址                                   |
-| RUN        | 容器构建时需要运行的命令                                     |
-| EXPOSE     | 当前容器对外暴露出的端口                                     |
-| WORKDIR    | 指定在创建容器后，终端默认登陆的进来工作目录，一个落脚点     |
-| ENV        | 用来在构建镜像过程中设置环境变量                             |
-| ADD        | 将宿主机目录下的文件拷贝进镜像且ADD命令会自动处理URL和解压tar压缩包 |
-| COPY       | 类似ADD，拷贝文件和目录到镜像中。将从构建上下文目录中 <源路径> 的文件/目录复制到新的一层的镜像内的 <目标路径> 位置 |
-| VOLUME     | 容器数据卷，用于数据保存和持久化工作                         |
-| CMD        | 指定一个容器启动时要运行的命令,ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数 |
-| ENTRYPOINT | 指定一个容器启动时要运行的命令;ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数 |
-| ONBUILD    | 当构建一个被继承的Dockerfile时运行命令，父镜像在被子继承后父镜像的onbuild被触发(子镜像在build的时候出发) |
+| 命令                                  | 描述                                                         |
+| ------------------------------------- | ------------------------------------------------------------ |
+| FROM image                            | 基础镜像，当前新镜像是基于哪个镜像的                         |
+| MAINTAINER username                   | 镜像维护者的姓名和邮箱地址                                   |
+| RUN command                           | 容器构建时需要运行的命令                                     |
+| EXPOSE  port                          | 当前容器对外暴露出的端口                                     |
+| WORKDIR path_dir                      | 指定在创建容器后，终端默认登陆的进来工作目录，一个落脚点     |
+| ENV   key   value                     | 用来在构建镜像过程中设置环境变量                             |
+| ADD  source_dir/file   dest_file/file | 将宿主机目录下的文件拷贝进镜像且ADD命令会自动处理URL和解压tar压缩包 |
+| COPY                                  | 类似ADD，拷贝文件和目录到镜像中。将从构建上下文目录中 <源路径> 的文件/目录复制到新的一层的镜像内的 <目标路径> 位置 |
+| VOLUME                                | 容器数据卷，用于数据保存和持久化工作                         |
+| CMD                                   | 指定一个容器启动时要运行的命令,ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数 |
+| ENTRYPOINT                            | 指定一个容器启动时要运行的命令;ENTRYPOINT 的目的和 CMD 一样，都是在指定容器启动程序及参数 |
+| ONBUILD                               | 当构建一个被继承的Dockerfile时运行命令，父镜像在被子继承后父镜像的onbuild被触发(子镜像在build的时候出发) |
+| ARG <参数名>[=<默认值>]               | 构建参数，与 ENV 作用一至。不过作用域不一样。ARG 设置的环境变量仅对 Dockerfile 内有效， 也就是说只有 docker build 的过程中有效 |
+
+## 构建命令
+
+- docker build
+
+```shell
+--build-arg，设置构建时的环境变量; arg =  xxx
+--file, -f，Dockerfile的完整路径，默认值为‘PATH/Dockerfile’
+--tag, -t，镜像的名字及tag，通常name:tag或者name格式；可以在一次构建中为一个镜像设置多个tag
+```
+
+
 
 ## dockerFile 示例
 
@@ -485,6 +585,24 @@ VOLUME ["/datavContainer1", "/datavContainer2"]
 CMD echo "finished"
 CMD /bin/bash
 
+```
+
+## 制作微服务镜像
+
+- Dockerfile内容
+
+```shell
+FROM openjdk:8-jdk-alpine
+ARG JAR_FILE
+COPY ${JAR_FILE} app.jar
+EXPOSE 80
+ENTRYPOINT ["java","jar", "/app.jar"]
+```
+
+- 构建镜像(JAR_FILE 相对路径)
+
+```shell
+[root@localhost home]# docker build --build-arg JAR_FILE=es-jd-1.0-SNAPSHOT.jar -f /home/Dockerfile -t jd:v1 .
 ```
 
 
@@ -574,5 +692,114 @@ http {
 		}
 	}
 }
+```
+
+# 安装ES集群
+
+- 建立三个配置文件 es1.yml,es2.yml,es3.yml
+  - 这里注意端口和映射端口要一致
+
+```yaml
+cluster.name: elasticsearch-cluster
+node.name: es-node1
+network.bind_host: 0.0.0.0
+network.publish_host: 127.0.0.1
+http.port: 9200
+transport.tcp.port: 9300
+http.cors.enabled: true
+http.cors.allow-origin: "*"
+node.master: true
+node.data: true
+#集群节点
+discovery.seed_hosts: ["192.168.1.134:9300","192.168.1.134:9301", "192.168.1.134:9302"]
+#有资格成为主节点的节点配置
+cluster.initial_master_nodes: ["es-node1","es-node2","es-node3"]
+
+```
+
+- 建立数据存储目录 data0 data1 data2, 并且授予 777权限
+
+- 修改文件
+
+```shell
+[root@localhost ~]# vim /etc/sysctl.conf 
+vm.max_map_count=655360
+[root@localhost ~]#sysctl -p
+```
+
+- 启动
+
+```shell
+
+ docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9200:9200 -p 9300:9300 -v /home/es/es1.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/data0:/usr/share/elasticsearch/data --name es0 elasticsearch:7.9.2
+
+ docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9201:9201 -p 9301:9301 -v /home/es/es2.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/data1:/usr/share/elasticsearch/data --name es1 elasticsearch:7.9.2
+
+ docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9202:9202 -p 9302:9302 -v /home/es/es3.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/data2:/usr/share/elasticsearch/data --name es2 elasticsearch:7.9.2
+
+```
+
+# 安装Kibana
+
+- 编辑配置文件 kibana.yml
+
+```yaml
+server.name: kibana
+server.host: "0"
+elasticsearch.hosts: ["http://192.168.1.134:9201"]
+xpack.monitoring.ui.container.elasticsearch.enabled: true
+elasticsearch.pingTimeout: 90000
+elasticsearch.requestTimeout: 90000
+i18n.locale: "zh-CN"
+
+```
+
+- 运行
+
+```shell
+docker run -d --name kibana -p 5601:5601 \
+-v /home/es/kibana.yml:/usr/share/kibana/config/kibana.yml \
+kibana:7.9.2
+```
+
+- 配置文件说明
+
+```yaml
+#节点地址和端口 必须是同一个集群的 必须以http或者https开头 填写实际的es地址和端口
+elasticsearch.hosts: ['http://172.16.10.202:9200','http://172.16.10.202:9202', 'http://172.16.10.202:9203']
+#发给es的查询记录 需要日志等级是verbose=true 
+elasticsearch.logQueries: true
+#连接es的超时时间 单位毫秒
+elasticsearch.pingTimeout: 30000
+elasticsearch.requestTimeout: 30000
+#是否只能使用server.host访问服务
+elasticsearch.preserveHost: true
+#首页对应的appid
+kibana.defaultAppId: "home"
+kibana.index: '.kibana'
+#存储日志的文件设置
+logging.dest: /usr/share/kibana/logs/kibana.log
+logging.json: true
+#是否只输出错误日志信息
+logging.quiet: false
+logging.rotate:
+  enabled: true
+  #日志文件最大大小
+  everyBytes: 10485760
+  #保留的日志文件个数
+  keepFiles: 7
+logging.timezone: UTC
+logging.verbose: true
+monitoring.kibana.collection.enabled: true
+xpack.monitoring.collection.enabled: true
+#存储持久化数据的位置
+path.data: /usr/share/kibana/data
+#访问kibana的地址和端口配置 一般使用可访问的服务器地址即可
+server.host: 0
+#端口默认5601
+server.port: 5601
+server.name: "kibana"
+#配置页面语言
+i18n.locale: zh-CN
 ```
 

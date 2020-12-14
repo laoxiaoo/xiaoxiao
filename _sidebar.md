@@ -2,7 +2,7 @@
 * java
 	* [java8](/java/java8.md)
 	* [java基础](/java/javaBase.md)
-	* [jenkin](/java/jenkin.md)
+	* [jenkins](/java/jenkins.md)
 	* [mybatis](/java/mybatis.md)
 	* [MybatisPlus](/java/MybatisPlus.md)
 	* [SpringBoot](/java/SpringBoot.md)
@@ -12,7 +12,8 @@
 	* [Spring注解](/java/Spring注解.md)
 	* [工作流](/java/workflow.md)
 	* [设计模式](/java/设计模式.md)
-* 前端frontend
+	* [常用工具](/java/util.md)
+* 前端
 	* [Angular](/frontend/angular)
 	* [Vue](/frontend/vue)
 	* [nodejs](/frontend/nodejs)
