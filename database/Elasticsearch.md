@@ -437,6 +437,22 @@ GET /order/product/1
 DELETE /order/product/1
 ```
 
+- 带查询方式的删除
+
+```json
+POST /sys_org_company/_delete_by_query
+{
+   "query": {
+        "match_all": {
+        }
+    }
+}
+```
+
+
+
+
+
 # 多重查询方式
 
 ## search
@@ -1445,6 +1461,63 @@ ext_dict:同目录下一个xx.dic文件，
 </properties>
 
 ```
+
+# 快照
+
+## 备份
+
+- 每个节点都要配置
+- 修改配置文件
+
+```
+[root@localhost ES]# vim node3/es3.yml 
+```
+
+```yaml
+path.repo: ["/usr/share/elasticsearch/data/backups/my_backup"]
+```
+
+- 建立备份目录
+
+```shell
+[root@localhost ES]# mkdir -p data/backups/my_backup
+[root@localhost ES]# chmod -R 777 data
+```
+
+- 重启每一个节点
+- 查看是否生效
+
+```shell
+GET _snapshot?pretty
+## 注册仓库
+POST _snapshot/myback_up
+{
+  "type": "fs",
+  "settings": {
+    "location": "/usr/share/elasticsearch/data/backups/my_backup"
+  }
+}
+```
+
+```json
+{
+  "myback_up" : {
+    "type" : "fs",
+    "settings" : {
+      "location" : "/usr/share/elasticsearch/data/backups/my_backup"
+    }
+  }
+}
+
+```
+
+- 执行备份,执行完后会返回备份的索引
+
+```shell
+PUT /_snapshot/myback_up/snapshot_1?wait_for_completion=true
+```
+
+
 
 # Spring Boot Api
 
