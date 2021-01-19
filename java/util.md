@@ -149,8 +149,5 @@ live template 进行设置模板
 
 ```
 
-<<<<<<< HEAD
 # Log
 
-=======
->>>>>>> 2870b0e3de724e5d232d78bc00bf6ccfc0e1c124

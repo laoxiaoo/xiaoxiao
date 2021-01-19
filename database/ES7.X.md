@@ -38,7 +38,6 @@ POST /test_index/_mapping
    }
 }
 ```
-<<<<<<< HEAD
 
 - 查询实例
 
@@ -80,49 +79,6 @@ PUT /sys_org_company
 ```
 
 
-=======
-
-- 查询实例
-
-```json
-POST /test_index/_doc
-{
-  "name": "深圳市腾讯计算机系统有限公司"
-}
-```
-
-## 高亮
-
-```shell
-POST /test_index/_search
-{
-  "query": {
-    "match": {
-      "name.name": "深圳市腾讯计算机系统有限公司"
-    }
-  },
-  "highlight": {
-    "fields": {
-      "name.name": {"pre_tags": "<calss>", "post_tags": "</calss>"}
-    }
-  }
-}
-```
-
-## 插入不允许有多余字段
-
-当插入超出mapping多余字段之后，则报错
-
-```json
-PUT /sys_org_company
-{
-  "mappings": {
-    "dynamic": "strict",
-    "properties": {
-```
-
-
->>>>>>> 2870b0e3de724e5d232d78bc00bf6ccfc0e1c124
 
 # 批量查询
 
@@ -281,7 +237,6 @@ POST /sys_org_company/_search
 
 使用短语查询的方式。即：`phrase query`。默认短语中间不能有间隔，但是可使用slop=1来表示中间可以间隔一个term（单词）
 
-<<<<<<< HEAD
 
 
 ## 数据刷新
@@ -460,10 +415,6 @@ PUT user_test
 
 
 
-=======
-# Mapping
-
->>>>>>> 2870b0e3de724e5d232d78bc00bf6ccfc0e1c124
 # 聚合分析
 
 **如果是text字段，则需要"fielddata": true才能聚合**
