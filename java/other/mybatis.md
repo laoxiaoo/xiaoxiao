@@ -172,7 +172,9 @@ scriptRunner.runScript(Resources.getResourceAsReader("create-table.sql"));
 
 ## Executor
 
-- SqlSession是MyBatis提供的操作数据库的API，但是真正执行SQL的是Executor组件
+> 基本概念
+
+- SqlSession是MyBatis提供的操作数据库的API(门面模式)，但是真正执行SQL的是Executor组件
 
 ![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/java/mybaits/20201111090756.png)
 
@@ -181,21 +183,59 @@ scriptRunner.runScript(Resources.getResourceAsReader("create-table.sql"));
 - BatchExecutor则会对调用同一个Mapper执行的update、insert和delete操作，调用Statement对象的批量操作功能
 - **当MyBatis开启了二级缓存功能时，会使用CachingExecutor对SimpleExecutor、ResueExecutor、BatchExecutor进行装饰**
 
-直接使用executor来执行
+>执行器使用示例
+
+- 此处使用SimpleExecutor，如果执行两次，则需要进行两次预编译（PreparedStatement的创建）
+- 真正执行的方法是doquery方法
 
 ```java
 String resource = "mybatis-config.xml";
 InputStream inputStream = Resources.getResourceAsStream(resource);
 SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
 SqlSession sqlSession = sqlSessionFactory.openSession();
+//获取配置信息
 Configuration configuration = sqlSession.getConfiguration();
 //获取statement, 里面包含执行的xml，接口等信息
 MappedStatement mappedStatement = configuration.getMappedStatement("com.xiao.dao.StudentMapper.selectStudent");
-//获取执行器
-Executor executor = configuration.newExecutor(new JdbcTransaction(sqlSession.getConnection()), ExecutorType.REUSE);
-List<Object> query = executor.query(mappedStatement, 2, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
+//获取执行器（传入配置信息和事务）
+JdbcTransaction jdbcTransaction = new JdbcTransaction(sqlSession.getConnection());
+Executor executor = new SimpleExecutor(configuration, jdbcTransaction);
+//执行我们对应的命名空间的语句
+List<Object> query = executor.doQuery(mappedStatement, 2, RowBounds.DEFAULT, Executor.NO_RESULT_HANDLER);
 log.debug(cn.hutool.core.util.ArrayUtil.toString(query));
 ```
+
+> ReuseExecutor
+
+- 可重用的执行器，他的用一个命名空间的sql预编译只会有一次
+
+>  BatchExecutor
+
+- 批处理执行器
+- 只会针对修改操作
+- 执行完成后，**需要手动的刷新操作**
+
+> 执行器怎么和缓存关联
+
+- 一级缓存
+
+1. 执行器调用query方法，先回根据key（CacheKey对象）获取结果
+2. 如果没有获取到结果，再执行doQuery查询的操作
+
+- 二级缓存
+
+1.  CachingExecutor
+2. 他对BaseExecutor进行了一层装饰
+
+```java
+//采用装饰者模式，delegate指向Executor
+public CachingExecutor(Executor delegate) {  
+    this.delegate = delegate;  delegate.setExecutorWrapper(this);
+}
+```
+
+3. 对二级缓存进行装饰
+4. 二级缓存想要生效，必须有commit操作，才会使用二级缓存
 
 ## StatementHandler
 
@@ -228,6 +268,19 @@ typeHandlerRegistry.register(LocalDateTimeTypeHandler.class);
 ```
 
 - 在TypeHandlerRegistry中，通过Map对象保存JDBC类型、Java类型与TypeHandler之间的关系
+
+# SqlSession
+
+- 作用：降低调用额复杂性
+
+> 调用顺序
+
+1. sqlsession 调用CachingExecutor
+2. CachingExecutor调用对应的BaseExecutor
+
+```java
+SqlSession sqlSession = sqlSessionFactory.openSession();Object o = sqlSession.selectOne("com.xiao.dao.StudentMapper.selectStudent", 1);System.out.println(o);
+```
 
 # 全局配置文件
 
@@ -953,24 +1006,67 @@ sqlSession级别的缓存。一级缓存是一直开启的
 与数据库同一次会话期间查询到的数据会放在本地缓存中。
 以后如果需要获取相同的数据，直接从缓存中拿，没必要再去查询数据库；
 
-### 一级缓存失效情况
+> 一级缓存失效情况
 
 没有使用到当前一级缓存的情况，效果就是，还需要再向数据库发出查询
 
 1、sqlSession不同。
 2、sqlSession相同，查询条件不同.(当前一级缓存中还没有这个数据)
 3、sqlSession相同，两次查询之间执行了增删改操作(这次增删改可能对当前数据有影响)
+
+​     调用了增删改的操作就会直接清空缓存
+
 4、sqlSession相同，手动清除了一级缓存（缓存清空）
 
-sqlSession.clearCache()
+```java
+sqlSession.clearCache();
+```
+
+5. localCacheScope设置成`STATEMENT`(缓存作用于作用于statement)
+
+> 一级缓存命中的情况
+
+1. sql 和参数必须相同
+2. 必须是相同的statementid（方法名）
+3. sqlsession 必须相同
+4. RowBound 必须相同（返回行范围必须相同）
 
 
 
 **在分布式环境下，务必将MyBatis的localCacheScope属性设置为STATEMENT，避免其他应用节点执行SQL更新语句后，本节点缓存得不到刷新而导致的数据一致性问题。**
 
+## 一级缓存原理
+
+```mermaid
+graph LR
+
+query[query]-->iscache{是否有缓存}
+iscache{是否有缓存}--是-->PerpetualCache[PerpetualCache]
+PerpetualCache[PerpetualCache] --获取--> hashmap
+
+iscache{是否有缓存}--否--> doQuery
+doQuery --> 操作数据库
+doQuery --填充缓存 --> PerpetualCache
+```
+
+
+
 ## 二级缓存
 
-基于namespace级别的缓存：一个namespace对应一个二级缓存
+- 基于namespace级别的缓存：一个namespace对应一个二级缓存(应用级别的缓存，作用于整个应用)
+- 他能个跨线程的使用
+
+> 二级缓存需要满足的点
+
+1. 存储:用什么方式存储
+2. 过期清理
+3. 线程安全
+4. 命中率统计
+5. 序列化
+
+> 设计思路
+
+装饰器+责任链方式进行缓存处理
 
 ### 工作机制
 
