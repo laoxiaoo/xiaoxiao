@@ -208,6 +208,7 @@ log.debug(cn.hutool.core.util.ArrayUtil.toString(query));
 > ReuseExecutor
 
 - 可重用的执行器，他的用一个命名空间的sql预编译只会有一次
+- **只要sql相同，就会重用sql预编译**
 
 >  BatchExecutor
 
@@ -240,6 +241,26 @@ public CachingExecutor(Executor delegate) {
 ## StatementHandler
 
 StatementHandler组件封装了对JDBC Statement的操作，例如设置Statement对象的fetchSize属性、设置查询超时时间、调用JDBC Statement与数据库交互等
+
+
+
+```java
+public interface StatementHandler {  
+    //基于连接创建statement
+    Statement prepare(Connection connection, Integer transactionTimeout) 
+```
+
+>  PreparedStatementHandler
+
+> > 能够做什么事
+
+预编译，设置参数，执行jdbc，将结果集封装成javabean
+
+### 参数处理器
+
+将javabean ----> jdbc 处理对象
+
+> ParamNameResolver#getNamedParams
 
 ## TypeHandler
 
@@ -1035,7 +1056,7 @@ sqlSession.clearCache();
 
 **在分布式环境下，务必将MyBatis的localCacheScope属性设置为STATEMENT，避免其他应用节点执行SQL更新语句后，本节点缓存得不到刷新而导致的数据一致性问题。**
 
-## 一级缓存原理
+### 一级缓存原理
 
 ```mermaid
 graph LR
@@ -1081,6 +1102,37 @@ doQuery --填充缓存 --> PerpetualCache
 去mapper.xml中配置使用二级缓存：<cache></cache>
 
 我们的POJO需要实现序列化接口
+
+### 缓存代码使用
+
+- 一个小示例，不是真实的存在
+
+```java
+SqlSession sqlSession = sqlSessionFactory.openSession();   
+Configuration configuration = sqlSession.getConfiguration();    
+Cache cache = configuration.getCache("com.xiao.dao.StudentMapper");   cache.putObject("laoxiao", new Student());    
+cache.getObject("laoxiao");
+```
+
+### 命中条件
+
+1. 必须是session commit之后才能命中
+2. sql相同、statementid， rowbound相同（二级缓存的key和一级缓存的key相同的）
+
+### 流程
+
+```mermaid
+graph LR
+
+回话1-->暂存区1
+暂存区1 --存取--> 缓存区
+
+会话2--> 暂存区2
+暂存区2 --存取--> 缓存区
+
+```
+
+
 
 ## 缓存有关的设置/属性
 
