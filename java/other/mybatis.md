@@ -1063,6 +1063,11 @@ log.debug("获取到结果集大小：{}", list.size());
 - 在DefaultResultSetHandler#handleResultSets 处理结果集
 - 如果只有一个结果集处理则只会调用DefaultResultSetHandler#handleResultSet方法
 - 如果没有循环嵌套的情况，则调用DefaultResultSetHandler#handleRowValuesForSimpleResultMap进行结果集的封装
+- DefaultResultSetHandler#handleRowValuesForSimpleResultMap
+
+- 遍历结果集：DefaultResultSetHandler#getRowValue
+  - 创建空对象：createResultObject
+  - 填充熟悉：applyAutomaticMappings（自动映射），applyPropertyMappings（手动映射）
 
 # 缓存
 
