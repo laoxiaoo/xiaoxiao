@@ -262,6 +262,12 @@ public interface StatementHandler {
 
 > ParamNameResolver#getNamedParams
 
+进行参数的map集合获取
+
+> DefaultParameterHandler#setParameters
+
+将参数设置进入TypeHandler中
+
 ## TypeHandler
 
 处理JDBC类型与Java类型之间的转换，如给PreparedStatement设置占位符
@@ -1017,6 +1023,46 @@ _databaseId就是代表当前数据库的别名oracle
 	</if>
 </sql>
 ```
+
+# 结果集处理
+
+> ResultHandler
+
+- 结果集处理流程
+
+```mermaid
+graph LR
+
+ResultSetHandler -->第一行
+ResultSetHandler -->第二行
+ResultSetHandler -->第三行
+第一行 --一行一行的将objet转换-->ResultContext
+ResultContext-->ResultHandler:封装处理结果
+```
+
+## 上下文
+
+如：我们结果集有10行，我们只需要5行，可以调用stop方法
+
+```java
+List list = new ArrayList();
+ResultHandler handler = new ResultHandler() {    
+    @Override    
+    public void handleResult(ResultContext resultContext) {
+        if(resultContext.getResultCount() > 2) {            
+            resultContext.stop();       
+        }        
+        list.add(resultContext.getResultObject());    
+    }};
+sqlSession.select("com.xiao.dao.StudentMapper.selectAll", handler);
+log.debug("获取到结果集大小：{}", list.size());
+```
+
+## 结果集转换
+
+- 在DefaultResultSetHandler#handleResultSets 处理结果集
+- 如果只有一个结果集处理则只会调用DefaultResultSetHandler#handleResultSet方法
+- 如果没有循环嵌套的情况，则调用DefaultResultSetHandler#handleRowValuesForSimpleResultMap进行结果集的封装
 
 # 缓存
 
