@@ -1069,6 +1069,8 @@ log.debug("获取到结果集大小：{}", list.size());
   - 创建空对象：createResultObject
   - 填充熟悉：applyAutomaticMappings（自动映射），applyPropertyMappings（手动映射）
 
+
+
 # 缓存
 
 ## 一级缓存
@@ -1482,3 +1484,21 @@ graph TD
 - SqlSession是一个接口
 
 - 通过这个接口，您可以执行命令、获取映射器和管理事务。
+
+# 工具类
+
+## MetaObject
+
+1. 直接操作属性
+2. 操作子属性
+3. 查找属性名，支持驼峰命名
+
+```java
+//对于mybatis，他不知道具体的类
+Object obj = new Student();
+Configuration configuration = new Configuration();
+MetaObject metaObject = configuration.newMetaObject(obj);
+//输出：phoneNumber
+log.debug("获取驼峰属性名称：{}", metaObject.findProperty("phone_number", true));
+```
+

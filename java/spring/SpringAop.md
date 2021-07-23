@@ -153,6 +153,60 @@ ReflectionUtils.invokeMethod(setStr, o, "laoxiao");
 System.out.println(ReflectionUtils.invokeMethod(ReflectionUtils.findMethod(o.getClass(), "getStr"), o));
 ```
 
+# ProxyFactory
+
+> 自定义切面和代理类
+
+1. 自定义一个目标执行一个对象
+
+```java
+@Slf4j
+public class MyTarget {
+    public void sayHello() {
+        log.debug("==> hello");
+    }
+}
+```
+
+2. 实现拦截面
+
+```java
+public class AroundInterceptor implements MethodInterceptor {
+    @Override
+    public Object invoke(MethodInvocation invocation) throws Throwable {
+        log.debug("==> 调用之前");
+        invocation.proceed();
+        log.debug("==> 调用之后");
+        return null;
+    }
+}
+```
+
+3. 直接对类进行拦截，生成的代理对象事GCLIB的
+
+```java
+public static void classProxy() {
+    ProxyFactory factory = new ProxyFactory();
+    factory.setTarget(new MyTarget());
+    factory.addAdvice(new AroundInterceptor());
+    MyTarget targetProxy = (MyTarget) factory.getProxy();
+    targetProxy.sayHello();
+}
+```
+
+4.  对接口继续拦截，生成的代理对象为jdk代理对象
+
+```java
+ProxyFactory proxyFactory = new ProxyFactory();
+proxyFactory.setInterfaces(new Class[] {TargetService.class});
+proxyFactory.setTarget(new TargetServiceImpl());
+proxyFactory.addAdvice(new AroundInterceptor());
+TargetService targetService = (TargetService)proxyFactory.getProxy();
+targetService.sayHello();
+```
+
+
+
 # Spring Aop原理
 
 >  EnableAspectJAutoProxy
