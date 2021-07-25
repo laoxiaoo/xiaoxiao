@@ -1313,3 +1313,7 @@ public void before() {
 - 如图：每个线程都有一个成员变量，ThreadLocal.ThreadLocalMap，里面存储的就是key-value的threadlocalset的值
 - 其中，map的key=当前定义的threadlocal的变量的虚引用
 - 当threadlocal强引用（即定义的时候）断开后，虚引用GC后就会垃圾回收，但这也值保证了tl的内存泄露问题，value还没有被回收，所以还是需要手动remove
+
+# SPI
+
+ 

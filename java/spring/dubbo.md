@@ -275,3 +275,34 @@ Invoker<T> invoker = cluster.join(directory);
 
 *可以，因为刚开始初始化的时候，消费者会将提供者的地址等信息拉取到本地缓存，所以注册中心挂了可以继续通信*
 
+# SPI
+
+## 基本使用
+
+1. 定义一个接口,添加注解@SPI
+
+```java
+@SPI
+public interface Car {
+    void sayHello();
+}
+```
+
+2. 在META-INF/dubbo下面定义一个文件，文件名为接口的全限定名(如:com.xiao.spi.Car)
+   1. 内容为Car接口的实现类为value，key可以随便取
+
+```tex
+car=com.xiao.spi.impl.CarImpl
+```
+
+3. 加载：按照key可以加载出Car的实现类，并且调用
+   1. 这个功能类似java的spi
+
+```java
+ExtensionLoader<Car> loader = ExtensionLoader.getExtensionLoader(Car.class);
+Car car = loader.getExtension("car");
+car.sayHello();
+```
+
+## 自动注入
+
