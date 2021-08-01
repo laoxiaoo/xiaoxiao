@@ -706,3 +706,204 @@ consumer.start();
 messageDelayLevel = 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h 1d
 ```
 
+> 实现原理
+
+![image-20210801101041611](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210801101048.png)
+
+Producer将消息发送到Broker后，Broker会首先将消息写入到commitlog文件，然后需要将其分发到相应的consumequeue。不过，在分发之前，系统会先判断消息中是否带有延时等级。若没有，则直接正常分发；若有则需要经历一个复杂的过程
+
+1.  将消息发送到Topic为SCHEDULE_TOPIC_XXXX的consumequeue中（这个XXXX其实就是延迟等级）
+
+修改消息的Topic为SCHEDULE_TOPIC_XXXX ?
+
+- 是按照消息投递时间排序的。一个Broker中同一等级的所有延时消息会被写入到consumequeue目录中SCHEDULE_TOPIC_XXXX目录下相同Queue中  
+
+> 代码示例
+
+```java
+Message msg = new Message(TOPIC,
+        "TagA",
+        "DelayOrderID188",
+        "Delay Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
+//设置消息延迟等级为3（也就是10s）
+msg.setDelayTimeLevel(3);
+SendResult send = producer.send(msg);
+log.debug("延迟消息队列：{}", LocalDateTime.now());
+producer.shutdown();
+```
+
+## 事务消息
+
+## 问题场景
+
+工行用户A向建行用户B转账1万元 ：
+
+我们可以使用同步消息来处理该需求场景 ：
+
+![image-20210801113618455](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210801113618.png)
+
+> 问题
+
+如果1 2 成功， 3的扣款失败，但是此事4 建行读取消息已经成功
+
+> 解决方案
+
+解决思路是，让第1、2、3步具有原子性，要么全部成功，要么全部失败  
+
+### 代码片段
+
+1. 定义一个监听器，用于操作本地事务和消息回查
+
+```java
+static class ICBCTransactionListener implements TransactionListener {
+    @Override
+    public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+        //当消息投递到mq后，处于半提交状态
+        // 执行本地事务
+        return LocalTransactionState.UNKNOW;
+    }
+
+    @Override
+    public LocalTransactionState checkLocalTransaction(MessageExt msg) {
+        //回查:只有以下两种情况会回查
+        //1.回调操作返回UNKNWON
+        //2.TC没有接收到TM的最终全局事务确认指令
+        log.debug("收到回查消息：{}", msg);
+        return LocalTransactionState.COMMIT_MESSAGE;
+    }
+}
+```
+
+2. 启动事务消息
+
+```java
+TransactionMQProducer txProducer = new TransactionMQProducer("tx");
+txProducer.setNamesrvAddr(ProductBase.ADDRESS);
+ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1000l, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
+//为生产者指定线程池
+txProducer.setExecutorService(executor);
+txProducer.setTransactionListener(new ICBCTransactionListener());
+txProducer.start();
+
+Message message = new Message("tx-topic", "taga", "tx".getBytes(StandardCharsets.UTF_8));
+//消息， 本地事务使用的业务参数
+TransactionSendResult sendResult = txProducer.sendMessageInTransaction(message, null);
+log.debug("启动事务生产者： {}", sendResult);
+```
+
+##  批量消息
+
+### 批量发送
+
+> 发送限制
+
+1. 批量发送的消息必须具有相同的Topic  
+2. 批量发送的消息必须具有相同的刷盘策略  
+3. 批量发送的消息必须具有相同的刷盘策略  
+
+> 发送大小
+
+默认情况下，一批发送的消息总大小不能超过4MB字节  
+
+如果超过，则需要消息分割器进行分割
+
+### 批量消费
+
+Consumer的MessageListenerConcurrently监听接口的consumeMessage()方法的第一个参数为消息列表，但默认情况下每次只能消费一条消息。若要使其一次可以消费多条消息，则可以通过修改Consumer的consumeMessageBatchMaxSize属性来指定。不过，该值不能超过32。因为默认情况下消费者每次可以拉取的消息最多是32条。若要修改一次拉取的最大值，则可通过修改Consumer的pullBatchSize属性来指定  
+
+```java
+consumer.setConsumeMessageBatchMaxSize(10);
+```
+
+## 消息过滤
+
+### Tag过滤
+
+通过consumer的subscribe()方法指定要订阅消息的Tag。如果订阅多个Tag的消息，Tag间使用或运算符(双竖线||)连接。  
+
+```java
+DefaultMQPushConsumer consumer = new
+DefaultMQPushConsumer("CID_EXAMPLE");
+consumer.subscribe("TOPIC", "TAGA || TAGB || TAGC");
+```
+
+### SQL过滤  
+
+SQL过滤是一种通过特定表达式对事先埋入到消息中的用户属性进行筛选过滤的方式。通过SQL过滤，可以实现对消息的复杂过滤。不过，只有使用PUSH模式的消费者才能使用SQL过滤。  
+
+> SQL过滤表达式中支持多种常量类型与运算符  
+
+> > 常量类型  
+
+数值：比如：123，3.1415
+字符：必须用单引号包裹起来，比如：'abc'
+布尔：TRUE 或 FALSE
+NULL：特殊的常量，表示空  
+
+> > 运算符  
+
+数值比较：>，>=，<，<=，BETWEEN，=
+字符比较：=，<>，IN
+逻辑运算 ：AND，OR，NOT
+NULL判断：IS NULL 或者 IS NOT NULL  
+
+---
+
+`默认情况下Broker没有开启消息的SQL过滤功能，需要在Broker加载的配置文件中添加如下属性，以开启该功能：  `
+
+```shell
+enablePropertyFilter = true
+```
+
+在启动Broker时需要指定这个修改过的配置文件。例如对于单机Broker的启动，其修改的配置文件是conf/broker.conf，启动时使用如下命令：  
+
+```shell
+sh bin/mqbroker -n localhost:9876 -c conf/broker.conf &
+```
+
+## 消息重置机制
+
+### 发送重试
+
+> 说明
+
+1. 生产者在发送消息时，若采用同步或异步发送方式，发送失败会重试，但oneway消息发送方式发送失败是没有重试机制的
+2. 只有普通消息具有发送重试机制，顺序消息是没有的  
+3. 消息发送重试有三种策略可以选择：同步发送失败策略、异步发送失败策略、消息刷盘失败策略  
+
+> 重试策略
+
+对于普通消息，消息发送默认采用round-robin策略来选择所发送到的队列。如果发送失败，默认重试2次。但在重试时是不会选择上次发送失败的Broker，而是选择其它Broker。当然，若只有一个Broker其也只能发送到该Broker，但其会尽量发送到该Broker上的其它Queue  
+
+## 消费重试
+
+对于无序消息（普通消息、延时消息、事务消息），当Consumer消费消息失败时，可以通过设置返回状态达到消息重试的效果。不过需要注意，无序消息的重试只对集群消费方式生效，广播消费方式不提供失败重试特性  
+
+
+
+对于无序消息集群消费下的重试消费，每条消息默认最多重试16次，但每次重试的间隔时间是不同的  
+
+若一条消息在一直消费失败的前提下，将会在正常消费后的第 4小时46分 后进行第16次重试。若仍然失败，则将消息投递到 死信队列  
+
+> 修改重试策略
+
+```java
+DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
+// 修改消费重试次数
+consumer.setMaxReconsumeTimes(10);
+```
+
+> 消费重试配置方式 
+
+集群消费方式下，消息消费失败后若希望消费重试，则需要在消息监听器接口的实现中明确进行如下三种方式之一的配置：  
+
+方式1：返回ConsumeConcurrentlyStatus.RECONSUME_LATER（推荐）
+方式2：返回Null
+方式3：抛出异常  
+
+## 死信队列  
+
+1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
+2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
+3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
+4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
