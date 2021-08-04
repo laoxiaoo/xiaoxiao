@@ -1366,6 +1366,16 @@ public class ConfigController {
 
 1. 前往conf目录，寻找sql脚本,在nacos_config数据库中执行脚本
 
+## 不生效场景
+
+> 解决办法
+
+经过查询得知解决办法是新建 `bootstrap.yml`,并且将信息配置到这个文件中
+
+> 另一种解决办法
+
+依赖了nacos-config包造成的，他会去寻找bootstrap配置文件进行远程配置中心的配置拉取
+
 # Sentinel
 
 - 功能：流量控制、熔断降级、系统负载保护
