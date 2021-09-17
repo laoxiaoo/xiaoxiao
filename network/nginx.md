@@ -159,6 +159,7 @@ server {
     server_name 192.168.1.134;
     location ~ /test/ {
        proxy_pass http://192.168.1.134:8080;
+       proxy_set_header Host $host;
      }
 
     location ~ /edu/ {
@@ -167,6 +168,10 @@ server {
 
 }
 ```
+
+- proxy_set_header: 把原http请求的Header中的Host字段也放到转发的请求
+  - **设置 proxy_set_header Host $host 时，浏览器直接访问 nginx，获取到的 Host 是 $host 的值，没有端口信息**，此时代码中如果有重定向路由，那么重定向时就会丢失端口信息，导致 404
+  - **设置 proxy_set_header Host $http_host 时，浏览器直接访问 nginx，获取到的 Host 包含浏览器请求的 IP 和端口**
 
 # SSL配置
 
