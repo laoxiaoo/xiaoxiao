@@ -852,6 +852,174 @@ func (p *person) sayHello2() {
 
 1. 只能给自己包定义方法
 
+## 匿名结构体
+
+```go
+func main() {
+   var p = person{
+      "老肖",
+      22,
+   }
+   fmt.Println(p)
+}
+
+//匿名字段不显示的定义字段名
+//适合字段比较少的结构体
+type person struct {
+   string
+   int
+}
+```
+
+## 嵌套结构体
+
+- 在结构体中嵌套其他的结构体
+
+```got
+func main() {
+   var person = Person{
+      name: "老肖",
+      Address: Address{
+         "中国",
+      },
+   }
+   fmt.Println(person)
+   	//可以直接访问结构体字段
+   fmt.Println(person.address)
+}
+
+type Address struct {
+   address string
+}
+
+type Person struct {
+   name string
+   Address
+}
+```
+
+>模拟实现继承
+
+- 本来dog是不能调用move方法的
+- 因为其嵌套了animal，所以他拥有了animal的一切，可以调用animal的方法
+
+```go
+func main() {
+   var d = dog{
+      animal{
+         "旺财",
+      },
+   }
+   d.say()
+   d.move()
+}
+
+type animal struct {
+   name string
+}
+
+type dog struct {
+   animal
+}
+
+func (a animal) move() {
+   fmt.Printf("%s 在移动 \n ", a.name)
+}
+
+func (d dog) say() {
+   fmt.Printf("%s 在狂叫 \n", d.name)
+}
+```
+
+## json
+
+> 序列化
+
+1. 此时，字段之所以要定义为大写，是因为，type如果需要被其他包使用，则必须首字母大写
+2. 但是此时我们发现输出的字符串为：json: {"Name":"老肖","Age":12}
+
+```go
+func main() {
+   var p = person{
+      Name: "老肖",
+      Age:  12,
+   }
+   str, err := json.Marshal(p)
+   if err != nil {
+      fmt.Println(err)
+      return
+   }
+   fmt.Printf("json: %s", str)
+}
+
+type person struct {
+   Name string
+   Age  int
+}
+```
+
+3. 为了使序列化的json key为小写，我们可以这么操作
+
+```go
+type person struct {
+   Name string `json:"name"`
+   Age  int    `json:"age"`
+}
+```
+
+> 反序列化
+
+```go
+var p2 person
+var str2 = "{\"name\":\"laoxiao\",\"age\":13}"
+err1 := json.Unmarshal([]byte(str2), &p2)
+if err != nil {
+   fmt.Println(err1)
+   return
+}
+fmt.Println(p2)
+```
+
+# 接口
+
+## 定义接口
+
+1. 我们看见，cat和dog都可以调用say方法
+2. 定义一个接口，定义一个say方法
+3. 此时，我们在operation方法中，就可以传入cat和dog调用共同的方法
+
+```go
+func main() {
+	var c = cat{}
+	var d = dog{}
+	operation(c)
+	operation(d)
+}
+
+type speaker interface {
+	say()
+}
+
+type cat struct {
+}
+
+type dog struct {
+}
+
+func (c cat) say() {
+	fmt.Println("喵喵喵...")
+}
+
+func (d dog) say() {
+	fmt.Println("汪汪汪...")
+}
+
+//调用操作的方法，使其叫唤
+func operation(s speaker) {
+	s.say()
+}
+```
+
 # vscode setting
 
 ```json
