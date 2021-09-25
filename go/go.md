@@ -1020,6 +1020,189 @@ func operation(s speaker) {
 }
 ```
 
+1. 接口的定义：结构体必须实现接口中的所有的方法
+
+## 接口接口
+
+1. 动态类型
+2. 动态值
+
+## 指针接收者区别
+
+1. 使用值接收者，那么接口必须传的是指针
+
+如：
+
+```go
+func (d *dog) say() {
+   fmt.Println("汪汪汪...")
+}
+//此时取出的dog结构体必须用地址赋值给接口类型
+var d = dog{}
+var sp speaker
+sp = &d
+operation(sp)
+```
+
+## 接口嵌套
+
+1. animal嵌套了两个接口
+2. 则实现者必须实现say方法和move方法
+
+```go
+type speaker interface {
+   say()
+}
+
+type movement interface {
+   move()
+}
+
+type animal interface {
+   speaker
+   movement
+}
+```
+
+## 空接口
+
+- 当我们不知道值是什么类型的时候，我们可以使用空接口
+- 如：map的value
+
+```go
+//定一个了一个值接收类型是空接口的map
+var m = make(map[string]interface{}, 10)
+m["name"] = "老肖"
+m["age"] = 18
+m["hobby"] = [...]string{"运动", "唱歌"}
+fmt.Println(m)
+```
+
+# 包
+
+## 定义
+
+1. 在calculate文件夹下建立一个包，注意，此时包名和文件夹名不一致
+
+```go
+package ca
+
+func Add(a int, b int) int {
+	return a + b
+}
+```
+
+2. 在main中引入包
+   1. improt 导入的包默认是 GOPATH/src下的目录
+   2. 当外部包需要调用函数时，函数需要`大写`，才能够对外部可见
+   3. 如果文件夹名与引入的包不一致，则需要取别名，如：ca，如果一致，则默认文件夹就是别名
+
+```go
+package main
+
+import (
+   "fmt"
+   ca "gofirst/pk/calculate"
+)
+
+func main() {
+   add := ca.Add(1, 2)
+
+   fmt.Println(add)
+}
+```
+
+## 匿名导包
+
+- 如：我们不需要调用包里面的代码，只需要包里面的自启动代码，如果：init方法
+- 每个包导入的时候，都会自动执行init()函数
+
+## 文件
+
+## 打开文件
+
+1. os打开文件
+2. 返回file指针和错误信息
+
+```go
+file, err := os.Open("./main.go")
+if err != nil {
+   fmt.Printf("打开文件错误, %s", err)
+}
+//记得defer中关闭文件
+defer file.Close()
+```
+
+## 读取文件
+
+1. Read方法返回的n为读取的数组大小
+
+```go
+file, err := os.Open("./main.go")
+if err != nil {
+   fmt.Printf("打开文件错误, %s", err)
+}
+defer file.Close()
+
+for {
+   //定义一个切片，用于存储读取到的文件的数据
+   var tmp = make([]byte, 128)
+   n, err := file.Read(tmp)
+   if err != nil {
+      fmt.Printf("文件读取错误, %s", err)
+   }
+   fmt.Println(string(tmp[:n]))
+   if n < 128 {
+      return
+   }
+}
+```
+
+## 写入文件
+
+```go
+func main() {
+   //writer1()
+   //writer2()
+   writer3()
+}
+
+//以拼接的方式创建文件，写入内容
+func writer1() {
+   file, err := os.OpenFile("./1.txt", os.O_WRONLY|os.O_APPEND|os.O_CREATE, 0666)
+   if err != nil {
+      fmt.Printf("打开文件失败：%s", err)
+   }
+   defer file.Close()
+   file.Write([]byte("老小老小"))
+}
+
+//以清空的方式写入内容
+func writer2() {
+   file, err := os.OpenFile("./1.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+   if err != nil {
+      fmt.Printf("打开文件失败：%s", err)
+   }
+   defer file.Close()
+   file.Write([]byte("老小老小"))
+}
+
+//已缓存的方式写入内容
+func writer3() {
+   file, err := os.OpenFile("./1.txt", os.O_WRONLY|os.O_TRUNC|os.O_CREATE, 0666)
+   if err != nil {
+      fmt.Printf("打开文件失败：%s", err)
+   }
+   defer file.Close()
+   writer := bufio.NewWriter(file)
+   for i := 0; i < 10; i++ {
+      writer.WriteString("老小老小\n")
+   }
+   //将内存中的数据刷如磁盘中
+   writer.Flush()
+}
+```
+
 # vscode setting
 
 ```json

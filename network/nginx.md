@@ -205,7 +205,29 @@ server{
     }
 ```
 
+> 遇到nginx:[emerg]unknown directive ssl相关问题处理
 
+- 配置这个SSL证书需要引用到nginx的中SSL这模块，然而我们一开始编译的Nginx的时候并没有把SSL模块一起编译进去，所以导致这个错误的出现
+
+1. 我们先来到当初下载nginx的包压缩的解压目录
+2. 来到解压目录下后，按顺序执行一下命令
+
+```shell
+./configure --prefix=/usr/local/nginx --with-http_stub_status_module --with-http_ssl_module
+make
+```
+不要执行make install，因为make是用来编译的，而make install是安装，不然你整个nginx会重新覆盖的
+
+3. 在我们执行完做命令后，我们可以查看到在nginx解压目录下，objs文件夹中多了一个nginx的文件，这个就是新版本的程序了。首先我们把之前的nginx先备份一下，然后把新的程序复制过去覆盖之前的即可。
+    cp /usr/local/nginx/sbin/nginx /usr/local/nginx/sbin/nginx.bak
+    cp objs/nginx /usr/local/nginx/sbin/nginx
+4. 执行命令查询是否安装成功
+
+```shell
+./sbin/nginx -V
+```
+
+5. 重新启动则OK了
 
 # 负载均衡
 
