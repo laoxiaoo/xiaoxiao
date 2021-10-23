@@ -40,6 +40,28 @@ public class SingletonDemo2 {
 }
 ```
 
+> 双层检测模式
+
+```java
+public class SingletonDemo2 {
+    private static SingletonDemo2 singletonDemo2;
+    private SingletonDemo2(){
+
+    }
+
+    public static SingletonDemo2 getInstance(){
+        if(singletonDemo2 == null){
+         	synchronized (SingletonDemo2.class){
+                if(singletonDemo2 == null){
+                    singletonDemo2 = new SingletonDemo2();
+                }
+        	}   
+        }
+        return singletonDemo2;
+    }
+}
+```
+
 ## 静态内部类实现
 
 线程安全的，懒加载的，在初始化外部类时，不会去初始化内部类（**静态内部类和非静态内部类一样，都是在被调用时才会被加载**）
@@ -493,7 +515,24 @@ public static void main(String[] args) throws Exception {
 
 现有的client无法直接调用目标类，需要经历一系列的转换再调用目标类
 
-目标类
+- 如图所示，client通过adapter 调用Adapee
+
+```mermaid
+graph LR;
+
+Client --> Adapter
+Adapter --> Adapee
+```
+
+
+
+## 示例1
+
+我们可以看到，Adapee和Target是没有关系的
+
+当是我们客户端是通过 Target去调用Adapee
+
+> 目标类
 
 ```java
 public class Adapee {
@@ -503,7 +542,7 @@ public class Adapee {
 }
 ```
 
-适配类
+> 适配类
 
 ```java
 public interface Target {
@@ -526,7 +565,7 @@ public class Adapter implements Target {
 }
 ```
 
-client
+> client
 
 ```java
 public class Client {
@@ -562,7 +601,7 @@ public class Client {
 	• CGLIB
 	• ASM(底层使用指令，可维护性较差) 
 
-### 静态代理
+## 静态代理
 
 定义一个接口
 
@@ -683,6 +722,17 @@ public class Client {
     }
 }
 ```
+
+## 示例1
+
+> 代理模式针对不同文件上传不同服务器
+
+1. 定义枚举类型，来实现不同的文件类型，对应不同的上传服务的bean
+2. 定义一个代理类，来实现根据上传的文件，来调用不同的bean
+
+[]: https://gitee.com/xiaojihao/learning/blob/master/demo-spring-boot/src/main/java/com/xiao/gof/upload/UploadProxy.java	"代码地址"
+
+
 
 # 桥接模式
 
@@ -852,18 +902,29 @@ public class Client {
 
 # 装饰模式
 
-icar抽象构件角色：
-• 真实对象和装饰对象有相同的接口。这样，客户端对象就能够以与真实对象相同的方式同装饰
-对象交互。
-– car具体构件角色(真实对象)：
-• io流中的FileInputStream、FileOutputStream
-– superCar装饰角色：
-• 持有一个抽象构件的引用。装饰对象接受所有客户端的请求，并把这些请求转发给真实的对象
-。这样，就能在真实对象调用前后增加新的功能。
-– FlyCar具体装饰角色：
-• 负责给构件对象增加新的责任。 
+> 定义
 
-![](../image/DesignPatterns/decorator.png)
+动态的向一个现有的对象添加新的功能，同时又不改变其结构,它属于结构型模式。
+
+## 适配器模式与装饰器模式的区别
+
+装饰器与适配器都有一个别名叫做 包装模式(Wrapper)，它们看似都是起到包装一个类或对象的作用，但是使用它们的目的很不一一样。适配器模式的意义是要将一个接口转变成另一个接口，它的目的是通过改变接口来达到重复使用的目的。
+而装饰器模式不是要改变被装饰对象的接口，而是恰恰要保持原有的接口，但是增强原有对象的功能，或者改变原有对象的处理方式而提升性能
+
+## 示例
+
+订单下单，计算价格，MoneySum获取最基础的价格
+
+- 用抽象方法来拓展装饰者
+
+- Full是满减的装饰者增强类（full装饰的是基础价格计算）
+- Vip是vip用户满减的装饰器（vip需要先满减，在进行vip计算，所以，vip装饰的是full）
+
+代码地址：
+
+![image-20211023175711826](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/gof/20211023175711.png)
+
+
 
 
 
@@ -968,6 +1029,11 @@ A：使用非享元数据
 B：使用非享元数据
 享元1号：使用享元角色数据
 ```
+
+## 使用案例
+
+- 享元模式可以是针对局部的数据共享
+  - 如：接口访问之后，我们需要用户信息，我们可以从进入接口时，将用户信息放入threadlocal中，之后不用每次都去缓存中取
 
 # 责任链模式
 
