@@ -15,6 +15,11 @@
     * [SpringMvc](/java/spring/SpringMvc.md)
 	* [SpringCloud2018](/java/spring/SpringCloud.md)	
 	* [面试题](java/spring/interview.md)
+* 其他
+    * [mybatis](/java/other/mybatis.md)
+	* [MybatisPlus](/java/other/MybatisPlus.md)
+    * [设计模式](/java/other/gof.md)
+	* [常用工具](/java/tool/util.md)
 * 前端
 	* [Angular](/frontend/angular)
 	* [Vue](/frontend/vue)
@@ -42,8 +47,4 @@
 	* [Mysql](/database/Mysql.md)
 * 工具
     * [Jenkins](/java/tool/jenkins.md)
-    * [常用工具](/java/tool/util.md)
-* 其他
-    * [mybatis](/java/other/mybatis.md)
-	* [MybatisPlus](/java/other/MybatisPlus.md)
-    * [设计模式](/java/other/gof.md)
+    
