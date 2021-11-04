@@ -141,7 +141,7 @@ try(FileChannel from = new FileInputStream("d:\\1.txt").getChannel();
 ## Selector
 
 - 一般称 为选择器 ,也可以翻译为 多路复用器 。
-- 它是用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程管理多个channels,也就是可以管理多个网络链接
+- 它是用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程/多个线程管理多个channels,也就是可以管理多个网络链接
 - 当有事件发生时，返回select Key 数组，通过selectKey可以获取对应channel
 
 对应方法
@@ -149,7 +149,7 @@ try(FileChannel from = new FileInputStream("d:\\1.txt").getChannel();
 ```java
 int select()：阻塞到至少有一个通道在你注册的事件上就绪了。
 int select(long timeout)：和select()一样，但最长阻塞时间为timeout毫秒。
-int selectNow()：非阻塞，只要有通道就绪就立刻返回、。
+int selectNow()：非阻塞，只要有通道就绪就立刻返回。
 ```
 
 ```java

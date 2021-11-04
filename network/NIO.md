@@ -93,3 +93,32 @@ ByteBuffer buffer2 = ByteBuffer.wrap("hello".getBytes());
 
 ![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/java/Netty/20200803231057.jpg)
 
+## Selector
+
+1. 一般称 为选择器 ,也可以翻译为 多路复用器 。
+
+2. 它是用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程管理多个channels,也就是可以管理多个网络链接
+
+3. 当有事件发生时，返回select Key 数组，通过selectKey可以获取对应channel
+
+> 对应方法
+
+```java
+int select()：阻塞到至少有一个通道在你注册的事件上就绪了。
+int select(long timeout)：和select()一样，但最长阻塞时间为timeout毫秒。
+int selectNow()：非阻塞，只要有通道就绪就立刻返回。
+```
+
+> 编程步骤
+
+1. ServerSocketChannel绑定服务器端口
+2.  ServerSocketChannel注册selector，将selector与channel关联、
+3.  SelectionKey 注册一个连接事件
+4. 一个while循环，去获取事件
+   1. 通过 selector.selectedKeys().iterator()获取所有事件的集合
+   2. 发现一个事件，则进行处理
+
+# WebSocket
+
+1. 基于TCP的通信协议
+2. WebSocket是双向通信协议，模拟Socket协议，可以双向发送或接受信息 
