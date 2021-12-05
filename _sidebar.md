@@ -15,6 +15,8 @@
     * [SpringMvc](/java/spring/SpringMvc.md)
 	* [SpringCloud2018](/java/spring/SpringCloud.md)	
 	* [面试题](java/spring/interview.md)
+* 项目设计
+	* [缓存架构设计](project/cache.md)
 * 其他
     * [mybatis](/java/other/mybatis.md)
 	* [MybatisPlus](/java/other/MybatisPlus.md)

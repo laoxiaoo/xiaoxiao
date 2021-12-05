@@ -404,3 +404,9 @@ fi
 [root@localhost keepalived]# systemctl start keepalived.service
 ```
 
+# 缓存
+
+
+
+## 缓存清理
+
