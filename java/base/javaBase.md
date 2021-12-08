@@ -507,17 +507,21 @@ processor.subscribe(subscriber);
 
 # JAVA8
 
-## 环境
+## 环境使用
 
 新项目：project  sdk(1.8)   level(8)->modules level（8）->java compile version(1.8)
 
-## 特性
+## 接口变化
 
-### Lambda表达式
+1. 添加的default 方法，但是，必须要通过实现类才能够访问
+   1. 使用原则为类优先原则，意思就是优先执行类中的同名方法
+2. 添加了接口static方法，可以通过接口直接访问
+
+## Lambda表达式
 
 其本质是接口（只有一个方法的接口）的实现
 
-### 举例
+### 使用规范
 
 格式：
 
@@ -576,11 +580,13 @@ Consumer<String> consumer2 = s-> System.out.println(s);
 
 第四种情况：如果有多行语句，return和{}不能省略
 
-### 函数式接口
+> 函数式接口
 
-如果一个接口只声明了一个接口方法，那么它就是函数式接口
+1. 如果一个接口只声明了一个接口方法，那么它就是函数式接口
 
-### java四大函数式接口
+2. 当然，如果标注@FunctionalInterface方法，则可以显示的告诉读者
+
+> java四大函数式接口
 
 - 消费型接口 Consumer<T>     void accept(T t)
   - 消费型接口，只有入参没有返回值
@@ -638,6 +644,10 @@ public List<String> predicate(List<String> list, Predicate<String> predicate){
     return list1;
 }
 ```
+
+> lambda的原理
+
+java.lang.invoke.LambdaMetafactory#metafactory
 
 ## 方法引用
 

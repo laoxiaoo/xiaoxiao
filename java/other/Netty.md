@@ -1,100 +1,8 @@
-
-
-# BIO
-
-- 阻塞型IO,同一时间内，线程只能处理一个socket（同一个线程连接到断开期间不能处理其他socket）
-- 一个线程对应一个连接,并发量上来了，线程开销就大了
-- 线程切换成本高
-- 适用于连接数少，短连接的场景（http）
-
-![](../../image/java/netty/20200729222717.jpg)
-
-代码解析
-
-- 来一个连接启动一个线程
-
-```java
-@Slf4j
-public class TestBio {
-    public void createCocket() throws Exception {
-        //创建一个线程池，维护连接进来的通讯
-        ExecutorService executorService = Executors.newCachedThreadPool();
-        //建立一个socket
-        ServerSocket serverSocket = new ServerSocket(8000);
-        log.debug("服务器启动");
-        while (true) {
-            Socket accept = serverSocket.accept();
-            //来一个连接启动一个线程
-            log.debug("建立一个连接");
-            executorService.execute(()->{
-                handler(accept);
-            });
-        }
-    }
-
-    /**
-     * 与客户端通信handler
-     * @param socket
-     */
-    public void handler(Socket socket)  {
-        try {
-            log.debug("开始接受信息");
-            InputStream inputStream = socket.getInputStream();
-            while (true) {
-                byte[] bytes = new byte[1024];
-                int read = inputStream.read(bytes);
-                if(read!=-1){
-                    log.debug("收到信息：{}", new String(bytes, "UTF-8"));
-                } else {
-                    break;
-                }
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        } finally {
-            try {
-                socket.close();
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
-        }
-    }
-
-    public static void main(String[] args) throws Exception {
-        new TestBio().createCocket();
-    }
-}
-```
-
-- 测试BIO的端口
-  - telnet 127.0.0.1 8000
-
-```shell
-Escape 字符为 'CTRL+]'
-
-
-Microsoft Telnet> send 好的
-发送字符串 好的
-Microsoft Telnet> send 111
-发送字符串 111
-Microsoft Telnet>
-```
-
 # NIO
-
-- 同步非阻塞（channel连接后，没有发生事件，当前线程可以处理其他的）
-- server端启动一个线程，线程维护一个selector
-- selector一直轮询，查询通道有没有连接事件(selector负责监听这通道的所有事件)
-- 一个selector负责拖个channel
-- 也可以有多个线程维护selector
-- 适合连接数多且连接比较短，如聊天服务器，弹幕系统，（如果一个channel发送了很长的数据，那么，其他channel可能就要等待很久）
-
-![](../../image/java/netty/20200729223449.png)
 
 ## 简介
 
-- NIO有三个核心部分channel(通道)， buffer(缓冲区), selector(选择器)
-- 每一个channel对应一个buffer，channel可以通过buffer进行读写，程序只与buffer进行交互
+
 
 ![](../../image/java/netty/20200731085919.png)
 
@@ -104,85 +12,13 @@ Microsoft Telnet>
 
 ## Buffer
 
-- 当向buffer写入数据时，buffer会记录下写了多少数据。一旦要读取数据，需要通过flip()方法将Buffer从写模式切换到读模式。在读模式下，可以读取之前写入到buffer的所有数据
 
-以intbuffer为例
 
-```java
-@Slf4j
-public class TestBuffer {
-    public static void main(String[] args) {
-        //创建一个buffer，可以存放5个int
-        IntBuffer intBuffer = IntBuffer.allocate(5);
-        //将i设置进入buffer，将buffer塞满
-        for(int i=0; i<intBuffer.capacity(); i++){
-            intBuffer.put(i);
-        }
-        //转化读操作
-        intBuffer.flip();
-        //判读是否还有数据
-        while (intBuffer.hasRemaining()) {
-            log.info("取出数据：{}", intBuffer.get());
-        }
 
-    }
-}
-```
 
-### buffer几个参数
+### 
 
-```java
-//标记
-private int mark = -1;
-//当前下标
-private int position = 0;
-//操作过程中，下标不能超过limit
-//作用：读数据不能超过这个数，flip时，会将position赋值给limit
-private int limit;
-//容量
-private int capacity;
-```
 
-### 分配内存
-
-```java
-//class java.nio.HeapByteBuffer
-//使用堆内存，读写效率低，受GC影响
-ByteBuffer.allocate(5).getClass();
-//class java.nio.DirectByteBuffer
-//直接内存，读写效率高（少一次拷贝）
-ByteBuffer.allocateDirect(5).getClass();    
-```
-
-### 存和读
-
-```java
-ByteBuffer buffer = ByteBuffer.allocate(10);
-//存入数据，也可以用 channel.read(buffer)
-buffer.put(new byte[] {'a', 'b', 'c', 'd', 'e'});
-buffer.flip();
-buffer.get(new byte[4]);
-//[pos=4 lim=5 cap=10]
-//位置已经读取到了4位置
-System.out.println(buffer);
-//获取坐标1的数据，但是pos不会动
-System.out.println((char)buffer.get(1));
-//读取坐标重置
-buffer.rewind();
-System.out.println((char)buffer.get());
-//标记当前位置
-buffer.mark();
-//中间做N个读取操作后，指针回到mark标记处
-buffer.reset();
-```
-
-### 字符串和buffer转换
-
-```java
-//这些方式都是直接切换到读模式的
-ByteBuffer buffer1 = StandardCharsets.UTF_8.encode("hello");
-ByteBuffer buffer2 = ByteBuffer.wrap("hello".getBytes());
-```
 
 ### 分散读集中写
 
@@ -305,7 +141,7 @@ try(FileChannel from = new FileInputStream("d:\\1.txt").getChannel();
 ## Selector
 
 - 一般称 为选择器 ,也可以翻译为 多路复用器 。
-- 它是用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程管理多个channels,也就是可以管理多个网络链接
+- 它是用于检查一个或多个NIO Channel（通道）的状态是否处于可读、可写。如此可以实现单线程/多个线程管理多个channels,也就是可以管理多个网络链接
 - 当有事件发生时，返回select Key 数组，通过selectKey可以获取对应channel
 
 对应方法
@@ -313,7 +149,7 @@ try(FileChannel from = new FileInputStream("d:\\1.txt").getChannel();
 ```java
 int select()：阻塞到至少有一个通道在你注册的事件上就绪了。
 int select(long timeout)：和select()一样，但最长阻塞时间为timeout毫秒。
-int selectNow()：非阻塞，只要有通道就绪就立刻返回、。
+int selectNow()：非阻塞，只要有通道就绪就立刻返回。
 ```
 
 ```java
