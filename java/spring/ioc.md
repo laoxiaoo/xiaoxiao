@@ -1095,7 +1095,11 @@ public class TestBeanPropersecor implements BeanPostProcessor {
 }
 ```
 
-## @value注入属性值
+# 属性读取
+
+## @Value注入属性值
+
+> 常用操作方式
 
  @Value("张三"):直接赋值方式
 
@@ -1112,7 +1116,7 @@ public class TestBean {
     private String password;
 ```
 
-### 原理
+> 原理
 
 - 在DefaultListableBeanFactory#doResolveDependency中
 
@@ -1124,6 +1128,42 @@ Object value = getAutowireCandidateResolver().getSuggestedValue(descriptor);
 String strVal = resolveEmbeddedValue((String) value);
 ```
 
+> 操作方式统计
+
+
+
+```java
+//常量
+@Value("#{1}")
+private int constant;
+//从属性源取值
+@Value("${test.name}")
+private String name;
+
+//从属性源取值
+@Value("${test.name2: defaultname}")
+private String namedefault;
+
+//从容器中获取bean的的属性值
+@Value("#{developerProperty.name}")
+private String dname;
+
+//从指定属性源获取属性值(jvm属性)
+@Value("#{systemProperties['spring.application.json']}")
+private String systemPropertiesjson;
+
+//从指定属性源获取属性值（系统环境属性源）
+@Value("#{systemEnvironment['HOME']}")
+private String systemEnvironmentHOME;
+
+//从指定属性源获取属性值 默认值
+@Value("#{systemEnvironment['HOME22']?:'default'}")
+private String systemEnvironmentHOMEdefault;
+
+//获取随机值
+@Value("${random.int.5,100;}")
+private Integer randomint;
+```
 
 
 ## 获取配置文件属性值
