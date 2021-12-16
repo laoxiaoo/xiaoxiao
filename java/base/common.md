@@ -13,7 +13,7 @@
 
 ## JsonFactory 
 
-- jsonFactory是线程安全的（Factory instances are thread-safe and reusable after configuration (if any)）
+- JsonFactory是**线程安全**的（Factory instances are thread-safe and reusable after configuration (if any)）
 - 引入jar包
 
 ```xml
@@ -115,7 +115,7 @@ mapper.configure(JsonParser.Feature.ALLOW_UNQUOTED_FIELD_NAMES, true);
 mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
 ```
 
-### JsonInclude
+### JsonInclude注解
 
 | 标识         | 描述                                                         |
 | ------------ | ------------------------------------------------------------ |
@@ -133,6 +133,7 @@ mapper.configure(JsonParser.Feature.ALLOW_SINGLE_QUOTES, true);
 
 - jsonProperty可以作用在成员变量和方法上，作用是在**序列化**和**反序列化**操作中指定json字段的名称
 - 可以作用在字段上，也可以作用在get或者set方法上
+- `作用是：序列化后作为json的key显示`
 
 1. 序列化操作
 
@@ -169,11 +170,12 @@ Person(id=1, name=laoxiao, fileName=测试中)
 
 #### JsonIgnore
 
-- 作用在成员变量或者方法上，指定被注解的变量或者方法不参与序列化和反序列化操作
+- 作用在成员变量或者方法上，指定被注解的变量或者方法**不参与序列化和反序列化操作**
 
 #### JsonSerialize
 
 - JsonSerialize用于序列化场景，被此注解修饰的字段或者get方法会被用于序列化，并且using属性指定了执行序列化操作的类
+- 如：需要在这个字段序列化的时候对这个进行调整
 
 ```java
 public class Person {
@@ -189,7 +191,7 @@ public class Person {
 public class IdJsonSerializer extends JsonSerializer<Long> {
     @Override
     public void serialize(Long value, JsonGenerator gen, SerializerProvider serializers) throws IOException {
-        //对该字段进行
+        //对该字段进行调整
         gen.writeNumber(value+100);
         //新增一个字段
         gen.writeNumberField("id_tmp", value);
