@@ -410,3 +410,69 @@ fi
 
 ## 缓存清理
 
+
+
+# 限流
+
+nginx提供两种限流的方式  
+
+1. 一是控制速率 ：
+   1. 漏桶算法
+2. 二是控制并发连接数 ：每秒钟限制的访问数量
+
+> 控制速率配置
+
+1. 创建限流缓存空间  
+
+```properties
+#限流设置：每秒钟只允许两个
+limit_req_zone $binary_remote_addr zone=contentRateLimit:10m rate=2r/s;
+```
+
+2. 在访问地址中配置指定的配置
+```properties
+#使用限流配置
+limit_req zone=contentRateLimit;
+```
+
+3. 平均每秒允许不超过2个请求，突发不超过4个请求，并且处理突发4个请求的时候，没有延迟，等到完成之后，按照
+   正常的速率处理  
+
+**nodelay**表示并发的处理
+
+```prop
+limit_req zone=contentRateLimit burst=4 nodelay;
+```
+
+> 控制并发量
+
+```properties
+#表示限制根据用户的IP地址来显示，设置存储地址为的内存大小10M
+limit_conn_zone $binary_remote_addr zone=addr:10m; 
+#表示 同一个地址只允许连接2次
+limit_conn addr 2; 
+
+```
+
+2. 限制每个客户端IP与服务器的连接数，同时限制与虚拟服务器的连接总数。  
+
+   ​	下面的配置，表示，同一个ip并发3个，但是所有的总量限制5个 
+
+```properties
+#IP限流
+limit_conn_zone $binary_remote_addr zone=perip:10m;
+#根据server的名字限流
+limit_conn_zone $server_name zone=perserver:10m;
+
+```
+
+location配置
+
+```properties
+#单个客户端ip与服务器的连接数．
+limit_conn perip 3;
+
+#限制与服务器的总连接数
+limit_conn perserver 5; 
+```
+
