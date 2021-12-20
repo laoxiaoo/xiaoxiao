@@ -467,6 +467,120 @@ POST /sys_org_company/_delete_by_query
 
 
 
+# 结构化查询
+
+## 基本知识
+
+> 结构化查询（Query DSL）  
+
+query的时候，会先比较查询条件，然后计算分值，最后返回文档结果  
+
+```json
+GET /test_index/test_type/_search?scroll=1m
+{
+  "query": {
+    "match_all": {}
+  }
+}
+```
+
+> 结构化过滤（Filter DSL）  
+
+过滤器，对查询结果进行缓存，不会计算相关度，避免计算分值，执行速度非常快  
+
+```json
+GET /order/product/_search
+{
+  "query":{
+    "bool": {
+      "must": [
+        {"match":{"name": "iphone"}}
+      ],
+      "filter": [
+      {"range":{"price":{"gt":"3000"}}}  
+      ]
+    }
+  }
+```
+
+## 结构化过滤（Filter DSL）  
+
+> term 过滤  
+
+term 主要用于精确匹配哪些值，比如数字，日期，布尔值或 not_analyzed 的字符串（未经分析的文本数据类型），相当于sql age=26  
+
+```json
+{ "term": { "age": 26 }}
+{ "term": { "date": "2014-09-01" }}
+```
+
+> terms 过滤  
+
+terms 允许指定多个匹配条件。如果某个字段指定了多个值，那么文档需要一起去做匹配。相当于sql： age in  
+
+```json
+{"terms": {"age": [26, 27, 28]}}
+```
+
+> range 过滤  
+
+range 过滤允许我们按照指定范围查找一批数据 
+
+```json
+{
+    "range": {
+        "price": {
+            "gte": 2000,
+            "lte": 3000
+            }
+        }
+    }
+}
+```
+
+> exists 和 missing 过滤  
+
+exists 和 missing 过滤可以用于查找文档中是否包含指定字段或没有某个字段  
+
+```json
+{
+	"exists": {
+    	"field": "title"
+    }
+}
+```
+
+> bool 过滤  
+
+用来合并多个过滤条件查询结果的布尔逻辑：
+
+1. must：多个查询条件的完全匹配，相当于 and。
+
+2. must_not： 多个查询条件的相反匹配，相当于 not；
+
+3. should：至少有一个查询条件匹配，相当于 or；
+
+   相当于sql and 和or  
+
+```json
+{
+    "bool": {
+        "must": { "term": { "folder": "inbox" }},
+        "must_not": { "term": { "tag": "spam" }},
+        "should": [
+                { "term": { "starred": true }},
+                { "term": { "unread": true }}
+            ]
+    }
+}
+```
+
+## 结构化查询（Query DSL）  
+
+
+
+
+
 
 
 # 多重查询方式
@@ -996,6 +1110,8 @@ GET /sys_org_company/_search
 ## 通过http请求查询
 
 ![1607563675460](../image/es\1607563675460.png)
+
+
 
 # 批量增删改
 
