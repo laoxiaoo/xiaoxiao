@@ -1733,6 +1733,162 @@ ext_dict:同目录下一个xx.dic文件，
 
 ```
 
+# 自动补全 
+
+suggest就是一种特殊类型的搜索
+
+分为四种
+
+1. Term suggester ：词条建议器。对给输入的文本进进行分词，为每个分词提供词项建议
+2. Phrase suggester ：短语建议器，在term的基础上，会考量多个term之间的关系
+3. Completion Suggester，它主要针对的应用场景就是"Auto Completion"。
+4. Context Suggester：上下文建议器  
+
+ ## Term suggester 
+
+拼写纠错；可以用来：我们搜索为华 然后显示：我们为您显示“华为”相关的商品。仍然搜索：“为华”
+
+1. 建立mapping
+
+```json
+PUT s1
+{
+  "mappings": {
+    "properties": {
+        "title":{
+          "type":"text",
+          "analyzer":"standard"
+        }
+      }
+  }
+}
+```
+
+2. 添加词条
+
+```json
+PUT s1/_doc/1
+{
+  "title": "Lucene is cool"
+}
+```
+
+3. 进行错误的词条搜索
+
+```json
+GET s1/_doc/_search
+{
+  "suggest": {
+    "my_s1": {
+      "text": "lucne",
+      "term": {
+        "field": "title"
+      }
+    }
+  }
+}
+```
+
+4. 返回正确的词条
+
+![image-20211222224602615](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222224602.png)
+
+## Phrase suggester
+
+与Term 不同的是，Phrase是对一连串的短语进行纠错
+
+如:在词库，我们有两个 “Lucene is cool”， “Elasticsearch builds on top of lucene”词语，
+
+如果我们搜索:lucne的单词错误，elasticsear的单词错误
+
+```json
+GET s1/_doc/_search
+{
+  "suggest": {
+    "my_s1": {
+      "text": "lucne and elasticsear rock",
+      "phrase": {
+        "field": "title",
+        "highlight":{
+          "pre_tag":"<em class='xxxx'>",
+          "post_tag":"</em>"
+        }
+      }
+    }
+  }
+}
+```
+
+那么返回的是：，此时我们对options可以取评分最高的短语进行操作
+
+![image-20211222225423921](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222225424.png)
+
+## Completion Suggester
+
+`可以用来做自动补全操作`, 如：京东的搜索，我们搜索，小米，下拉框出来小米10，小米11等下拉选项
+
+1. 使用此类型，首先我们要使用特殊的mapping映射
+   1. 建立一个mapping，其中title使用的类型是自动补全类型
+
+```json
+PUT s2
+{
+  "mappings": {
+    "properties": {
+      "title":{
+          "type":"completion",
+          "analyzer":"ik_smart"
+      }
+    }
+  }
+}
+```
+
+2. 批量的添加一些数据,这些数据，就是我们后面的自动补全 的数据
+
+```json
+POST _bulk/?refresh=true
+{ "index": { "_index": "s2", "_type": "_doc" }}
+{ "title": "项目"}
+{ "index": { "_index": "s2", "_type": "_doc" }}
+{ "title": "项目进度"}
+{ "index": { "_index": "s2", "_type": "_doc" }}
+{ "title": "项目管理"}
+{ "index": { "_index": "s2", "_type": "_doc" }}
+{ "title": "项目进度及调整 汇总.doc_文档"}
+{ "index": { "_index": "s2", "_type": "_doc" }}
+{ "title": "项目3"}
+
+## 我们也可以给参数加入权重，这样查询靠前
+POST s2/_doc
+{
+  "title":{
+    "input": "项目4",
+    "weight": 2
+  }
+}
+```
+
+3. 进行自动补全查询
+
+```json 
+GET s2/_doc/_search
+{
+  "suggest": {
+    "my_s1": {
+      "prefix": "项",
+      "completion": {
+        "field": "title"
+      }
+    }
+  }
+}
+```
+
+4. 获取的结果如图
+
+![image-20211222220206840](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222220213.png)
+
 # 快照
 
 ## 备份
