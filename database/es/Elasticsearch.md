@@ -367,8 +367,6 @@ GET /_cat/indices?v
 
 ## 新增操作
 
-- 这种操作是幂等的
-
 ```
 PUT /index/type/documentid
 {
@@ -386,7 +384,7 @@ PUT /order/product/1
 }
 ```
 
-- post方式， 不指定documentid 新增(采用GUID算法生成)
+不指定documentid 新增(采用GUID算法生成)
 
 ```shell
 POST /order/product/
@@ -823,9 +821,9 @@ POST index/_search
 
 
 
-# 聚合查询
+## 聚合查询
 
-## 聚合的概念
+### 聚合的概念
 
 ```text
 Metric(指标)：指标分析类型，如计算最大值、最小值、平均值等（对桶内的文档进行聚合分析的操作）
