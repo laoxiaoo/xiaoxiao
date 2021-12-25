@@ -812,7 +812,7 @@ public class SecurityConfig extends WebSecurityConfigurerAdapter {
 
 6. 资源服务器确认令牌无误，同意向客户端开放资源
 
-![](../image/java/security/202142323.png)
+![](../../image/java/security/202142323.png)
 
 ## 授权模式
 
@@ -836,7 +836,7 @@ client：第三个应用
 
 
 
-![](..\image\java\OAuth2\0.png)
+![](../..\image\java\OAuth2\0.png)
 
 ## 刷新令牌
 
