@@ -44,7 +44,8 @@
 	* [Shell](/server/shell)
 	* [k8s](/server/k8s)
 * 数据库
-	* [Elasticsearch](/database/Elasticsearch.md)
+	* Elasticsearch
+		* [Elasticsearch](/database/Elasticsearch.md)
 	* [Redis](/database/Redis.md)
 	* [Mysql](/database/Mysql.md)
 * 工具
