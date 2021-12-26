@@ -636,7 +636,7 @@ skip-name-resolve
 docker run -p 6379:6379 -v /zzyyuse/myredis/data:/data -v /zzyyuse/myredis/conf/redis.conf:/usr/local/etc/redis/redis.conf  -d redis:3.2 redis-server /usr/local/etc/redis/redis.conf --appendonly yes
 ```
 
-# 按照rabbitmq
+# 安装rabbitmq
 
 ```shell
 # 下载镜像
@@ -650,6 +650,13 @@ rabbitmq            3-management        46c7d1fde5d3        2 days ago          
 ```
 
 访问<http://192.168.94.134:15672/>    guest/guest
+
+
+
+如果访问失败，可能是没有开启manage模块。
+
+通过`docker ps -a`查看部署的mq容器id，在通过 `docker exec -it 容器id /bin/bssh` 进入容器内部在
+运行：`rabbitmq-plugins enable rabbitmq_management，执行完毕后重新访问web界面即可。`
 
 # 安装nginx
 
