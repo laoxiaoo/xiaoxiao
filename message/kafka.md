@@ -12,7 +12,11 @@
 
 ## 分区和主题
 
-topic：主题（抽象概念），kafka消息以主题为单位进行归类，生产值将消息发送特定主题，消费者负责订阅主题进行消费
+topic：主题（抽象概念），kafka消息以主题为单位进行归类，
+
+​		     生产值将消息发送特定主题，消费者负责订阅主题进行消费
+
+​			 代表一个类别，如果把Kafka看做为一个数据库，topic可以理解为数据库中的一张表，topic的名字即为表名  
 
 partition ：分区（物理概念），一个主题下可以有多个主题，**offset是分区的唯一表示，保证了消息的顺序性**
 
@@ -87,5 +91,5 @@ Topic: mytest	TopicId: lHL_52IoSSWPJDRecdDctA	PartitionCount: 1	ReplicationFacto
 > 消费数据
 
 ```sh
- .bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
+ ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
 ```

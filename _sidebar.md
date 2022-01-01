@@ -4,6 +4,7 @@
 	* [通用](/java/base/common)
 	* [java基础](/java/base/javaBase)
 	* [并发编程](/java/base/concurrent)
+	* [canal](/java/tool/canal)
 * Spring
 	* [Spring基础](java/spring/base.md)
     * [依赖注入](java/spring/ioc.md)
