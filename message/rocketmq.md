@@ -819,7 +819,7 @@ consumer.setConsumeMessageBatchMaxSize(10);
 
 ### Tag过滤
 
-通过consumer的subscribe()方法指定要订阅消息的Tag。如果订阅多个Tag的消息，Tag间使用或运算符(双竖线||)连接。  
+通过consumer的subscribe()方法指定要订阅消息的Tag(即：subExpression)。如果订阅多个Tag的消息，Tag间使用或运算符(双竖线||)连接。  
 
 ```java
 DefaultMQPushConsumer consumer = new
@@ -907,3 +907,13 @@ consumer.setMaxReconsumeTimes(10);
 2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
 3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
 4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
+
+# 一些坑
+
+##  instanceName 
+
+MQClientInstance不是对外应用类，也就是说用户不需要自己实例化使用他。并且，MQClientInstance的实例化并不是直接new后使用，而是通过MQClientManager这个类型。MQClientManager是个单例类，使用饿汉模式设计保证线程安全。他的作用是提供MQClientInstance实例（与集群进行交互）
+
+ 所以只要ClientConfig里的相关参数（ IP@instanceName@unitName ）一致，这些Client会复用一个MQClientInstance 
+
+如果我们同一个应用，连接了多个集群，那么，不配置instanceName，那么会公用一个MQClientInstance ，则，只会连接一个集群
