@@ -76,14 +76,16 @@ zookeeper.connect=node1:2181,node2:2181,node3:2181
 
 # 基本命令
 
-> 创建一个topic
+## 创建一个topic
+
+- replication-factor： 副本因子（表示每一个分区拥有的副本数量）
 
 ```shell
 [root@node2 kafka]# ./bin/kafka-topics.sh --create --bootstrap-server localhost:9092 --replication-factor 1 --partitions 1 --topic mytest
 Created topic mytest.
 ```
 
-> 查看topic
+## 查看topic
 
 ```shell
 [root@node2 kafka]# ./bin/kafka-topics.sh --list --bootstrap-server=127.0.0.1:9092
@@ -96,7 +98,7 @@ Topic: mytest	TopicId: lHL_52IoSSWPJDRecdDctA	PartitionCount: 1	ReplicationFacto
 
 ```
 
-> 消费数据
+## 消费数据
 
 ```sh
  ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
@@ -192,3 +194,57 @@ public void consumerHandler(String msg , KafkaConsumer consumer) {
 ```
 ## 生产者发送途中出现问题
 
+在消息发送的过程中，涉及到了两个线程——main线程和Sender线程，以及一个线程共享变量RecordAccumulator。main线程将消息发送给RecordAccumulator，Sender线程会根据指定的条件，不断从RecordAccumulator中拉取消息发送到Kafka broker
+
+![image-20220103103409345](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220103103413.png)
+
+
+
+Sender线程拉取消息的条件
+
+1. 缓冲区大小达到一定的阈值（默认是16384byte），可以通过spring.kafka.producer.batch-size进行设定  
+2. 缓冲区等待的时间达到设置的阈值（默认是0）， 可以通过linger.ms属性进行设定  
+
+### 发送消息的三种方式
+
+> 发送消息的三种方式  
+
+只管往kafka发送消息（消息只发送到缓冲区）而并不关心消息是否正确到达。正常情况没什么问题，不过有些时候（比如不可重试异常）会造成消息的丢失。
+
+```java
+kafkaTemplate.send("my_test", "测试java发送数据");
+```
+
+> 同步消息发送 
+```java
+kafkaTemplate.send("my_test", "测试java发送数据").get();
+```
+
+> 异步发送
+
+```java
+public static void synSendMessage(KafkaTemplate kafkaTemplate) {
+    kafkaTemplate.send("my_test" , "测试java发送异步数据").addCallback(obj -> {
+        System.out.println("发送成功结果" + ((SendResult)obj).getProducerRecord().value());
+    } , t -> System.out.println("失败结果:" + t.getMessage()));
+}
+```
+
+# Kafka秒杀公平性保证  
+
+消息的可靠性传输可以保证秒杀业务的公平性。关于秒杀业务的公平性，我们还需要考虑一点：消息的顺序性  
+
+只需要确保**要求顺序性的若干消息发送到同一个** partiton，即可满足其顺序性。并且在进行消息消费的时候，需要确保消费者是进行单线程消费。  
+
+# Kafka秒杀不超卖保证
+
+ ## 生产端消息重复
+
+生产者发送的消息没有收到正确的broke响应，导致producer重试。producer发出一条消息，broker落盘以后因为网络等种种原因发送端得到一个发送失败的响应或者网络中断，然后producer收到一个可恢复的Exception重试消息导致消息重复  
+
+> 解决方案
+
+1. 启动kafka的幂等性  
+2. retries=0，不重试 （可能会丢消息(一般不会使用)，适用于吞吐量指标重要性高于数据丢失  ）
+   1. 开启幂等性的方式比较简单，我们只需要设置enable.idempotence**参数为**true就可以了  
+   2. 幂等性配置不能夸分区实现 

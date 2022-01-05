@@ -13,9 +13,10 @@
     * [spring-3](/java/spring/spring3.md)
 	* [SpringAop](/java/spring/aop.md)
     * [SpringBoot](/java/spring/SpringBoot.md)
-    * [SpringMvc](/java/spring/SpringMvc.md)
-	* [SpringCloud2018](/java/spring/SpringCloud.md)	
+    * [SpringMvc](/java/spring/SpringMvc.md)	
 	* [面试题](java/spring/interview.md)
+* Spring Cloud
+    * [SpringCloud2018](/java/spring/SpringCloud.md)
 * 项目设计
 	* [缓存架构设计](project/cache.md)
 * 其他
