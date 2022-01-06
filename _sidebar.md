@@ -17,6 +17,9 @@
 	* [面试题](java/spring/interview.md)
 * Spring Cloud
     * [SpringCloud2018](/java/spring/SpringCloud.md)
+    * [注册中心](/java/springcloud/register.md)
+    * [负载均衡](/java/springcloud/loadBalance.md)
+    * [流量容错](/java/springcloud//trafficFault-tolerant)
 * 项目设计
 	* [缓存架构设计](project/cache.md)
 * 其他
