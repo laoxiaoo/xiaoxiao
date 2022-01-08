@@ -1,12 +1,101 @@
-# 整体解决方案 
 
-## Cookie 
 
-## 分布式Session 
+# 普通的session登录
 
-## 客户端令牌Token 
+> session的原理
 
- 
+![](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220108104719.png)
+
+## 普通session登录问题
+
+1. 不同域名不能共享session
+2. 多个后台服务器不能共享session
+
+## 解决方案
+
+> session复制
+
+将a服务器的session同步到B服务器，这个只需要修改tomcat配置
+
+> > 存在问题
+
+1. session同步会占用带宽
+2. 占用后台服务器的内存，如果有100个服务器，一个服务器就要存100个服务器的session信息
+
+> hash一致性
+
+只要是同一个ip来源，我们就让他进入同一个服务器
+
+> > 优点
+
+1. 只需要改nginx配置，不需要修改应用代码
+2. 可以支持web-server水平扩展
+
+> > 缺点
+
+1. session还是存在web-server中的，所以web-server重启可能导致部分session丢失，影响业务，如部分用户需要重新登录
+2. 水平扩展，影响hash一致性
+
+> session统一存储
+
+# 分布式Session 
+
+> 基本使用
+
+1. 引入jar
+
+```xml
+<dependency>
+    <groupId>org.springframework.session</groupId>
+    <artifactId>spring-session-data-redis</artifactId>
+</dependency>
+```
+
+2. 开启springsession
+
+```java
+@SpringBootApplication
+@EnableRedisHttpSession
+public class SessionApplication
+```
+
+3. 使用session: 就像普通的session那样去使用
+
+```
+@PostMapping("/login")
+public String login(LoginDTO loginDTO, HttpSession session, HttpServletResponse response) {
+    session.setAttribute("admin", loginDTO.getUsername());
+    return "redirect:http://laoxiao.com";
+}
+```
+
+可以看到，访问之后有对应的cookie
+
+而且他的作用域是www.laoxiao.com
+
+![image-20220108172138326](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220108172150.png)
+
+而且redis也有对应的数据
+
+![image-20220108172214157](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220108172215.png)
+
+> 自定义cookie
+
+修改cookie的name和它的作用域
+
+```java
+@Bean
+public CookieSerializer cookieSerializer() {
+    DefaultCookieSerializer serializer = new DefaultCookieSerializer();
+    serializer.setCookieName("LAOXIAOJSESSION");
+    serializer.setDomainNamePattern(".laoxiao.com");
+    return serializer;
+}
+```
+
+# sso流程
+
+![](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220108205559.png)
 
 
 
