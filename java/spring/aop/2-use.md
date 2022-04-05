@@ -17,6 +17,7 @@
 ## Pointcut
 
 - joinpoint 条件接口
+- **所以它主要包含两个过滤**，一个是方法过滤，一个是类型过滤
 
 两个
 
@@ -64,7 +65,11 @@ public class EchoMatcherService extends StaticMethodMatcherPointcut {
 
 ## Advice
 
-执行动作接口
+- 执行动作接口
+
+- spring对其做前置动作还是后置动作还是围绕动作的api
+
+- 所有的advice的底层实现都是MethodInterceptor落地实现的
 
 >  Interceptor
 
@@ -74,6 +79,129 @@ public class EchoMatcherService extends StaticMethodMatcherPointcut {
 
 > BeforeAdvice
 
+- 具体实现：org.springframework.aop.framework.adapter.MethodBeforeAdviceInterceptor
 
+- 所有的beforeadvice拦截都来自于MethodBeforeAdviceInterceptor
+- 有多少个beforeadvice就会有多少个MethodBeforeAdviceInterceptor
+- 执行beforeadvice就是下面方法的调用
+
+```java
+@Override
+public Object invoke(MethodInvocation mi) throws Throwable {
+   this.advice.before(mi.getMethod(), mi.getArguments(), mi.getThis());
+   return mi.proceed();
+}
+```
+
+> BeforeAdvice 的 AspectJ实现
+
+- 目标实现：AspectJMethodBeforeAdvice
 
 > AfterAdvice
+
+- 具体实现：
+
+org.springframework.aop.framework.adapter.ThrowsAdviceInterceptor
+
+> 如何筛选执行的方法
+>
+> AspectJ根据表达式寻找对应的方法，在org.springframework.aop.aspectj.AbstractAspectJAdvice中
+
+
+
+>  AfterReturning 是如何被调用的
+
+ AspectJAfterReturningAdvice = AfterReturningAdvice
+
+ AfterReturningAdviceInterceptor 关联了 AfterReturningAdvice,如下：
+
+```java
+public class AfterReturningAdviceInterceptor {
+
+   private final AfterReturningAdvice advice;
+```
+
+AfterReturningAdviceInterceptor = MethodInterceptor
+
+所有的MethodInterceptor都会被spring 调用
+
+*最终调用逻辑*：
+
+AfterReturningAdviceInterceptor 
+
+->调用 AspectJAfterReturningAdvice#afterReturning 
+
+->调用 AbstractAspectJAdvice#invokeAdviceMethodWithGivenArgs
+
+
+
+## Advisor
+
+- Advice 容器接口
+- 包含了一个advice
+- 可以结合pointcut来做一个接口上的约束
+
+>  PointcutAdvisor
+
+将pointCut和 advice关联起来 
+
+spring的底层通过这个接口的实现来获取pointcut 和 advice
+
+
+
+## Introduction
+
+>  Introduction与 Advisor的连接器
+
+接口：org.springframework.aop.IntroductionAdvisor
+
+**IntroductionAdvisor只关心类的过滤，其他类下面的所有方法，默认都是true**
+
+> 使用场景
+
+当我们一个类	，实现了A B 两个接口，如果我们只需要代理A接口，此时，我们就可以使用Introduction
+
+## AdvisorAdapter
+
+```java
+//是否支持这个advice
+boolean supportsAdvice(Advice advice);
+
+MethodInterceptor getInterceptor(Advisor advisor);
+```
+
+> 实现示例
+
+- supportsAdvice提供所支持的advice
+- getInterceptor提供MethodBeforeAdviceInterceptor
+
+```java
+class MethodBeforeAdviceAdapter implements AdvisorAdapter, Serializable {
+
+   @Override
+   public boolean supportsAdvice(Advice advice) {
+      return (advice instanceof MethodBeforeAdvice);
+   }
+
+   @Override
+   public MethodInterceptor getInterceptor(Advisor advisor) {
+      MethodBeforeAdvice advice = (MethodBeforeAdvice) advisor.getAdvice();
+      return new MethodBeforeAdviceInterceptor(advice);
+   }
+
+}
+```
+
+> AdvisorAdapter的注册
+
+org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry
+
+可以通过DefaultAdvisorAdapterRegistry#registerAdvisorAdapter注册新的AdvisorAdapter
+
+## AopProxy
+
+>  AopProxyFactory
+
+默认实现：DefaultAopProxyFactory
+
+我们也可以根据org.springframework.aop.framework.ProxyCreatorSupport#ProxyCreatorSupport(org.springframework.aop.framework.AopProxyFactory)来动态替换默认实现
