@@ -69,12 +69,12 @@ this.markmap = this.markmap || {},
             }([{
                 type: "script",
                 data: {
-                    src: "./d3@6.7.0"
+                    src: "https://gitee.com/xiaojihao/xiaoxiao/raw/master/js/d3@6.7.0"
                 }
             }, {
                 type: "script",
                 data: {
-                    src: "./markmap-view@0.2.7"
+                    src: "https://gitee.com/xiaojihao/xiaoxiao/raw/master/js/markmap-view@0.2.7"
                 }
             }]).then((() => {
                 var t, n;
