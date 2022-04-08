@@ -8,3 +8,21 @@
 
 > JVM Bytecode Viewer
 
+
+
+# 录屏工具
+
+## ShareX
+
+可以录屏，截图，截GIF等
+
+https://github.com/ShareX/ShareX
+
+##  Peek 
+
+适用于linux平台的录屏
+
+##  Captura  
+
+大小不到3M
+
