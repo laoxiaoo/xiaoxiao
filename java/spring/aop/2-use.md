@@ -205,3 +205,15 @@ org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry
 默认实现：DefaultAopProxyFactory
 
 我们也可以根据org.springframework.aop.framework.ProxyCreatorSupport#ProxyCreatorSupport(org.springframework.aop.framework.AopProxyFactory)来动态替换默认实现
+
+
+
+ <iframe  
+ height=555  
+ width=100% 
+ src="http://localhost:3000/markmap.html?md=java/spring/aop/nt/01-base.md"  
+ frameborder=0
+ scrolling="no"
+ align="absmiddle">
+ </iframe>
+
