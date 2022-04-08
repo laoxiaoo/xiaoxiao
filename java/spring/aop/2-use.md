@@ -208,57 +208,16 @@ org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry
 
 
 
-<<<<<<< HEAD
 ## AdvisedSupport
 
 - 包含了一些ProxyConfig必要信息
 
 # 脑图
 
-```mermaid
-graph LR;
-
-base((Spring AOP API)) --> joinpoint(JOIN POINT)
-base --> PointCut
-base --> Advice
-base --> Advisor
-base --> AdvisorAdapter
-base --> AOP代理对象
-base --> aop代理配置 --> AdvisedSupport
-base --> AbstractAutoProxyCreator
-base --> IntroductionInfo
-base --> TargetSource
-
-joinpoint --> Invocation --> MethodInvocation --> ProxyMethodInvocation
-
-ProxyMethodInvocation --> CglibMethodInvocation
-ProxyMethodInvocation --> ReflectiveMethodInvocation
-
-PointCut --> StaticMethodMatcherPointcut
-
-Advice --> Interceptor --> MethodInterceptor
-Advice --> BeforeAdvice --> MethodBeforeAdvice
-Advice ---> AfterAdvice
-AfterAdvice --> AfterReturningAdvice
-AfterAdvice --> ThrowsAdvice
-
-Advisor --> PointcutAdvisor
-Advisor --> IntroductionAdvisor
-
-AOP代理对象 -->AOP代理对象工厂 -->AopProxyFactory
-AOP代理对象 --> AopProxy
-
-AopProxy --> JdkDynamicAopProxy
-AopProxy --> CglibAopProxy
-
-
-
-```
-
  <iframe  
  height=555  
  width=100% 
- src="http://localhost:3000/markmap.html?md=java/spring/aop/nt/01-base.md"  
+ src="https://laoxiaoo.github.io/xiaoxiao/markmap.html?md=java/spring/aop/nt/01-base.md" 
  frameborder=0
  scrolling="no"
  align="absmiddle">
