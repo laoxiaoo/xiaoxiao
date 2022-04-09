@@ -69,12 +69,12 @@ this.markmap = this.markmap || {},
             }([{
                 type: "script",
                 data: {
-                    src: "/js/d3@6.7.0"
+                    src: "js/d3@6.7.0"
                 }
             }, {
                 type: "script",
                 data: {
-                    src: "/js/markmap-view@0.2.7"
+                    src: "js/markmap-view@0.2.7"
                 }
             }]).then((() => {
                 var t, n;

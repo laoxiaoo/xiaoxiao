@@ -4,7 +4,7 @@
 
 用于执行对应的方法
 
-![image-20220226150100480](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220226150109.png)
+![image-20220226150100480](../../../image/java/message/20220226150109.png)
 
 -  CglibMethodInvocation
 
@@ -217,7 +217,7 @@ org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry
  <iframe  
  height=555  
  width=100% 
- src="https://laoxiaoo.github.io/xiaoxiao/markmap.html?md=java/spring/aop/nt/01-base.md" 
+ src="https://laoxiaoo.github.io/xiaoxiao/markmap.html?md=https://laoxiaoo.github.io/xiaoxiao/java/spring/aop/nt/01-base.md" 
  frameborder=0
  scrolling="no"
  align="absmiddle">
