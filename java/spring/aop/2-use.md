@@ -4,7 +4,7 @@
 
 用于执行对应的方法
 
-![image-20220226150100480](../../../image/java/message/20220226150109.png)
+![image-20220226150100480](./image/20220226150109.png)
 
 -  CglibMethodInvocation
 
