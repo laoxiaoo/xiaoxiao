@@ -1,3 +1,5 @@
+# Spring 对Aspectj的支持，是它的注解的支持，不是对它的编译器和语法的支持
+
 # Aop Api整体设计
 
 ## Joinpoint
@@ -111,9 +113,18 @@ org.springframework.aop.framework.adapter.ThrowsAdviceInterceptor
 
 >  AfterReturning 是如何被调用的
 
+- 如果：@AfterReturning是怎么被调用的
+
+```java
+@AfterReturning("anyPublicMethod()")
+public void afterReturningMethod() {
+    System.out.println("afterReturning method");
+}
+```
+
  AspectJAfterReturningAdvice = AfterReturningAdvice
 
- AfterReturningAdviceInterceptor 关联了 AfterReturningAdvice,如下：
+ AfterReturningAdviceInterceptor 关联了 AfterReturningAdvice(AfterReturningAdvice最终会变成AfterReturningAdviceInterceptor ),如下：
 
 ```java
 public class AfterReturningAdviceInterceptor {
@@ -211,6 +222,104 @@ org.springframework.aop.framework.adapter.DefaultAdvisorAdapterRegistry
 ## AdvisedSupport
 
 - 包含了一些ProxyConfig必要信息
+
+> 三大特性
+
+1. 配置
+2. 产生代理对象
+3. 事件关联
+
+## AdvisedSupportListener
+
+事件监听器
+
+
+
+```java
+//激活
+void activated(AdvisedSupport advised);
+//advice变更时调用
+void adviceChanged(AdvisedSupport advised);
+```
+
+## ProxyFactory
+
+- AdvisedSupport的标准实现
+
+## AspectJProxyFactory
+
+
+
+>  AspectFactory读取注解的方式，进行方法的拦截
+
+```java
+//被代理对象
+Map<String, String> map = new HashMap<>();
+AspectJProxyFactory aspect = new AspectJProxyFactory(map);
+//添加配置类
+aspect.addAspect(AspectConfiguration.class);
+//获取代理对象
+Map<String, String> proxy = aspect.getProxy();
+//我们在执行代理对象的方法时候，能够执行AspectConfiguration配置的类
+proxy.put("laoxiao", "laoxiao");
+```
+
+- 配置类
+
+```java
+@Aspect
+public class AspectConfiguration {
+    /**
+     * 定义一个point cut 可以拦截public 任何方法
+     */
+    @Pointcut("execution(public * *(..))")
+    private void anyPublicMethod() {
+    }
+    /**
+     * 定义拦截前的方法执行
+     */
+    @Before("anyPublicMethod()")
+    public void beforeMethod() {
+        System.out.println("before method");
+    }
+}
+```
+
+> >  aspect.addAspect(AspectConfiguration.class)解析
+
+```mermaid
+graph TB
+
+subgraph 进入addAspect
+createAspectMetadata -...- 获取AspectMetadata元信息
+createAspectMetadata --> createAspectInstanceFactory
+createAspectInstanceFactory --> addAdvisorsFromAspectInstanceFactory
+end
+
+subgraph 进入createAspectInstanceFactory方法
+createAspectInstanceFactory --> getSingletonAspectInstance  -...- 获取配置类的的实例
+end
+
+subgraph 进入addAdvisorsFromAspectInstanceFactory 
+
+addAdvisorsFromAspectInstanceFactory --调用--> ReflectiveAspectJAdvisorFactory#getAdvisors 
+end
+
+subgraph 进入ReflectiveAspectJAdvisorFactory#getAdvisors
+ReflectiveAspectJAdvisorFactory#getAdvisors --> getAdvisorMethods -- 调用--> getAdvisor --调用-->ReflectiveAspectJAdvisorFactory#getPointcut
+
+getAdvisorMethods -...- 获取advice挑选出执行方法
+getAdvisorMethods -...- 如果是统一类型的advice则通过order来排序
+end
+```
+
+
+
+
+
+
+
+
 
 # 脑图
 
