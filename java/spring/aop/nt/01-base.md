@@ -47,6 +47,18 @@
 
 - AdvisedSupport
 
+## Aop代理对象创建
+- 手动模式
+  - ProxyCreatorSupport
+    - ProxyFactory
+    - ProxyFactoryBean
+    - AspectJProxyFactory
+- 自动模式
+  - AbstractAutoProxyCreator
+    - DefaultAdvisorAutoProxyCreator
+    - BeanNameAutoProxyCreator
+    - InfrastructureAdvisorAutoProxyCreator
+
 ## AbstractAutoProxyCreator
 
 ## IntroductionInfo

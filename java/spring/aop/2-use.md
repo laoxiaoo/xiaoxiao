@@ -2,11 +2,15 @@
 
 # Aop Api整体设计
 
-## Joinpoint
+## org.aopalliance.intercept.Joinpoint
 
 用于执行对应的方法
 
 ![image-20220226150100480](./image/20220226150109.png)
+
+
+
+
 
 -  CglibMethodInvocation
 
@@ -287,39 +291,38 @@ public class AspectConfiguration {
 
 > >  aspect.addAspect(AspectConfiguration.class)解析
 
-```mermaid
-graph TB
+- 进入addAspect方法
+- 调用createAspectMetadata方法
+  - 获取AspectMetadata元信息
+- 调用createAspectInstanceFactory方法
+  - 调用getSingletonAspectInstance方法
+    - 获取配置类的实例
+- 调用addAdvisorsFromAspectInstanceFactory方法
+  - 调用ReflectiveAspectJAdvisorFactory#getAdvisors 方法
+    - 调用getAdvisorMethods方法
+      - 获取advice挑选的执行方法
+      - 如果是同一个advice则通过order注解来进行排序
+    - 调用getAdvisor方法
+      - 调用ReflectiveAspectJAdvisorFactory#getPointcut方法
 
-subgraph 进入addAspect
-createAspectMetadata -...- 获取AspectMetadata元信息
-createAspectMetadata --> createAspectInstanceFactory
-createAspectInstanceFactory --> addAdvisorsFromAspectInstanceFactory
-end
+# IOC容器自动代理
 
-subgraph 进入createAspectInstanceFactory方法
-createAspectInstanceFactory --> getSingletonAspectInstance  -...- 获取配置类的的实例
-end
+## 标准实现
 
-subgraph 进入addAdvisorsFromAspectInstanceFactory 
+org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator
 
-addAdvisorsFromAspectInstanceFactory --调用--> ReflectiveAspectJAdvisorFactory#getAdvisors 
-end
+> 三个实现
 
-subgraph 进入ReflectiveAspectJAdvisorFactory#getAdvisors
-ReflectiveAspectJAdvisorFactory#getAdvisors --> getAdvisorMethods -- 调用--> getAdvisor --调用-->ReflectiveAspectJAdvisorFactory#getPointcut
+1. 默认实现：DefaultAdvisorAutoProxyCreator
+2. bean名称实现：BeanNameAutoProxyCreator
+   1. 通过bean的名称进行配置拦截
+3. Infrastructure实现：InfrastructureAdvisorAutoProxyCreator
 
-getAdvisorMethods -...- 获取advice挑选出执行方法
-getAdvisorMethods -...- 如果是统一类型的advice则通过order来排序
-end
-```
+## Aspectj实现
 
+ AspectJAwareAdvisorAutoProxyCreator
 
-
-
-
-
-
-
+**AspectJAwareAdvisorAutoProxyCreator是在解析< aop:config/>AOP标签时注册的一个bean定义，专门用于创建代理对象，实现AOP的核心功能**
 
 # 脑图
 
