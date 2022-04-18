@@ -1,12 +1,8 @@
 - 先给idea装jclasslib ByteCode Viewer插件
 - **本笔记观看尚硅谷JVM所书**
 
-# jRE JDK关系
 
-- JDK包含了JRE,JDK有编译器等
--  JRE中包含虚拟机JVM
 
-![](./image/2021427224536.jpg)
 
 # JVM结构
 

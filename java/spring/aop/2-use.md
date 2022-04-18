@@ -324,6 +324,35 @@ org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator
 
 **AspectJAwareAdvisorAutoProxyCreator是在解析< aop:config/>AOP标签时注册的一个bean定义，专门用于创建代理对象，实现AOP的核心功能**
 
+
+
+## AopInfrastructureBean
+
+- 一个标记接口
+- 它的实现不会被再次代理
+
+# Aop辅助工具类
+
+## 上下文辅助类
+
+org.springframework.aop.framework.AopContext
+
+- 可以用来在代理方法中获取当前的代理对象（但是前提是需要将这个aop设置为可暴露到上下文）】
+
+## 工厂工具类
+
+
+
+## AOP工具类
+
+ AopUtils
+
+-  isAopProxy：是否为代理对象
+-  isJdkDynamicProxy： 是否为jdk代理对象
+-  isCglibProxy： 是否为CGLIB代理对象
+-  getTargetClass： 从对象中获取目标类型
+-  invokeJoinpointUsingReflection：使用Java反射调用Joinpoint(目标方法)
+
 # 脑图
 
  <iframe  
