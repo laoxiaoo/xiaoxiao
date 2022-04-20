@@ -1,4 +1,5 @@
-- 先给idea装jclasslib ByteCode Viewer插件
+先给idea装jclasslib ByteCode Viewer插件
+
 - **本笔记观看尚硅谷JVM所书**
 
 
@@ -40,41 +41,7 @@
 
 # 类加载子系统
 
-## 初始化过程
 
-- 类初始化过程就是执行构造方法clinit的过程
-
-```java
-class A {
-    static{
-        //clinit
-    }
-}  
-```
-
-- 他只有类存在静态代码时才会有
-- 他不需要定义，是javac编译器自动收集类中所有变量的赋值动作和静态代码块中的语句合并而来
-
-![](./image/jvm/20210429233002.png)
-
-- 他是按照代码的顺序执行的
-  - 因为声明的对象在后面，而使用的代码在前面
-  - staic里面能赋值是因为jvm会把static赋值过程自己编译成一个clinit方法，在链接阶段赋值
-
-```java
-static {
-    number = 2;
-    num = 3;
-    //这里是不允许使用的，非法的前向引用
-    System.out.println(num);
-}
-//这里最终输出的结果是4
-private static int num = 4;
-```
-
-- 虚拟机保证每个类的clinit在多线程下都是同步加锁的（只会有一个线程加载一个类的clinit方法）
-  - **如果加载过程中 出现这个问题，会造成线程加载阻塞 **
-- 如果存在父类，会先执行父类的clinit
 
 ## 类加载器
 

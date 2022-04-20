@@ -106,6 +106,11 @@ class A {
   - 因为声明的对象在后面，而使用的代码在前面
   - staic里面能赋值是因为jvm会把static赋值过程自己编译成一个clinit方法，在链接阶段赋值
 
+> 例子
+
+1. num的赋值过程  num=0 ---> num = 3 ---->num=4
+2. 非法前向应用：因为num下面由在初始化阶段赋值，所以在此处不能引用他
+
 ```java
 static {
     number = 2;
@@ -168,3 +173,4 @@ public static final int k = 1;
 ```
 
 **clinit虚拟机加锁了，是线程安全的**
+
