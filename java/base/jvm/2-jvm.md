@@ -1,21 +1,3 @@
-# 加载过程
-
-- 类加载子系统只负责从文件系统加载class文件，
-- 加载的类信息存在方法区的内存空间，方法区还存放运行时的常量池信息
-- 类加载子系统只负责加载，能不能运行由执行引擎决定
-
-
-
-![](./image/202162220201.png)
-
-
-
-> 细节图
-
-![](./image/2-jvm/1600746666896567.png)
-
-
-
 # 加载class文件方式
 
 **基本数据类型由虚拟机预先定义，引用数据类型则需要进行类的加载**
@@ -45,6 +27,32 @@
 Class<?> clazz = Class.forName("java.lang.String");
 ```
 
+
+
+# 加载过程
+
+- 类加载子系统只负责从文件系统加载class文件，
+- 加载的类信息存在方法区的内存空间，方法区还存放运行时的常量池信息
+- 类加载子系统只负责加载，能不能运行由执行引擎决定
+
+
+
+![](./image/202162220201.png)
+
+
+
+> 细节图
+
+![](./image/2-jvm/1600746666896567.png)
+
+## 类加载器
+
+> 类加载器分类
+
+- 引导类加载器
+- 自定义加载器
+  - 所有派生于抽象类ClassLoader的类加载器都划分为自定义加载器
+
 ## 链接过程
 
 > 验证
@@ -66,3 +74,97 @@ Class<?> clazz = Class.forName("java.lang.String");
   - 为**类变量**分配内存并且设置该类的初始值
 - **这里不包含基本数据类型的字段用static final修饰的情况，因为final在编译的时候就会分配了，准备阶段会显式赋值。**（没有初始化赋值这个代码执行）
 - 如果使用字面量方式给String的常量赋值，也是在准备阶段**显示赋值**的
+
+> 解析
+
+- 将符号引用转为对应直接引用
+- 一个类可能会引用很多其他类
+
+![](./image/2-jvm/20210429232122.png)
+
+## 初始化阶段
+
+为类的静态变量赋予正确的初始值。
+
+- 初始化阶段的重要工作是执行类的初始化方法:<clinit>()方法。
+
+```java
+class A {
+    static{
+        //clinit
+    }
+}  
+```
+
+- 他不需要定义，是javac编译器自动收集类中所有变量的赋值动作和静态代码块中的语句合并而来
+
+![](./image/2-jvm/20210429233002.png)
+
+
+
+- 他是按照代码的顺序执行的
+  - 因为声明的对象在后面，而使用的代码在前面
+  - staic里面能赋值是因为jvm会把static赋值过程自己编译成一个clinit方法，在链接阶段赋值
+
+```java
+static {
+    number = 2;
+    num = 3;
+    //这里是不允许使用的，非法的前向引用
+    System.out.println(num);
+}
+//这里最终输出的结果是4
+private static int num = 4;
+```
+
+- 虚拟机保证每个类的clinit在多线程下都是同步加锁的（只会有一个线程加载一个类的clinit方法）
+  - **如果加载过程中 出现这个问题，会造成线程加载阻塞 **
+- 如果存在父类，会先执行父类的clinit
+
+
+
+由代码可见，初始化阶段会执行clinit方法,有静态代码块，或者静态变量，就会有clinit（静态常量不会产生）
+
+```java
+public static int i = 1;
+public static int j;
+static {
+    j = 2;
+    System.out.println(j);
+}
+```
+
+
+
+```shell
+ 0 iconst_1
+ 1 putstatic #2 <com/xiao/classLoader/TestStatic.i>
+ 4 iconst_2
+ 5 putstatic #3 <com/xiao/classLoader/TestStatic.j>
+ 8 getstatic #4 <java/lang/System.out>
+11 getstatic #3 <com/xiao/classLoader/TestStatic.j>
+14 invokevirtual #5 <java/io/PrintStream.println>
+17 return
+```
+
+> 注意
+
+```tex
+在加载一个类之前，虚拟机总是会试图加载该类的父类，因此父类的<clinit>总是在子类<clinit>之前被调用。也就是说，父类的static块优先级高于子类。
+口诀:由父及子，静态先行。
+```
+
+引用类型的不管是不是final，是static就是在clinit中赋值
+
+> 没有clinit场景
+
+```java
+//非静态变量
+public int i;
+//静态变量未赋值
+public static int j;
+//常量
+public static final int k = 1;
+```
+
+**clinit虚拟机加锁了，是线程安全的**
