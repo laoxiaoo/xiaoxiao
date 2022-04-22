@@ -290,21 +290,21 @@ public enum State {
 
 ## 线程状态的转换
 
-### NEW --> RUNNABLE  
+> NEW --> RUNNABLE  
 
 1. NEW --> RUNNABLE  
 
-### RUNNABLE <--> WAITING  
+> RUNNABLE <--> WAITING  
 
 1. 调用 obj.wait() 方法时  
 2. 调用 obj.notify() ， obj.notifyAll() ， t.interrupt()  
 3. 当前线程调用 LockSupport.park() 方法会让当前线程从 RUNNABLE --> WAITING  
 
-### RUNNABLE <--> WAITING  
+> RUNNABLE <--> WAITING  
 
 1. 当前线程调用 t.join() 方法时，当前线程从 RUNNABLE --> WAITING  
 
-### RUNNABLE <--> TIMED_WAITING  
+> RUNNABLE <--> TIMED_WAITING  
 
 1. 当前线程调用 Thread.sleep(long n) ，当前线程从 RUNNABLE --> TIMED_WAITING  
 
@@ -335,23 +335,26 @@ public enum State {
 ## Monitor
 
 - monitor是操作系统提供的对象
-- 每个Java对象都可以关联一个Monitor对象，如果使用synchronized给对象上锁〈重量级)之后，该对象头的Mark Word 中就被设置指向Monitor对象的指针
+- 每个Java对象都可以关联一个Monitor对象，如果使用synchronized给对象上锁〈重量级)之后，该对象头的Mark Word 中就被设置指向**Monitor对象的指针**
 
-![image-20210628154124702](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/20210628154124.png)
+![image-20210628154124702](./image/20210628154124.png)
 
 - monitor里面的owner属性指向抢到锁的线程
 - 此时另外一个线程来抢这个锁，则monitor的的EntryList指向抢锁的线程
 - 当线程执行完，将EntryList中的线程全部唤醒，继续抢锁
+- waitSet:存放wait状态的线程集合
 
-![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/java/jvm/20210619104359.png)
+![](./image/20210619104359.png)
 
 ## 轻量级锁
 
-轻量级锁的使用场景:如果一个对象虽然有多线程访问，但多线程访问的时间是错开的（也就是没有竞争)，那么可以使用轻量级锁来优化。
+> 轻量级锁的使用场景
+
+如果一个对象虽然有多线程访问，但多线程访问的时间是错开的（也就是没有竞争)，那么可以使用轻量级锁来优化。
 
 - 轻量级锁是没有阻塞的概念的
 
-轻量级锁加锁过程：
+> 轻量级锁加锁过程
 
 1. 当执行到加锁模块时，栈帧中生成一个锁记录的结构，内部存储锁定的对象和Mark Word![image-20210620133724895](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/image-20210620133724895.png)
 
@@ -414,16 +417,16 @@ public void method2() {
 }
 ```
 
-### 偏向锁概念
+> 偏向锁概念
 
 ![image-20210620163259171](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/image-20210620163259171.png)
 
 - 由图可见：
   - 如果开启了偏向锁（默认开启)，那么对象创建后，markword值为0x05即最后3位为101，这时它的thread、epoch、age都为0
-  - 当加锁之后，前54位就是线程id，后三位为101
+  - 当加锁之后，前54位就是线程id(即 thread:54)，后三位为101
 - 如果调用hashcode方法后，就是撤销该对象的偏向状态
 
-### 撤销偏向锁的场景
+> 撤销偏向锁的场景
 
 1. 调用hashcode方法（调用hashcode方法需要将hashcode赋值）
 2. 其他线程使用对象（两个线程锁同一个对象，顺序执行场景）（obj的markword不知道记录哪个线程的id，所以无法使用偏向锁）
@@ -437,9 +440,9 @@ public void method2() {
 ## wait | notify
 
 - Monitor中Owner线程发现条件不满足，调用wait方法，即可进入WaitSet变为WAITING状态
-- WAITING线程会在Owner线程调用notify或notifyAll 时唤醒，但唤醒后并不意味者立刻获得锁，仍需进入EntryList重新竞争
+- WAITING线程会在Owner线程调用notify或notifyAll 时唤醒，但唤醒后并不意味者立刻获得锁，仍需进入**EntryList重新竞争**
 
-### Api
+> Api
 
 - obj.wait()让进入object 监视器的线程到waitSet等待
 
@@ -452,18 +455,35 @@ synchronized (LOCK) {
 
 - notify 唤醒一个线程，notifyall唤醒所有的线程
 
-### sleep和wait区别
+> sleep和wait区别
 
 - sleep不会释放锁，wait会释放锁
 - sleep是 Thread方法，而wait是Object的方法
 - sleep不需要强制和synchronized配合使用，**但wait需要和synchronized一起用**
 
-### 虚假唤醒
+> 虚假唤醒
 
 - 同一个锁下面，其他线程调用了notifyAll，但是当前线程并不满足唤醒条件，这时，就导致了虚假唤醒
-- 一般设置待超时的阻塞等待，就需要考虑虚假唤醒的问题
+  -  比如：仓库有货了才能出库，突然仓库入库了一个货品；这时所有的线程（货车）都被唤醒，来执行出库操作；实际上只有一个线程（货车）能执行出库操作，其他线程都是虚假唤醒 
 
-### 使用正确姿势
+比如这段代码，在wait后唤醒，两个线程同时执行--product，此时，可能导致两个product为负数，因为此时没有再判断product的值
+
+```java
+if (product <= 0) {
+    System.out.println(Thread.currentThread().getName() + ": " + "库存不足，无法出库");
+    try {
+        this.wait();
+    } catch (InterruptedException e) {
+        // ignore exception
+    }
+}
+--product;
+```
+
+-  解决方法
+  - 使用while循环去循环判断一个条件，而不是使用if只判断一次条件；即wait()要在while循环中。 
+
+  - 使用正确姿势
 
 ```java
 synchronized (LOCK) {
@@ -478,10 +498,12 @@ synchronized (LOCK) {
 }
 ```
 
-### 原理
+> wait | notify 原理
 
-- wait: 将线程放入monitor的wait队列中，进行阻塞
-- notifyall: 将monitor的wait队列中的待处理线程放入entrylist，让其也可以继续竞争锁
+*wait: 将线程放入monitor的wait队列中，进行阻塞
+notifyall: 将monitor的wait队列中的待处理线程放入entrylist，让其也可以继续竞争锁*
+
+
 
 ## park$unpark
 
@@ -512,7 +534,7 @@ LockSupport.unpark(t1);
 
 - park是以线程为单位，更加精准；notify是所有线程都通知
 
-### 原理
+> park$unpark原理
 
 - 每个thread都有一个park对象
 
