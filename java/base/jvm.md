@@ -47,54 +47,9 @@
 
 ### 类加载器分类
 
-- 引导类加载器
-- 自定义加载器
-  - 所有派生于抽象类ClassLoader的类加载器都划分为自定义加载器
 
-### 代码获取类加载器
 
-```java
-//获取系统类加载器
-ClassLoader systemClassLoader = ClassLoader.getSystemClassLoader();
-//sun.misc.Launcher$AppClassLoader@18b4aac2
-System.out.println(systemClassLoader);
-//获取自定义类加载器（可以发现他默认使用的是系统类加载器）
-ClassLoader classLoader = TestClassLoader.class.getClassLoader();
-//sun.misc.Launcher$AppClassLoader@18b4aac2
-System.out.println(classLoader);
-```
 
-### 引导类加载器
-
-- 启动类加载器， 自定义类加载器没办法获取到引导类加载器
-
-- 它用来加载java的核心库(例如：String 类型)
-- 它没有父类加载器
-
-```java
-//String 类使用引导类加载器
-//java核心库使用引导类加载器
-ClassLoader loader = String.class.getClassLoader();
-//输出null（凡是这里是null的都是引导类加载器）
-System.out.println(loader);
-```
-
-### 自定义类加载器
-
-- ·什么时候需要自定义类加载器
-
-  - 隔离加载器
-  - 修改类的加载方式
-  - 扩展加载源
-  - 防止源码泄露
-
-- 自定义类加载器方式
-
-  - 继承URLClassLoader即可/继承ClassLoader
-  - 重写loadClass() /findClass()方法
-  - loadClass重写可能会破坏双亲委派机制
-  
-  
 
 ### 获取类加载器的方式
 

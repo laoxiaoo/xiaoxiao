@@ -209,7 +209,7 @@ Thread.sleep(1000);
 - 睡眠2秒为了避免循环耗尽资源
 - 出现异常设置打断是因为：睡眠阶段打断标识会抛出异常，并且打断标识为false
 
-![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/java/concurrent/1624007279803.png)
+![](./image/1624007279803.png)
 
 ```java
 private static Thread monitor;
