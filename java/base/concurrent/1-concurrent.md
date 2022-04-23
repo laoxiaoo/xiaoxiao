@@ -169,7 +169,7 @@ t1 执行结束
 -  isInterrupted:判断是否打断，执行后不清除标记
 -  Thread.interrupted()：返回打断标记，但是返回打断标记以后会清除打断标记
 
-### interrupt对park的影响
+> interrupt对park的影响
 
 - park作用是让线程阻塞
 
@@ -310,19 +310,9 @@ public enum State {
 
 # 共享模型-管理
 
-## 对象头
 
-- 一般我们造的对象，都由对象头和对象的成员属性组成
 
-### 普通对象头结构
 
-- 此处以32位虚拟机为例
-
-如：一个Integer：8个字节对象头+4个字节的数据，int 只有4个字节数据
-
-- klassword: 类型指针
-
-![image-20210628153023099](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/20210628153030.png)
 
 ### Mark Word结构
 
@@ -559,7 +549,7 @@ LockSupport.unpark(t1);
 
 # 保护性暂停模式
 
-- 用在一个线程等待另一个线程的执行结果
+用在一个线程等待另一个线程的执行结果
 
 ![image-20210620230826069](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/image-20210620230826069.png)
 
@@ -1350,6 +1340,8 @@ static class MyTask extends RecursiveTask<Integer> {
 2. 提供了基于FIFO（先进先出）的等待队列，类似于Monitor的EntryList
 3. 条件变量来实现等待、唤醒机制，支持多个条件变量，类似于Monitor的WaitSet
 
+![](./image/20190203234437159.png)
+
 ## 加锁基本原理
 
 - 获取锁的姿势
@@ -1466,11 +1458,14 @@ static class MyLock implements Lock {
 ### 特点
 
 - 可中断（如A线程持有锁，B线程可以中断他）
+
 - 设置超时时间
+
 - 可以设置为公平锁（可以防止线程饥饿问题）
+
 - 支持多个条件变量
 
-- 可重入
+>  可重入
 
 ```java
 public static void method1() {
@@ -1491,17 +1486,18 @@ public static void method2() {
 }
 ```
 
-- 可打断
+> 可打断
 
 ```java
 //尝试去获取锁，当有竞争时，进入阻塞队列
-//当其他线程调用打断是，抛出异常
+//当其他线程调用打断时，抛出异常
 lock.lockInterruptibly();
 ```
 
-- 锁超时
-  1. trylock也可以被打断，被打断抛出异常
-  2. 超时未获取到锁则返回false
+> 锁超时
+
+1. trylock也可以被打断，被打断抛出异常
+2. 超时未获取到锁则返回false
 
 ```java
 lock.tryLock(1, TimeUnit.SECONDS)
