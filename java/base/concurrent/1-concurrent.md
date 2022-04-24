@@ -314,35 +314,15 @@ public enum State {
 
 
 
-### Mark Word结构
+### 
 
-- age: 垃圾回收的年龄
-- biased_lock：是否是偏向锁
-- 最后两位：锁状态
 
-![image-20210628153735951](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/20210628153736.png)
 
 ## Monitor
 
-- monitor是操作系统提供的对象
-- 每个Java对象都可以关联一个Monitor对象，如果使用synchronized给对象上锁〈重量级)之后，该对象头的Mark Word 中就被设置指向**Monitor对象的指针**
 
-![image-20210628154124702](./image/20210628154124.png)
-
-- monitor里面的owner属性指向抢到锁的线程
-- 此时另外一个线程来抢这个锁，则monitor的的EntryList指向抢锁的线程
-- 当线程执行完，将EntryList中的线程全部唤醒，继续抢锁
-- waitSet:存放wait状态的线程集合
-
-![](./image/20210619104359.png)
 
 ## 轻量级锁
-
-> 轻量级锁的使用场景
-
-如果一个对象虽然有多线程访问，但多线程访问的时间是错开的（也就是没有竞争)，那么可以使用轻量级锁来优化。
-
-- 轻量级锁是没有阻塞的概念的
 
 > 轻量级锁加锁过程
 
