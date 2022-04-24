@@ -41,68 +41,6 @@
 
 # 类加载子系统
 
-
-
-## 类加载器
-
-### 类加载器分类
-
-
-
-
-
-### 获取类加载器的方式
-
-1. Clasz.getClassLoader()
-
-```java
-Class.forName("java.lang.String").getClassLoader();
-```
-
-2. 线程的方式获取上下文的loader
-
-```java
-Thread.currentThread().getContextClassLoader()
-```
-
-3. 获取当前系统类加载器
-
-```java
-ClassLoader.getSystemClassLoader()
-```
-
-- 获取类加载器能够加载的jar包
-
-```java
-URL[] urLs = Launcher.getBootstrapClassPath().getURLs();
-Stream.of(urLs).forEach(url -> System.out.println(url.toExternalForm()));
-```
-
-
-
-## 双亲委派机制
-
-### 原理
-
-- 如果一个类加载器收到请求，它不会自己先去加载，二十把这个加载委托给父类的加载器，如果父类加载器还存在父类加载器，就会依次递归，直到最顶层的启动类加载器
-- 如果父类加载器加载返回失败，则子类才会自己尝试去加载
-
-![](./image/20200621170659.jpg)
-
-例1：
-
-如果new一个java.lang.String类，则是引导类加载器加载
-
-### 优势
-
-- 避免类的重复加载
-- 保护程序加载，避免核心API恶意篡改
-
-### 判断同一个类条件
-
-- 包目录类名相同
-- 类加载器相同
-
 ---
 
 # 运行时数据区
@@ -1020,45 +958,7 @@ public class CustomerTest {
 
 # String Table
 
-## String 基本特性
 
-- jdk8 char数组存储， jdk9 byte数组存储
-  - 因为大部分的String存储的是拉丁文，占一个字节
-- 字符串常量池不会存储相同的字符串
-  - String pool底层是一个固定大小的StringTable
-  - 更改StringTable的大小：-XX:StringTableSize
-- String:代表不可变的字符串序列（不可变性）
-
-```java
-/**
-  * 字面量定义的字符串常量
-  *  当堆区的字符串常量修改时，会复制一份出来进行修改
- */
-@Test
-public void test1() {
-    String a = "abc";
-    String b = "abc";
-    //true
-    System.out.println(a==b);
-    a = "dfe";
-    // false
-    System.out.println(a==b);
-}
-
-/**
- * 使用replace时，也是复制一份再进行修改
-*/
-@Test
-public void test2() {
-    String a = "abc";
-    String b = "abc";
-    b = a.replace('a', 'd');
-    //abc
-    System.out.println(a);
-    //dbc
-    System.out.println(b);
-}
-```
 
 ## 字符串拼接
 
