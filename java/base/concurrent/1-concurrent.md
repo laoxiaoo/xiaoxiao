@@ -312,37 +312,6 @@ public enum State {
 
 
 
-
-
-### 
-
-
-
-## Monitor
-
-
-
-## 轻量级锁
-
-> 轻量级锁加锁过程
-
-1. 当执行到加锁模块时，栈帧中生成一个锁记录的结构，内部存储锁定的对象和Mark Word![image-20210620133724895](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/image-20210620133724895.png)
-
-2. 让锁记录中Object reference指向锁对象，并尝试用cas替换Object的Mark Word，将Mark Word 的值存入锁记录
-3. 如果cas替换成功，对象头中存储了锁记录地址和状态00，表示由该线程给对象加锁(此时，obj的分带年龄，锁标识等都存储到锁记录中，将来解锁可以恢复过去)
-
-![image-20210628155654661](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/20210628155654.png)
-
-3. 如果CAS失败，则有一下两种情况
-   1. 如果是其它线程已经持有了该Object的轻量级锁，这时表明有竞争，进入锁膨胀过程
-   2. 如果是自己执行了synchronized锁重入，那么再添加一条Lock Record作为重入的计数
-
-![image-20210628155943006](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/concurrent/20210628155943.png)
-
-3. 当退出synchronized代码块（解锁时）锁记录的值不为null（为null表示为锁重入），这时使用cas将 Mark Word的值恢复给对象头
-   1. 成功，解锁成功
-   2. 失败，说明轻量级锁进行了锁膨胀或已经升级为重量级锁，进入重量级锁解锁流程
-
 ## 锁膨胀
 
 如果在尝试加轻量级锁的过程中，CAS操作无法成功，这时一种情况就是有其它线程为此对象加上了轻量级锁(有竞争)，这时需要进行锁膨胀，将轻量级锁变为重量级锁。
