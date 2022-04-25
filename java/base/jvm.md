@@ -962,78 +962,19 @@ public class CustomerTest {
 
 ## 字符串拼接
 
-- 常量与常量的拼接结果在常量池，原理是编译器优化
-- 只要其中一个是变量，结果就在堆中（相当于new），原理是StringBuilder.append().toString()
 
-```java
-//所以拼接字符串的方式会效率很低
-//toString ==> new String()
-new StringBuilder().append("a").append("b").toString();
-```
 
-- 如果拼接的结果调用intern()方法，则主动将常量池还没有字符串的对象放入池中，并返回地址
 
-```java
-String a = "a"+"b";
-String b = "ab";
-//true
-System.out.println(a==b);
-String c = "a";
-String d = c+"b";
-//false
-System.out.println(b==d);
-String f = d.intern();
-//true
-System.out.println(b==f);
-```
 
-- 使用final修饰的常量是编译期优化
 
-  所以，在代码中，建议 能使用final修饰的使用final修饰
-
-```java
-final String a = "a";
-final String b = "b";
-String c = "ab";
-String d = a+b;
-//true
-System.out.println(c == d);
-```
 
 ## String对象
 
-- new String("ab") 会造几个对象
-  - 查看字节码，我们发现是两个
 
-```shell
-## 先new一个String对象
-0 new #2 <java/lang/String>
-3 dup
-## 从常量池获取 ab （第二次）
-4 ldc #3 <ab>
-## 调用String的构造方法
-6 invokespecial #4 <java/lang/String.<init>>
-```
 
-## intern()方法
 
-- 如果发现常量池有字符串相同，则将常量池的字符串地址返回
-- 如果常量池没有
-  - jdk6：常量池没有，则将当前堆中的String放入常量池，且返回常量池的地址
-  - jdk7以上：常量池没有，在常量池创建一个引用，指向堆区的“ab"，目的是
 
-```java
-//StringBuilder的toString不会在常量池产生“ab"
-String str = new String("a") + new String("b");
-//常量池没有，在常量池创建一个引用，指向堆区的“ab"
-str.intern();
-String b = "ab";
-//true
-System.out.println(str == b);
-```
 
-- 对于字符串，如果有大量存在的重复字符串时，使用intern能够节省内存空间
-  - 如"a"+"b"等这样的操作  
 
 ## 面试题
 
