@@ -150,3 +150,39 @@ System.out.println(str == b);
 
 3. 对于字符串，如果有大量存在的重复字符串时，使用intern能够节省内存空间
    1. 如"a"+"b"等这样的操作
+
+#  常见面试题
+
+> new String("ab")  会创建几个对象？
+
+1. 一个是堆空间的对象
+2. 一个是字符串常量池的对象（字节码指令LDC）
+
+> new String("a") + new String("b"); 会创建几个对象？
+
+1. new StringBuilder()  //对象1，  有字符串拼接就会有new StringBuilder
+2. new String(“a”)； //对象2和对象3， 堆空间和字符串常量池“a”
+3. new String("b") //对象4和对象5， 堆空间和字符串常量池“b”
+4. new String(“ab”) //对象6，StringBuilder的toString不会在常量池产生“ab"
+
+
+
+> java输出结果？
+
+```java
+String java = "ja" + new String("va");
+String jTmp = java.intern();
+System.out.println(java == jTmp);
+```
+
+1. 输出为true，因为java是jvm初始化时（加载sun.misc.Version）就将字符串放入了常量池
+2. 源码部分
+
+```java
+public class Version {
+    private static final String launcher_name = "java";
+    private static final String java_version = "1.8.0_131";
+    private static final String java_runtime_name = "Java(TM) SE Runtime Environment";
+```
+
+他在java.lang.System#initializeSystemClass的静态方法sun.misc.Version.init();汇总调用了
