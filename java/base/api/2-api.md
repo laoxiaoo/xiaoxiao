@@ -173,6 +173,11 @@ transient Node<E> last;
     }
 ```
 
+注意点：
+
+1. 遍历LinkedList必须使用iterator不能使用for循环，因为每次for循环体内通过get(i)取得某一元素时都需要对list重新进行遍历，性能消耗极大。
+2. 另外不要试图使用indexof等返回元素索引，并利用其进行遍历，使用indexlOf对list进行了遍历，当结果为空时会遍历整个列表。
+
 > 总结
 
 1. LinkedList是一个双向链表，内部维护了Node节点，分别指向prev上一个节点和item当前节点，next下一个节点
@@ -195,3 +200,9 @@ transient Node<E> last;
 1. 局部内部类和匿名内部类编译在编译之后会生成两个class,所以，内部类和外部类都是同一级别，不会随着外面的方法执行完了，里面的class回收
 2. 如果外部类方法结束，局部变量就销毁了，但是内部类对象还存在，此时如果内部类使用这个变量就会有问题
 3. jvm为了解决这个这个问题，就将局部变量复制一份放到内部类中，此时，为了保证两个变量一致，所以外面的就不能再修改
+
+# HashMap和HashTable
+
+HashMap方法没有synchronized修饰，线程非安全，
+
+HashTable线程安全;HashMap允许key和value为null，而HashTable不允许

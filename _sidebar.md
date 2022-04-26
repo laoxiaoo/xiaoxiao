@@ -1,6 +1,6 @@
 ﻿* [首页](/)
 * java
-	* [jvm](/java/base/jvm)
+	* [jvm]
     	* [jvm基础](/java/base/jvm/1-jvm)
     	* [类加载子系统](/java/base/jvm/2-jvm)
     	* [运行时数据区](/java/base/jvm/3-jvm)
@@ -8,7 +8,10 @@
 	* [通用](/java/base/common)
 	* [java基础](/java/base/javaBase)
     	* [Api](/java/base/api/api)
-	* [并发编程](/java/base/concurrent)
+	* [并发编程]
+    	* [基础] (/java/base/concurrent/1-base)
+    	* [synchronized] (/java/base/concurrent/2-synchronized)
+    	* [线程池] (/java/base/concurrent/3-threadpool)
 	* [canal](/java/tool/canal)
 * Spring
 	* [Spring基础](java/spring/base.md)
