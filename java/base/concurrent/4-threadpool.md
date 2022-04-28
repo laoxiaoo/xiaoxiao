@@ -33,3 +33,54 @@
 
 1. 定义一个class继承Thread，这里这个Thread是用于线程的start执行
 2. 定义一个属性Runable，这里是用于接收线程的参数，到时直接调用run方法，不会直接作为多线程执行
+
+## 代码部分
+
+```java
+public class MyThreadPool {
+
+    //存储待执行的线程
+    private Queue<Runnable> queue;
+    //存储正在工作的线程
+    private Set<Worker> workers = new HashSet<>();
+    //核心线程大小
+    private int coreSize;
+
+    public MyThreadPool(int coreSize, int queueSize) {
+        queue = new ArrayBlockingQueue<Runnable>(queueSize);
+        this.coreSize = coreSize;
+    }
+
+    public void execute(Runnable task) {
+        synchronized (workers) {
+            if(workers.size() < coreSize) {
+                //当核心线程没满，交给work对象执行线程任务
+                Worker worker = new Worker(task);
+                workers.add(worker);
+                worker.start();
+            } else {
+                queue.add(task);
+            }
+        }
+    }
+
+    class Worker extends Thread {
+        private Runnable task;
+        public Worker(Runnable task) {
+            this.task = task;
+        }
+        @Override
+        public void run() {
+            //当任务不为空，则执行当前任务，任务为空，则从队列获取任务
+            while (task != null || (task = queue.poll()) != null ) {
+                try {
+                    task.run();
+                    task = null;
+                }catch (Exception e) {
+
+                }
+            }
+        }
+    }
+}
+```
