@@ -3,75 +3,15 @@
 - 单核CPU下，多线程并不能实际的提高程序运行的效率，但是能够使不同的线程轮询使用cpu
 - 多核下，可以并行的执行，可以提高效率
 
-# 线程的创建
 
-1. 直接继承Thread的方式
 
-```java
-public static void main(String[] args) {
-    new MyThread().start();
-    log.debug("主线程运行结束...");
-}
 
-static class MyThread extends Thread {
-    @Override
-    public void run() {
-        log.debug("线程运行中....");
-    }
-}
-```
 
-2. 使用Runnable接口的方式创建（建议使用）
 
-```java
-public static void main(String[] args) {
-    Runnable runnable = new Runnable() {
-        @Override
-        public void run() {
-            log.debug("线程运行中....");
-        }
-    };
-    new Thread(runnable).start();
-    log.debug("主线程运行中.....");
-}
-```
 
-- Thread 方式和Runnable的方式原理
 
-Runable方式中，将Runable的实现类赋值了target
 
-```java
-this.target = target;
-```
 
-最终在run方法中，可以看到，执行的是Runnable的实现的方法
-
-```java
-@Override
-public void run() {
-    if (target != null) {
-        target.run();
-    }
-}
-```
-
-Thread 方式中，执行的是子类的run方法，也就是我们重写的方法，所以两种方式原理是一样的
-
-3. future模式,future模式能够阻塞的等待异步线程的结果，他要配合Callable的方式
-
-```java
-FutureTask<Integer> futureTask = new FutureTask<>(new Callable<Integer>() {
-    @Override
-    public Integer call() throws Exception {
-        log.debug("future执行中.....");
-        Thread.sleep(1000);
-        return 1000;
-    }
-});
-new Thread(futureTask).start();
-log.debug("main 线程执行中.....");
-log.debug("获取到future的结果：{}", futureTask.get());
-```
 
 # 线程切换
 

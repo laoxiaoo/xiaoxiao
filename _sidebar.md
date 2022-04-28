@@ -10,8 +10,9 @@
     	* [Api](/java/base/api/api)
 	* [并发编程]
     	* [基础] (/java/base/concurrent/1-base)
-    	* [synchronized] (/java/base/concurrent/2-synchronized)
-    	* [线程池] (/java/base/concurrent/3-threadpool)
+    	* [线程常见方法] (/java/base/concurrent/2-method)
+    	* [synchronized] (/java/base/concurrent/3-synchronized)
+    	* [线程池] (/java/base/concurrent/4-threadpool)
 	* [canal](/java/tool/canal)
 * Spring
 	* [Spring基础](java/spring/base.md)
