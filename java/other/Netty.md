@@ -49,79 +49,9 @@ while (true) {
 
 - NIO server
 
-## 多路复用
-
-### 服务器端
-
-ServerSocketChannel：负责监听客户端连接
-SocketChannel：负责读写操作
-
-- selector.select(1000):如果没有调用socketChannel.accept()/channel.read(buffer)(**buffer没有可读的时候**)/ key.cancel()方法，它会任务事件还未处理，不进行阻塞
-- 为什么要调用keys.remove():因为每次有时间发生，都会往keys里面添加，但是它不会主动删除事件
-- 当调用socketChannel.accept()时，他会把他和他关联的selector的key的事件标记为已处理，处理后，无法获取当前关联的channel了
-- 客户端正常的端口和异常断开，都会产生读事件，这时，我们需要调用key.cancel()方法来进行处理
 
 
 
-
-
-### 客户端
-
-```java
-public static void main(String[] args) throws Exception {
-    //打开选择器
-    Selector selector = Selector.open();
-    //打开套字接通道
-    SocketChannel channel = SocketChannel.open();
-    //设置非阻塞
-    channel.configureBlocking(false);
-    //注册通道，设置为链接就绪
-    channel.register(selector, SelectionKey.OP_CONNECT);
-    //绑定IP，端口
-    if(!channel.connect(new InetSocketAddress("127.0.0.1", 7070))){
-        while (!channel.finishConnect()) {
-            System.out.println("客户端还未连接，不会阻塞，可以做其他事");
-        }
-    }
-    ByteBuffer byteBuffer = ByteBuffer.wrap("hello, 老肖".getBytes());
-    channel.write(byteBuffer);
-    System.out.println("写入完毕");
-}
-```
-
-### 边界值处理问题
-
-- 上述代码有编辑值处理问题
-  - 如：如果客户端发送的字节超过1024，则服务器端需要分多次接收，这时，则会产生拆包黏包的问题
-- 解决方案
-
-1. 服务器端和客户端都约定一个长度，如果超过这个长度，则做两次发送
-   1. 弊端：如果数据不超过这个预定长度，则每次都会浪费空间
-2. 按分隔符拆分，每一段结束，都给定一个特殊的分隔符，服务器端按照这个特定的分隔符来进行解析
-   1. 如： hello word \n 你好\n
-   2. 弊端：效率低，每次都要一次一次的去寻找分隔符
-3. 没段字符分为两段：头部和数据部，头部标记数据部的长度
-   1. 如： 5bytehello  2bytehi
-
-### 事件的附件
-
-- 可以注意到，在注册事件时，我们造了一个bytebuffer,这个buffer是与当前事件关联的
-
-```java
-socketChannelRead.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
-```
-
-- 如果事件没有读取完，下一次读取，可以对这个bytebuffer进行重新的扩容处理，如：
-
-```java
-key.attach(ByteBuffer.allocate(2048))
-```
-
-- 获取附件的内容
-
-```java
-key.attachment()
-```
 
 ## NIO和BIO比较
 
@@ -129,10 +59,7 @@ key.attachment()
 
 # NIO多线程版
 
-- boss线程只处理客户端的accept事件
-- 当有读/写事件发生时，交给work线程池处理（一个work线程表示一个selectorkey事件集合）
 
-![](../../image/java/netty/20210615165848.png)
 
 # AIO
 

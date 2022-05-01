@@ -361,7 +361,7 @@ hello\nworld\nzhan
 gsang\n
 ```
 
-# NIO编程
+# NIO编程（单线程版）
 
 ## 无Selector示例
 
@@ -387,7 +387,7 @@ try (ServerSocketChannel socketChannel = ServerSocketChannel.open();) {
 }
 ```
 
-## 非阻塞模式
+## <span id = "fzsio">非阻塞模式</span>
 
 *socketChannel.configureBlocking(false)*将模式设置为非阻塞
 
@@ -416,7 +416,7 @@ try (ServerSocketChannel socketChannel = ServerSocketChannel.open();) {
 }
 ```
 
-## Selector版本
+## <span id="dlfy">Selector版本</span>
 
 ### 服务器端
 
@@ -432,13 +432,15 @@ try (ServerSocketChannel socketChannel = ServerSocketChannel.open();) {
 
 *key.cancel()*： 如果selector不去处理事件，则下一次**selector.select**就不会阻塞，认为上一次事件没有执行
 
+`源码地址：`：com.xiao.nio.NIOServer
+
 ```java
 ServerSocketChannel socketChannel = ServerSocketChannel.open();
-Selector selector = Selector.open();
 //绑定一个服务器监听端口
 socketChannel.bind(new InetSocketAddress(7070));
 //设置为非阻塞
 socketChannel.configureBlocking(false);
+Selector selector = Selector.open();
 //将selector与channel关联
 //SelectionKey: 之后发生的事件都集中这里
 SelectionKey sscKey = socketChannel.register(selector, 0, null);
@@ -499,7 +501,358 @@ while (true) {
 1. 客户端异常断开，则需要catch掉
 2. 如果客户端正常断开int i = channel.read(buffer); **i == -1**
 
-# WebSocket
+> 消息边界问题
 
-1. 基于TCP的通信协议
-2. WebSocket是双向通信协议，模拟Socket协议，可以双向发送或接受信息 
+> > 上述代码有编辑值处理问题
+
+- 如：如果客户端发送的字节超过1024（buffer的大小），则服务器端需要分多次接收，这时，则会产生拆包黏包的问题
+
+> > 解决方案
+
+1. 服务器端和客户端都约定一个长度，如果超过这个长度，则做两次发送
+
+- 弊端：如果数据不超过这个预定长度，则每次都会浪费空间
+
+2. 按分隔符拆分，每一段结束，都给定一个特殊的分隔符，服务器端按照这个特定的分隔符来进行解析
+
+- 如： hello word \n 你好\n
+- 弊端：效率低，每次都要一次一次的去寻找分隔符
+
+3. 每段字符分为两段：头部和数据部，头部标记数据部的长度
+
+- 如： 5bytehello(前五个字符表示后面字符的长度)
+
+> 事件附件
+
+1. 从上面可以看出，如果我们的字符串超过长度，则可以多次读，但是，此时buffer又是一个局部变量，如果使用全局变量，则会导致每个channel都关联一个buffer
+2. 使用事件附件可以解决**将当前buffer关联channel**，从此，这个buffer随着channel就关联到这个selectorkey
+
+- 注册附件
+
+```java
+socketChannelRead.register(selector, SelectionKey.OP_READ, ByteBuffer.allocate(1024));
+```
+
+- 如果事件没有读取完，下一次读取，可以对这个bytebuffer进行重新的扩容处理(`让key关联新的buffer`)
+
+```java
+//....读取buffer的内容，发现没有换行符(即这段字符串字符还没有读完，当前buffer容量太小)
+//当压缩之后发现buffer没有读完
+buffer.capacity();
+if(buffer.position() == buffer.limit()) {
+    ByteBuffer bufferTemp = ByteBuffer.allocate(buffer.capacity() * 2);
+    //将老的buffer设置到新的buffer中
+    bufferTemp.put(buffer);
+    key.attach(bufferTemp);
+}
+```
+
+- 获取附件内容
+
+```java
+key.attachment()
+```
+
+> ByteBuffer大小分配
+
+- 每个channel都需要记录可能被切分的消息，因为ByteBuffer 不能被多个channel共同使用，因此需要为每个channel维护一个独立的ByteBuffer
+
+- ByteBuffer不能太大，比如一个ByteBuffer 1Mb的话，要支持百万连接就要1Tb内存，因此需要设计大小可变的ByteBuffer
+  - 一种思路是首先分配一个较小的buffer，例如4k，如果发现数据不够，再分配8k的buffer，将4kbuffer内容拷贝至8k buffer，优点是消息连续容易处理，缺点是数据拷贝耗费性能，参考实现
+  - 另一种思路是用多个数组组成buffer，一个数组不够，把多出来的内容写入新的数组，与前面的区别是消息存储不连续解析复杂，优点是避免了拷贝引起的性能损耗
+
+> 一次写入数据过多的问题
+>
+> `因为缓冲区的大小是有限的，所以，推送的写入数据可能会分很多批次推送`
+
+- 错误示例
+
+可以看到*buffer.hasRemaining()*方法一直在循环，占用着线程，知道数据完全发送结束，这样会造成某个channel一直阻塞
+
+```java
+if(key.isAcceptable()) {
+    SocketChannel socketChannel = ssc.accept();
+    socketChannel.configureBlocking(Boolean.FALSE);
+    //如果是连接事件,造出大量的数据，模拟发送客户端
+    StringBuffer sb = new StringBuffer();
+    for (int i=0; i<3000000; i++) {
+        sb.append("a");
+    }
+    ByteBuffer buffer = Charset.defaultCharset().encode(sb.toString());
+    //只要缓存区还有数据，就一直发送
+    while(buffer.hasRemaining()) {
+        int write = socketChannel.write(buffer);
+        log.info("发送数据：{}", write);
+    }
+}
+```
+
+- 解决方式
+
+当发送大量的数据的时候，我们让ServerSocketChannel再关注一个写事件
+
+`可以看到，当写不完的时候，当前key关注一个可写事件，下次循环这个事件的时候，继续写`不让一个线程一直阻塞这里
+
+```java
+SelectionKey key = keyIterator.next();
+keyIterator.remove();
+if(key.isAcceptable()) {
+    SocketChannel socketChannel = ssc.accept();
+    socketChannel.configureBlocking(Boolean.FALSE);
+    SelectionKey sk = socketChannel.register(selector, SelectionKey.OP_READ);
+    //如果是连接事件,造出大量的数据，模拟发送客户端
+    StringBuffer sb = new StringBuffer();
+    for (int i=0; i<30000000; i++) {
+        sb.append("a");
+    }
+    ByteBuffer buffer = Charset.defaultCharset().encode(sb.toString());
+    /*//只要缓存区还有数据，就一直发送
+    while(buffer.hasRemaining()) {
+        int write = socketChannel.write(buffer);
+        log.info("发送数据：{}", write);
+    }*/
+    int i = socketChannel.write(buffer);
+    log.info("第一次发送数据：{}", i);
+    if(buffer.hasRemaining()) {
+        //如果还有没有写完的数据，则关注一个可写事件，用于下次处理
+        //这里的意思：同时关注原来关注的事件和可写事件
+        sk.interestOps(sk.interestOps() + SelectionKey.OP_WRITE);
+        //并且将当前没发完的保存起来
+        sk.attach(buffer);
+    }
+}else if(key.isWritable()) {
+    //如果是可写事件，继续发送数据
+
+    SocketChannel channel = (SocketChannel)key.channel();
+    //取出上一次可写事件的key关联的数据
+    ByteBuffer byteBuffer = (ByteBuffer) key.attachment();
+    int i = channel.write(byteBuffer);
+    log.info("再次写入数据： {}", i);
+    if(!byteBuffer.hasRemaining()) {
+        //没有数据了则清空，避免内存泄露
+        key.attach(null);
+        //同时不再关注可写事件
+        key.interestOps(key.interestOps() - SelectionKey.OP_WRITE);
+    }
+}
+```
+
+### 客户端
+
+```java
+public static void main(String[] args) throws Exception {
+    //打开选择器
+    Selector selector = Selector.open();
+    //打开套字接通道
+    SocketChannel channel = SocketChannel.open();
+    //设置非阻塞
+    channel.configureBlocking(false);
+    //注册通道，设置为链接就绪
+    channel.register(selector, SelectionKey.OP_CONNECT);
+    //绑定IP，端口
+    if(!channel.connect(new InetSocketAddress("127.0.0.1", 7070))){
+        while (!channel.finishConnect()) {
+            System.out.println("客户端还未连接，不会阻塞，可以做其他事");
+        }
+    }
+    ByteBuffer byteBuffer = ByteBuffer.wrap("hello, 老肖".getBytes());
+    channel.write(byteBuffer);
+    System.out.println("写入完毕");
+}
+```
+
+# 多线程版本
+
+## 设计
+
+1. boss线程只处理客户端的accept事件（关注建立连接的事件）
+2. 当有读/写事件发生时，交给work线程池处理（一个work线程表示一个selectorkey事件集合）
+
+![](image/nio/20210615165848.png)
+
+## 代码示例
+
+> Work类构造
+
+*selector*: 一个work对应一个selector，用于关注当前work线程的事件
+
+*thread*: 当前用于启动事件线程的对象
+
+*isStart*：标记当前work有没有被使用过，如果是新使用，则启动新的线程，否则，只是关联新的可读事件
+
+*queue*： 用与在work线程中关联boss的可读事件
+
+**register方法中，为什么要执行selector.wakeup()方法？**
+
+`因为此处不像单线程那样，第一次客户建立连接后，有连接事件，所以此处的selector.wakeup()就是在boss方法中唤醒阻塞中的selector.select()方法`
+
+**为什么要在selector.select()后面读取queue的方法执行关联事件？**
+
+`因为在selector.select()方法会阻塞，如果不关注事件，则会一直执行，所以结束阻塞后，需要在同一个线程中顺序关注一个可读事件`
+
+> 代码@see:com.xiao.nio.nio.ThreadServer
+
+```java
+public class ThreadServer {
+
+    public static void main(String[] args) throws IOException {
+        ServerSocketChannel ssc = ServerSocketChannel.open();
+        ssc.bind(new InetSocketAddress(80));
+        ssc.configureBlocking(Boolean.FALSE);
+        Selector selector = Selector.open();
+        ssc.register(selector, SelectionKey.OP_ACCEPT);
+        Worker worker = new Worker("work-1");
+        while (true) {
+            selector.select();
+            Iterator<SelectionKey> keyIterator = selector.selectedKeys().iterator();
+            while (keyIterator.hasNext()) {
+                SelectionKey key = keyIterator.next();
+                keyIterator.remove();
+                if(key.isAcceptable()) {
+                    SocketChannel socketChannel = ssc.accept();
+                    socketChannel.configureBlocking(Boolean.FALSE);
+                    worker.register(socketChannel);
+                }
+            }
+        }
+    }
+
+    static class Worker implements Runnable {
+        private String name;
+        //一个线程对应一个selector，一个selector关联多个key
+        private Selector selector;
+        private Thread thread;
+        //是否开始
+        private volatile boolean isStart = false;
+
+        private ConcurrentLinkedQueue<Supplier> queue = new ConcurrentLinkedQueue();
+
+        public Worker(String name) {
+            this.name = name;
+        }
+
+        public void register(SocketChannel sc) throws IOException {
+            if(!isStart) {
+                selector = Selector.open();
+                thread = new Thread(this, name);
+                thread.start();
+                isStart = true;
+            }
+            queue.add(() -> {
+                SelectionKey key = null;
+                try {
+                    key = sc.register(selector, SelectionKey.OP_READ);
+                } catch (ClosedChannelException e) {
+                    e.printStackTrace();
+                }
+                return key;
+            });
+            selector.wakeup();
+        }
+
+        @Override
+        public void run() {
+            while (true) {
+                try{
+                    selector.select();
+                    Supplier supplier = queue.poll();
+                    if(Objects.nonNull(supplier)) {
+                        supplier.get();
+                    }
+                    Iterator<SelectionKey> keyIterator = selector.selectedKeys().iterator();
+                    if(keyIterator.hasNext()) {
+                        SelectionKey key = keyIterator.next();
+                        keyIterator.remove();
+                        try{
+                            if(key.isReadable()) {
+                                SocketChannel socketChannel = (SocketChannel) key.channel();
+                                ByteBuffer buffer = ByteBuffer.allocate(1024);
+                                int read = socketChannel.read(buffer);
+                                log.info("read data: {}", Charset.defaultCharset().decode(buffer));
+                                if(read == -1) {
+                                    key.cancel();
+                                }
+                            }
+                        }catch (Exception e) {
+                            e.printStackTrace();
+                            key.cancel();
+                        }
+                    }
+                }catch (Exception e) {
+                    e.printStackTrace();
+                }
+            }
+        }
+    }
+}
+```
+
+# IO模型
+
+> 阻塞非阻塞
+
+*阻塞IO*：从read到获取数据是一个阻塞过程，用户线程是被阻塞的
+
+```mermaid
+sequenceDiagram
+
+participant u1 as 用户程序空间
+participant l1 as Linux内核空间
+
+u1 ->> l1:read
+l1 -->>+l1:等待数据
+l1 -->>l1:复制数据
+l1 ->> u1:数据
+```
+
+*非阻塞IO*：用户在read数据时，发现没有数据，立马返回，然后再去尝试获取[跳转示例](#fzsio)
+
+*多路复用*：用户在等待数据是阻塞的，用户在读取数据是阻塞的,[代码示例](#dlfy)
+
+```mermaid
+sequenceDiagram
+
+participant u1 as 用户程序空间
+participant l1 as Linux内核空间
+
+u1 ->> l1:select
+l1 -->>l1:等待数据
+l1 ->> u1:得到事件
+u1 ->> l1:read
+l1 -->>l1:复制数据
+l1 ->> u1:数据
+```
+
+> 同步与异步
+
+*同步*：线程自己去获取结果
+
+*异步*：当前线程申请结果，另一个线程推送结果（`回调方法的方式`）
+
+# 零拷贝问题
+
+> 传统IO的拷贝流程
+>
+> **四次拷贝三次切换**
+
+1. `由用户态切换到内核态`：由磁盘拷贝到内核缓冲区
+2. `内核态切换到用户态`：由内核缓冲区拷贝到用户缓冲区， 由用户缓冲区拷贝到socket缓冲区
+3. `用户态切换到内核态`:由socket缓冲区拷贝到网卡
+
+![20210615203422](image/1-nio/20210615203422.png)
+
+> NIO优化
+>
+> `ByteBuffer.allocateDirect(10) DirectByteBuffer使用的是操作系统内存`
+
+少了内核缓冲区拷贝到用户缓冲区的过程，其他都一样
+
+> 进一步优化
+
+1. java调用transferTo方法后，要从java程序的用户态切换至内核态，使用DMA将数据读入内核缓冲区，不会使用cpu\
+2. 数据从内核缓冲区传输到socket缓冲区，cpu会参与拷贝
+3. 最后使用DMA将socket缓冲区的数据写入网卡，不会使用cpu
+
+
+
+![](image/1-nio/20210615203948.png)
