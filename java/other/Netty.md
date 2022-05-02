@@ -375,7 +375,7 @@ ctx.channel().eventLoop().schedule(() -> {
 
 - NioEventLoopGroup默认的子线程线程数是：cpu核心数*2，new NioEventLoopGroup构造方法默认使用了NettyRuntime.availableProcessors() * 2
 
-  如果构造参数有值，则使用构造参数的线程数
+  如果构造参数有值，则使用构造参数的线程数,
 
 ![](../../image/java/netty/20210613130404.png)
 
