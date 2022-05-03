@@ -57,59 +57,7 @@ while (true) {
 
 - NIO 以块的方式处理数据，BIO以流的方式处理
 
-# NIO多线程版
-
-
-
-# AIO
-
-- 异步非阻塞
-- 异步意味着，在进行读写操作时，线程不必等待结果，而是将来由操作系统来通过回调方式由另外的线程来获得结果
-
-# IO模型
-
-- 阻塞IO(如下的过程，从read到获取数据是一个阻塞过程，用户线程是被阻塞的)
-
-```mermaid
-graph LR
-用户线程 --read--> linux内核
-linux内核 --等待数据--> linux内核
-linux内核 --复制数据 --> 用户线程
-```
-
-- 非阻塞IO（用户线程发现在等待数据的过程中，是非阻塞的）
-- 多路复用
-- 异步IO:线程自己获取不到结果，由其他线程去获取结果
-
-# NIO与零拷贝
-
-## 传统IO
-
-传统IO进行了四次拷贝三次切换
-
-- 拷贝过程
-
-1. 从硬盘 经过 DMA 拷贝（**直接内存拷贝**） 到 kernel buffer （内核buferr）
-2. 从kernel buffer 经过**cpu 拷贝**到 user buffer ,比如拷贝到应用程序(这个时候我们可以对流进行修改)
-3. 从user buffer 拷贝到 socket buffer
-4. 从socket buffer 拷贝到 protocol engine 协议栈
-
-- 状态切换
-- 用户态---》 内核状 （或者叫着 用户上下文----》 内核上下文）
-- 内核状---》 用户状
-- 用户状---》 内核状
-
-![](../../image/java/netty/20210615203422.png)
-
-## sendFile优化
-
-零拷贝指没有cpu拷贝,NIO中使用transferTo操作
-
-![](../../image/java/netty/20210615203948.png)
-
-1. DMA拷贝，将数据从硬盘拷贝到kernel buffer
-2. DMA拷贝，将数据从kernel buffer拷贝到protocol engine
-3. cpu copy 其实拷贝的是一些基本的信息（数据量少）
+# NIO多线程版 
 
 # Netty介绍
 
@@ -625,32 +573,11 @@ new ServerBootstrap()
         }).bind(80);
 ```
 
-- 如图
 
-![](../../image/java/netty/0041.png)
 
-### handler切换源码
 
-- io.netty.channel.AbstractChannelHandlerContext#invokeChannelRead(io.netty.channel.AbstractChannelHandlerContext, java.lang.Object)
 
-```java
-//获取msg信息
-final Object m = next.pipeline.touch(ObjectUtil.checkNotNull(msg, "msg"), next);
-//获取下一个handler
-EventExecutor executor = next.executor();
-//判断是否是同一个执行eventloop
-if (executor.inEventLoop()) {
-    next.invokeChannelRead(m);
-} else {
-    //不是，调用的代码封装为一个任务对象，由下一个 handler 的线程来调用
-    executor.execute(new Runnable() {
-        @Override
-        public void run() {
-            next.invokeChannelRead(m);
-        }
-    });
-}
-```
+
 
 ## 异步模型
 
@@ -701,92 +628,21 @@ future.addListener(new ChannelFutureListener() {
 });
 ```
 
-### Channel关闭
+1. 
 
-1. 通过监听的方式获取关闭事件
 
-```java
-Channel channel = future.sync().channel();
-new Thread(() -> {
-    Scanner scanner = new Scanner(System.in);
-    String next = scanner.next();
-    if("q".equals(next)) {
-        channel.close();
-    }
-}).start();
-ChannelFuture channelFuture = channel.closeFuture();
-channelFuture.addListener(closeFuture -> {
-    log.debug("channel 已关闭..");
-});
-```
 
-2. 通过 channelFuture.syn的方式
 
-### 优雅的停止EventLoop组
 
-```java
-loopGroup.shutdownGracefully();
-```
 
-### 异步的好处
 
-- 异步并没有缩短响应时间，反而有所增加
-- 合理进行任务拆分，也是利用异步的关键
-- 它提升的是单位时间内，处理的连接数的提升（吞吐量）
 
-## Future & Promise
 
-###   Jdk Future
 
-```java
-ExecutorService threadPool = Executors.newFixedThreadPool(2);
-Future<Integer> future = threadPool.submit(() -> {
-    log.debug("进入future中...");
-    Thread.sleep(1000);
-    return 10;
-});
-log.debug("准备获取结果...");
-Integer integer = future.get();
-log.debug("获取到结果...");
-```
 
-- future.get():异步阻塞的获取结果
 
-### Netty Future
 
-```java
-DefaultEventLoopGroup loopGroup = new DefaultEventLoopGroup();
-EventLoop eventLoop = loopGroup.next();
-Future<Integer> future = eventLoop.submit(() -> {
-    log.debug("进入future中...");
-    Thread.sleep(1000);
-    return 10;
-});
-log.debug("准备获取结果...");
-log.debug("获取到结果 {}...", log.getName());
-```
 
-- getNow:获取任务结果，非阻塞，还未产生结果时返回 null  
-- await:等待任务结束，如果任务失败，不会抛异常，而是通过 isSuccess 判断  
-- sync:等待任务结束，如果任务失败，抛出异常  
-- addLinstener: 添加回调，异步接收结果  
-
-### Promise
-
-- 它相当于一个容器，一个线程往这个里面设置数据，另一个线程从中取数据
-
-```java
-EventLoop eventLoop = new DefaultEventLoopGroup().next();
-Promise<Integer> promise = new DefaultPromise<>(eventLoop);
-new Thread(() -> {
-    log.debug("开始计算结果设置数据进入promise");
-    promise.setSuccess(100);
-}).start();
-log.debug("获取结果中....");
-log.debug("获取到结果：{} ...", promise.get());
-```
-
-- setFailure:设置失败结果
 
 # ByteBuf
 
@@ -819,12 +675,7 @@ ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(10);
 
 - 4.1 之前，池化功能还不成熟，默认是非池化实现
 
-## 结构
 
-- bytebuf由四个部分组成，它读写分为两个指针，这样就不用flip了
-- 最开始读写指针都在 0 位置
-
-![](../../image/java/netty/0010.png)
 
 ## 扩容
 
@@ -841,15 +692,9 @@ log(buffer);
 * 如果写入后数据大小超过 512，则选择下一个 2^n，例如写入后大小为 513，则扩容后 capacity 是 2^10=1024（2^9=512 已经不够了）
 * 扩容不能超过 max capacity 会报错
 
-## 内存回收
 
-- UnpooledHeapByteBuf 使用的是 JVM 内存，只需等 GC 回收内存即可
-- UnpooledDirectByteBuf 使用的就是直接内存了，需要特殊的方法来回收内存
-- PooledByteBuf 和它的子类使用了池化机制，需要更复杂的规则来回收内存
 
-Netty 这里采用了**引用计数法**来控制回收内存，每个 ByteBuf 都实现了 ReferenceCounted 接口
 
-- netty中，有head和tail对ByteBuf进行回收，如果中间有没传到这两个hanlder的bytebuf，则需要自己进行回收
 
 ## Unpooled 
 

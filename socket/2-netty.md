@@ -178,7 +178,7 @@ if (executor.inEventLoop()) {
 
 ## Channel
 
-**主要作用**
+> **主要作用**
 
 <b id="blue">close()</b>：可以用来关闭channel
 
@@ -189,3 +189,344 @@ if (executor.inEventLoop()) {
 <b id="blue">write(Object msg, ChannelPromise promise)</b>： 将数据写入
 
 <b id="blue">writeAndFlush(Object msg)</b>：将数据写入并刷出
+
+> ChannelFuture的连接问题
+
+**为什么调用connect后，需要调用io.netty.channel.ChannelFuture#sync方法？**
+
+1. 因为<b id="blue">connect</b>是main线程调用，但真正执行连接的是NioEventLoop的线程去执行的，如果不调用sync就会不等连接完，就结束了当前main线程
+
+**ChannelFuture处理连接的方式**
+
+1. 同步的方式
+
+`一直等待连接建立完成才执行下面的方法`
+
+```java
+channelFuture.sync()
+        .channel()
+        .writeAndFlush("hello word");
+```
+
+2. 监听回调的方式
+
+`等到连接建立完成，调用`<b id="blue">operationComplete</b>`方法`
+
+```java
+channelFuture.addListener(new ChannelFutureListener() {
+    @Override
+    public void operationComplete(ChannelFuture future) throws Exception {
+        future.channel().writeAndFlush("hello word");
+    }
+});
+```
+
+> ChannelFuture关闭的问题
+
+1. 通过监听的方式获取关闭事件,我们可以在监听方法里执行关闭后的一些善后操作
+
+```java
+ChannelFuture channelFuture = channel.closeFuture();
+channelFuture.addListener(closeFuture -> {
+    log.debug("channel 已关闭..");
+});
+```
+
+2. 通过同步的方式（<b id="blue"> channelFuture.syn</b>）关闭
+
+```java
+ChannelFuture channelFuture = channel.closeFuture();
+channelFuture.syn()
+//执行关闭的一些操作.....
+```
+
+> 优雅的结束所有线程
+
+*NioEventLoopGroup#shutdownGracefully*方法能够优雅的结束<b id="blue">NioEventLoopGroup</b>里的线程
+
+```java
+NioEventLoopGroup group = new NioEventLoopGroup();
+        ChannelFuture channelFuture = new Bootstrap()
+                .group(group)
+//....执行代码
+            
+//关闭后优雅的结束            
+channelFuture.addListener(new ChannelFutureListener() {
+    @Override
+    public void operationComplete(ChannelFuture future) throws Exception {
+        future.channel().writeAndFlush("hello word");
+        future.channel().close().addListener(close -> {
+            group.shutdownGracefully();
+        });
+    }
+});   
+```
+
+## Future & Promise
+
+由图可见，netty中的future和promise是jdk<b id="gray">future</b>的升级版本
+
+![image-20220503145449486](image/2-netty/image-20220503145449486.png)
+
+> Jdk Future
+>
+> **只能同步等待异步结束**
+
+通过*future.get()*方式获取异步的结果
+
+```java
+ExecutorService threadPool = Executors.newFixedThreadPool(2);
+Future<Integer> future = threadPool.submit(() -> {
+    log.debug("进入future中...");
+    Thread.sleep(1000);
+    return 10;
+});
+log.debug("准备获取结果...");
+Integer integer = future.get();
+log.debug("获取到结果...");
+```
+
+> Netty Futrue
+
+*getNow*：获取任务结果，非阻塞，还未产生结果时返回 null  
+
+*await*:等待任务结束，如果任务失败，不会抛异常，而是通过 isSuccess 判断  
+
+*sync*:等待任务结束，如果任务失败，抛出异常  
+
+*addLinstener*: 添加回调，异步接收结果  
+
+```java
+DefaultEventLoopGroup loopGroup = new DefaultEventLoopGroup();
+EventLoop eventLoop = loopGroup.next();
+Future<Integer> future = eventLoop.submit(() -> {
+    log.debug("进入future中...");
+    Thread.sleep(1000);
+    return 10;
+});
+log.debug("准备获取结果...");
+log.debug("获取到结果 {}...", future.get());
+future.addListener(future1 -> {
+    log.debug("异步的获取结果:{}", future1.getNow());
+});
+```
+
+> Promise
+>
+> **两个线程间交换结果的容器**
+
+`前面两个future都是通过线程池返回的，而promise可以自己创建`
+
+在RPC框架专供可以用到
+
+```java
+EventLoop eventLoop = new DefaultEventLoopGroup().next();
+Promise<Integer> promise = new DefaultPromise<>(eventLoop);
+new Thread(() -> {
+    log.debug("开始计算结果设置数据进入promise");
+    promise.setSuccess(100);
+}).start();
+log.debug("获取结果中....");
+log.debug("获取到结果：{} ...", promise.get());
+```
+
+## Handler&PipeLine
+
+ChannelHandler一般分为两种，
+
+1. <b id="blue">ChannelInboundHandler</b>入站handler：主要用来读取客户端数据，写回结果
+
+2. <b id="blue">ChannelOutboundHandler</b>出站handler：主要对写回结果进行加工
+
+> handler的顺序问题
+
+- 此处打印的日志  h1  h2  h4  h3，由此可见队列的顺序为  `head -> h1 -> h2 -> tail -> h4 -> h3 `
+- <b id="gray">pipeline</b>的链表是一个双向链表，*Inbound*从*head*往后面执行<b id="blue">channelRead</b>方法，而 *Outbound*则从*tail*往前面执行<b id="blue">write</b>方法
+
+![image-20220503220555603](image/2-netty/image-20220503220555603.png)
+
+- *Outbound*元素想要被执行，必须在*inbound*中写出数据，也就是调用*ch.writeAndFlush*方法
+- *super.channelRead*  ：调用下一个inboundhandler，如果不调用，*inbound*调用链就会**断开**
+
+```java
+.childHandler(new ChannelInitializer<NioSocketChannel>() {
+    @Override
+    protected void initChannel(NioSocketChannel ch) throws Exception {
+        ch.pipeline().addLast("h1",new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                log.debug("h1");
+                super.channelRead(ctx, msg);
+            }
+        });
+        ch.pipeline().addLast("h2",new ChannelInboundHandlerAdapter() {
+            @Override
+            public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+                log.debug("h2");
+                super.channelRead(ctx, msg);
+                ch.writeAndFlush(ctx.alloc().buffer().writeBytes("h2".getBytes(StandardCharsets.UTF_8)));
+            }
+        });
+        ch.pipeline().addLast( "h3", new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                log.debug("h3");
+                super.write(ctx, msg, promise);
+            }
+        });
+        ch.pipeline().addLast( "h4", new ChannelOutboundHandlerAdapter() {
+            @Override
+            public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+                log.debug("h4");
+                super.write(ctx, msg, promise);
+            }
+        });
+    }
+})
+```
+
+>  NioSocketChannel#writeAndFlush和ChannelHandlerContext#writeAndFlush区别
+
+1. *NioSocketChannel#writeAndFlush*:表示从tail往前找对应的*OutboundHandler*进行执行
+2. *ChannelHandlerContext#writeAndFlush*表示从当前节点往前找*OutboundHandler*执行
+   - 如： `head -> h1  -> h3 -> h2 -> h4 -> tail`,这个调用链，h4和h3是*OutboundHandler*，如果在h2调用*ChannelHandlerContext#writeAndFlush*，则只有h3会执行
+
+> Handler的顺序测试
+
+在开发中，启动服务端很耗时，可以借助netty提供的工具来测试handler的出站和入站
+
+```java
+ChannelInboundHandlerAdapter i1 = new ChannelInboundHandlerAdapter() {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        log.debug("h1");
+        super.channelRead(ctx, msg);
+    }
+};
+ChannelInboundHandlerAdapter i2 = new ChannelInboundHandlerAdapter() {
+    @Override
+    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+        log.debug("h2");
+    }
+};
+ChannelOutboundHandlerAdapter o3 = new ChannelOutboundHandlerAdapter() {
+    @Override
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        log.debug("h3");
+        super.write(ctx, msg, promise);
+    }
+};
+
+ChannelOutboundHandlerAdapter o4 = new ChannelOutboundHandlerAdapter() {
+    @Override
+    public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
+        log.debug("h4");
+        super.write(ctx, msg, promise);
+    }
+};
+
+EmbeddedChannel embeddedChannel = new EmbeddedChannel(i1, i2, o3, o4);
+//测试入站操作
+embeddedChannel.writeInbound(ByteBufAllocator.DEFAULT.buffer().writeBytes("hello".getBytes()));
+//测试出站
+embeddedChannel.writeOutbound(ByteBufAllocator.DEFAULT.buffer().writeBytes("hello".getBytes()));
+```
+
+# ByteBuf
+
+## 创建
+
+> 创建
+>
+> **ByteBuf的容量是可以动态扩容的**
+
+```java
+//创建初始容量为10
+ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(10);
+```
+
+> 直接内存 vs 堆内存
+>
+> **堆内存易分配读写慢**
+>
+> **直接内存创建和销毁的代价昂贵，但读写性能高**
+
+```java
+ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer(10);
+//默认使用的直接内存
+ByteBuf buffer = ByteBufAllocator.DEFAULT.directBuffer(10);
+```
+
+## 组成
+
+*max capacity*: 最大容量，到时候扩容的上限
+
+*capacity*: 容量
+
+*read index*: 读指针
+
+*write index*: 写指针
+
+`bytebuf由四个部分组成，它读写分为两个指针，这样就不用flip了`
+
+`最开始读写指针都在 0 位置`
+
+![](image/2-netty/0010.png)
+
+## 内存回收
+
+1. UnpooledHeapByteBuf 使用的是 JVM 内存，只需等 GC 回收内存即可
+
+2. UnpooledDirectByteBuf 使用的就是直接内存了，需要特殊的方法来回收内存
+
+3. PooledByteBuf 和它的子类使用了池化机制，需要更复杂的规则来回收内存
+
+Netty 这里采用了**引用计数法**来控制回收内存，每个 ByteBuf 都实现了 <b id="blue">ReferenceCounted </b>接口
+
+> 回收机制
+
+1. 每个 ByteBuf对象的初始计数为1
+2. 调用<b id="gray">release</b>方法计数减1，如果计数为0，ByteBuf内存被回收
+3. 调用<b id="gray">retain</b>方法计数加1，表示调用者没用完之前，其它handler即使调用了release 也不会造成回收
+4. 当计数为0时，底层内存会被回收，这时即使ByteBuf对象还在，其各个方法均无法正常使用
+5. 基本规则是，谁是**最后使用者**，谁负责release
+6. netty中，有*head*和*tail*对ByteBuf进行回收，`如果中间有没传到这两个hanlder的bytebuf，则需要自己进行回收`
+   1. (比如：head -> h1->h2->h3->h4)
+   2. h2的时候将bytebuf转换为字符串，并且传递到h3，此时bytebuf没有传递下去
+   3. 则h2是最后一个使用bytebuf的节点，则他需要回收这个bytebuf
+
+> tail 释放的源码
+>
+> `tail处理入站的消息释放`
+>
+> io.netty.channel.DefaultChannelPipeline#onUnhandledInboundMessage(java.lang.Object)
+
+```java
+protected void onUnhandledInboundMessage(Object msg) {
+    try {
+        logger.debug(
+                "Discarded inbound message {} that reached at the tail of the pipeline. " +
+                        "Please check your pipeline configuration.", msg);
+    } finally {
+        ReferenceCountUtil.release(msg);
+    }
+}
+```
+
+> head释放源码
+>
+> `head处理出站的消息释放`
+>
+> io.netty.channel.AbstractChannel.AbstractUnsafe#write
+
+```java
+public final void write(Object msg, ChannelPromise promise) {
+    assertEventLoop();
+
+    ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
+    if (outboundBuffer == null) {
+        safeSetFailure(promise, newClosedChannelException(initialCloseCause));
+        ReferenceCountUtil.release(msg);
+        return;
+    }
+```
