@@ -432,6 +432,21 @@ embeddedChannel.writeInbound(ByteBufAllocator.DEFAULT.buffer().writeBytes("hello
 embeddedChannel.writeOutbound(ByteBufAllocator.DEFAULT.buffer().writeBytes("hello".getBytes()));
 ```
 
+>  SimpleChannelInboundHandler<I>
+>
+> **只会对特定泛型的类型进行执行**
+
+如：只有上游传输的是Student的对象，才会调用<b id="blue">channelRead0</b>方法
+
+```java
+ch.pipeline().addLast("I2",new SimpleChannelInboundHandler<Student>() {
+    @Override
+    protected void channelRead0(ChannelHandlerContext ctx, Student msg) throws Exception {
+
+    }
+});
+```
+
 # ByteBuf
 
 ## 创建
@@ -530,3 +545,65 @@ public final void write(Object msg, ChannelPromise promise) {
         return;
     }
 ```
+
+## Netty中的零拷贝
+
+> slice
+
+但某个ByteBuf中的内容我们想取出一部分的时候，一般的方法我们会采取复制的方式
+
+但是netty提供了一个<b id="blue">slice</b>方法，直接对ByteBuf中的内容切片，建立虚拟的指针，直接指向ByteBuf的内存，从而达到不需要复制的目的
+
+**如下**
+
+- 此时，buf1/buf2和buf是同一内存，所以，修改buf1的值会影响buf的值
+
+```java
+ByteBuf buf = ByteBufAllocator.DEFAULT.buffer(6);
+buf.writeBytes(new byte[] {'a', 'b', 'c', 'd', 'e', 'f'});
+//采用切片的方式
+ByteBuf buf1 = buf.slice(0, 3);
+ByteBuf buf2 = buf.slice(3, 3);
+```
+
+- 切片后的对象容量`不允许再添加`，也就是buf1/buf2不能扩容
+- 切片后，buf调用release回收内存会有影响
+
+`正确的方式是：每一次slice后，都自己让引用计数+1`，达到一个原则：`自己的buf自己回收`
+
+```java
+//采用切片的方式
+ByteBuf buf1 = buf.slice(0, 3);
+//引用计数+1
+buf1.retain();
+ByteBuf buf2 = buf.slice(3, 3);
+//引用计数+2
+buf2.retain();
+buf.release();
+buf1.release();
+buf2.release();
+```
+
+> duplicate
+
+就好比截取了原始ByteBuf所有内容，并且没有max capacity 的限制，也是与原始ByteBuf使用同一块底层内存，只是读写指针是独立的
+
+> CompositeByteBuf
+
+- 将小的bytebuf合并成新的bytebuf
+- 这里不会发生数据的复制
+- 这里只是逻辑上将其聚合到一起
+- <b id="blue">addComponents</b>将第一个参数设置为true，表示在聚合的过程中自动的增长写指针
+- 调用<b id="blue">addComponents</b>方法也需要考虑调用<b id="gray">retain</b>方法来进行引用计数的增加，防止被意外的release掉
+
+```java
+ByteBuf buf1 = ByteBufAllocator.DEFAULT.buffer(5);
+buf1.writeBytes(new byte[]{1, 2, 3, 4, 5});
+ByteBuf buf2 = ByteBufAllocator.DEFAULT.buffer(5);
+buf2.writeBytes(new byte[]{6, 7, 8, 9, 10});
+
+CompositeByteBuf buf3 = ByteBufAllocator.DEFAULT.compositeBuffer();
+// true 表示增加新的 ByteBuf 自动递增 write index, 否则 write index 会始终为 0
+buf3.addComponents(true, buf1, buf2);
+```
+
