@@ -124,15 +124,17 @@ public static void main(String[] args) {
 ## 要素
 
 1. 魔数，用来在第一时间判定是否是无效数据包（如：jvm字节码以cafebaby开头）
-
 2. 版本号，可以支持协议的升级
-
 3. 序列化算法，消息正文到底采用哪种序列化反序列化方式，可以由此扩展，例如：json、protobuf、hessian、jdk
-
 4. 指令类型，是登录、注册、单聊、群聊... 跟业务相关
-
 5. 请求序号，为了双工通信，提供异步能力（如：发送123，消息不一定以123这个顺序来发）
-
 6. 正文长度
-
 6. 消息正文
+
+
+
+# 标识线程安全的Handler
+
+*@Sharable*: 这个注解标识，当前handler是线程安全的（<b id="blue">LoggingHandler</b>），可以共享使用，如果不标识这个注解，表示当前handler不是线程安全的
+
+- 如果我们为了防止子类注释*@Sharable*,可以参考`io.netty.channel.ChannelHandlerAdapter#ensureNotSharable`的写法
