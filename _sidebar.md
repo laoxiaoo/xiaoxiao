@@ -1,6 +1,6 @@
 ﻿* [首页](/)
 * java
-	* [jvm]
+	* jvm
     	* [jvm基础](/java/base/jvm/1-jvm)
     	* [类加载子系统](/java/base/jvm/2-jvm)
     	* [运行时数据区](/java/base/jvm/3-jvm)
@@ -8,7 +8,7 @@
 	* [通用](/java/base/common)
 	* [java基础](/java/base/javaBase)
     	* [Api](/java/base/api/api)
-	* [并发编程]
+	* 并发编程
     	* [基础] (/java/base/concurrent/1-base)
     	* [线程常见方法] (/java/base/concurrent/2-method)
     	* [synchronized] (/java/base/concurrent/3-synchronized)
@@ -33,8 +33,11 @@
     * [NIO编程](/socket/1-nio)
     * [Netty基础](/socket/2-netty-base)
     * [Netty进阶](/socket/3-netty-advanc)
+* 缓存
+    * [缓存基础理论](cache/1-cache-base)
+    * [缓存常用框架](cache/2-cache-api)
 * 项目设计
-	* [缓存架构设计](project/cache.md)
+	
 * 其他
     * [mybatis](/java/other/mybatis.md)
 	* [MybatisPlus](/java/other/MybatisPlus.md)
