@@ -109,6 +109,10 @@ OK
 (integer) 1
 ```
 
+> 查看数据库信息 info
+
+
+
 > 清空当前数据库
 
 ```shell
@@ -116,5 +120,81 @@ OK
 OK
 127.0.0.1:6379[1]> DBSIZE
 (integer) 0
+```
+
+# 配置文件
+
+## 配置端口和ip
+
+*允许哪些ip能访问这个redis，一般学习阶段配置为0.0.0.0*
+
+```shell
+## 可以导入多个配置文件
+# include /path/to/local.conf
+# include /path/to/other.conf
+
+## ip
+bind 0.0.0.0 -::1
+port 6379
+```
+
+## 最大内存配置
+
+1. 默认64位是不限制内存的
+2. 一般配置物理内存的3/4
+
+```shell
+### 最大内存配置
+# maxmemory <bytes>
+## 配置内存
+maxmemory 1024
+```
+
+## 内存满了的策略
+
+*如果超过内存，会报OOM错误*
+
+```shell
+# maxmemory-policy noeviction
+```
+
+## 持久化配置
+
+```shell
+## 如果3600秒内有一个key修改，就进行持久化操作
+# save 3600 1
+# save 300 100
+## 60秒内有一个key修改，就进行持久化
+# save 60 10000
+##持久化出错，是否继续工作
+stop-writes-on-bgsave-error yes
+
+## 是否压缩持久化（rdb）文件（会消耗cpu资源）
+rdbcompression yes
+
+## 是否校验rdb文件
+rdbchecksum yes
+# rdb保存文件
+dbfilename dump.rdb
+```
+
+## 设置密码
+
+*将密码设置成123456*
+
+```shell
+# 在配置文件中设置密码
+requirepass 123456
+```
+
+
+
+## 以守护进程运行
+
+```shell
+# 是否以守护进程运行，默认是NO
+daemonize yes
+## 如果以守护进程运行，则需要指定一个进程文件
+pidfile /var/run/redis_6379.pid
 ```
 

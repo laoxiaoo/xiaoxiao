@@ -907,8 +907,7 @@ logfile ""
 
 ####################### SECURITY(安全)
 
-# 在配置文件中设置密码
-# requirepass foobared
+
 
 ##最大的客户端连接数
 # maxclients 10000
@@ -929,14 +928,7 @@ appendfsync everysec
 # appendfsync no
 ```
 
-## 以守护进程运行
 
-```shell
-# 是否以守护进程运行，默认是NO
-daemonize yes
-## 如果以守护进程运行，则需要指定一个进程文件
-pidfile /var/run/redis_6379.pid
-```
 
 
 
