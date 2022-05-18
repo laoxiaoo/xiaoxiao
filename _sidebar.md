@@ -9,10 +9,10 @@
 	* [java基础](/java/base/javaBase)
     	* [Api](/java/base/api/api)
 	* 并发编程
-    	* [基础] (/java/base/concurrent/1-base)
-    	* [线程常见方法] (/java/base/concurrent/2-method)
-    	* [synchronized] (/java/base/concurrent/3-synchronized)
-    	* [线程池] (/java/base/concurrent/4-threadpool)
+    	* [基础](/java/base/concurrent/1-base)
+    	* [线程常见方法](/java/base/concurrent/2-method)
+    	* [synchronized](/java/base/concurrent/3-synchronized)
+    	* [线程池](/java/base/concurrent/4-threadpool)
 	* [canal](/java/tool/canal)
 * Spring
 	* [Spring基础](java/spring/base.md)
@@ -71,7 +71,7 @@
     	* [redis基础](database/redis/1-redis-base)
     	* [redis数据结构](database/redis/2-redis-datastructure)
     	* [redis实际应用](database/redis/2-redis-sample)
-	* [Mysql](/database/Mysql.md)、
+	* [Mysql](/database/Mysql.md)
 	* [事务](/database/transaction)
 * 工具
     * [Jenkins](/java/tool/jenkins.md)
