@@ -14,6 +14,8 @@
     	* [synchronized](/java/base/concurrent/3-synchronized)
     	* [线程池](/java/base/concurrent/4-threadpool)
 	* [canal](/java/tool/canal)
+* Mybatis
+  * [自定义持久层](java/mybatis/1-custom-persistence)
 * Spring
 	* [Spring基础](java/spring/base.md)
     * [依赖注入](java/spring/ioc.md)

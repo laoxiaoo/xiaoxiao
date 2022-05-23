@@ -223,3 +223,50 @@ GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH]
    2) "65.1974"
 ```
 
+# 用户签到功能
+
+> 数据库设计
+
+| 字段            | 描述         |
+| --------------- | ------------ |
+| user_id         | 用户id       |
+| sign_date       | 签到日期     |
+| continuous_date | 连续签到天数 |
+
+> Redis设计
+
+采用 Bitmap 位运算的操作来存储签到的数据
+
+可以按按月来存储， 哪天签到=1
+
+```shell
+## 设置第一天 第三天签到（设置第几个index=1）
+127.0.0.1:6379> SETBIT u1:month 0 1
+(integer) 0
+127.0.0.1:6379> SETBIT u1:month 2 1
+(integer) 0
+##获取第二天和第三天有没有签到（默认0）
+127.0.0.1:6379> GETBIT u1:month 1
+(integer) 0
+127.0.0.1:6379> GETBIT u1:month 2
+(integer) 1
+## 获取用户签到天数
+127.0.0.1:6379> BITCOUNT u1:month 
+(integer) 2
+```
+
+# 网站用户的上线次数统计
+
+> （活跃用户），统计用户的活跃信息， 活跃 0 不活跃 1
+
+- 网站用户的上线次数统计（活跃用户）
+
+- 用户id作为key，天作为offset，上线置为1
+
+- 例如：id为500的用户，今年第1天上线、第30天上线
+
+  setbit u500 1 1
+
+  setbit u500 30 1
+
+  *获取上线次数*：bitcount u500

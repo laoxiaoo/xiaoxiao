@@ -499,80 +499,7 @@ ZINCRBY key increment member
 
 
 
-# 特殊数据类型
 
-## 经纬度
-
-- 3.2版本推出
-- 可以计算地理位置的距离
-  - longitude 经度
-  - latitude 纬度
-
-```shell
-
-GEOADD key [NX|XX] [CH] longitude latitude member [longitude latitude member
-## 插入地理位置
-## 两级无法添加
-127.0.0.1:6379> GEOADD china:city 112.98626 28.25591 changsha
-(integer) 1
-127.0.0.1:6379> GEOADD china:city 113.64317 28.16378 liuyang
-(integer) 1
-
-```
-
-- 获取经纬度
-
-```shell
-127.0.0.1:6379> GEOPOS china:city changsha
-1) 1) "112.98626035451889038"
-   2) "28.25590931465907119"
-```
-
-- 获取城市距离
-
-```shell
-127.0.0.1:6379> GEODIST china:city changsha liuyang
-"65197.3795"
-
-##计算的距离单位（km）
-127.0.0.1:6379> GEOdist china:city changsha liuyang km
-"65.1974"
-
-```
-
-- 求附近人，（以半径为中心）
-  - 经度， 维度：longitude， latitude
-  - radius：半径
-  - withcoord：显示经度维度
-  - withdist：直线距离
-  - COUNT：查出来的数量
-
-```shell
-GEORADIUS key longitude latitude radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key]
-
-127.0.0.1:6379> GEORADIUS china:city 112 28 200 km
-1) "changsha"
-2) "liuyang"
-```
-
-- 以元素为中心寻找周围城市
-
-```shell
-GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH] [COUNT count [ANY]] [ASC|DESC] [STORE key] [STOREDIST key]
-
-## 获取长沙100km访问的城市
-127.0.0.1:6379> GEORADIUSBYMEMBER china:city changsha 100 km withdist
-1) 1) "changsha"
-   2) "0.0000"
-2) 1) "liuyang"
-   2) "65.1974"
-```
-
-- 删除地理位置
-
-```shell
-127.0.0.1:6379> ZREM china:city liuyang
-```
 
 ## 基数
 
@@ -602,40 +529,7 @@ OK
 
 
 
-## 位运算
 
-- 网站用户的上线次数统计（活跃用户），统计用户的活跃信息， 活跃 0 不活跃 1
-
-  - 网站用户的上线次数统计（活跃用户）
-
-  - 用户id作为key，天作为offset，上线置为1
-
-  - 例如：id为500的用户，今年第1天上线、第30天上线
-
-    setbit u500 1 1
-
-    setbit u500 30 1
-
-    bitcount u500
-
-- 打卡， 哪天打卡=1
-
-```shell
-## 设置第一天 第三天打卡
-127.0.0.1:6379> SETBIT u1 0 1
-(integer) 0
-127.0.0.1:6379> SETBIT u1 2 1
-(integer) 0
-##获取第二天和第三天有没有打卡（默认0）
-127.0.0.1:6379> GETBIT u1 1
-(integer) 0
-127.0.0.1:6379> GETBIT u1 2
-(integer) 1
-## 获取用户打卡天数
-127.0.0.1:6379> BITCOUNT u1 
-(integer) 2
-
-```
 
 # 事务
 
