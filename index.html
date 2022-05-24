@@ -63,25 +63,29 @@
       name: '',
       repo: '',
       loadSidebar: true,
+      alias: {
+        //配置后所有页面都会访问根目录的sidebar
+      //'/.*/_sidebar.md': './_sidebar.md'
+        '/.*/_navbar.md': '/_navbar.md'
+      },
+      //侧边栏菜单层级
       subMaxLevel: 2,
+      loadNavbar: true,//顶部导航
       coverpage: true,
       onlyCover: true,
-      alias: {
-        '/.*/_sidebar.md': '/_sidebar.md'
-      },	
       search: {paths: 'auto',placeholder: '搜索',noData: '找不到结果',depth: 3, },
-      autoHeader: true,
-      loadNavbar: true,
-      alias: {
-        '/.*/_sidebar.md': '/_sidebar.md'
-      }
+      autoHeader: true
     }
   </script>
   
-  <script src="https://cdn.staticfile.org/docsify/4.12.1/docsify.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script>
-  <script src="https://cdn.staticfile.org/docsify/4.12.1/plugins/search.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/prismjs@1.22.0/components/prism-java.min.js"></script>
-  <script src="//cdn.jsdelivr.net/npm/docsify-sidebar-collapse/dist/docsify-sidebar-collapse.min.js"></script>
+  <script src="./js/docsify.min.js"></script>
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script> --
+  <!--全局搜索-->
+  <script src="./js/search.js"></script>
+  <!--java高亮-->
+  <script src="./js/prism-java.min.js"></script>
+  <!--<script src="./js/docsify-sidebarFooter.min.js"></script>-->
+  <!--侧边栏收缩-->
+  <script src="./js/docsify-sidebar-collapse.min.js"></script>
 </body>
 </html>
