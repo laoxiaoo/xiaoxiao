@@ -1,6 +1,4 @@
-# 基本概念
 
-> 
 
 # 架构
 
@@ -537,118 +535,7 @@ commitlog文件存在一个过期时间，默认为72小时，即三天。除了
 
 # RocketMQ应用
 
-## 消息发送
 
-> 同步发送
-
-同步发送消息是指，Producer发出⼀条消息后，会在收到MQ返回的ACK之后才发下⼀条消息。该方式的消息可靠性最高，但消息发送效率太低。  
-
-> 异步发送
-
-异步发送消息是指，Producer发出消息后无需等待MQ返回ACK，直接发送下⼀条消息。该方式的消息可靠性可以得到保障，消息发送效率也可以。  
-
-`可以通过回调异步的收到ACK响应`
-
-> 单向发送消息 
-
-单向发送消息是指，Producer仅负责发送消息，不等待、不处理MQ的ACK。该发送方式时MQ也不返回ACK。该方式的消息发送效率最高，但消息可靠性较差。  
-
-## 简单代码
-
-> 引入对应版本的jar包
-
-```xml
-<dependency>
-    <groupId>org.apache.rocketmq</groupId>
-    <artifactId>rocketmq-client</artifactId>
-</dependency>
-```
-
-> 同步发送
-
-```java
-//定义一个消息
-Message msg = new Message(TOPIC /* Topic */,
-        "TagA" /* Tag */,
-        ("Hello RocketMQ ").getBytes(RemotingHelper.DEFAULT_CHARSET) /* Message body */
-);
-//会返回同步返回ack状态
-SendResult sendResult = producer.send(msg);
-System.out.printf("%s%n", sendResult);
-producer.shutdown();
-```
-
-> 异步发送
-
-```java
-Message msg = new Message(TOPIC,
-        "TagA",
-        "OrderID188",
-        "Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
-producer.send(msg, new SendCallback() {
-    @Override
-    public void onSuccess(SendResult sendResult) {
-
-        log.debug("消息： {}",  sendResult.getMsgId());
-    }
-    @Override
-    public void onException(Throwable e) {
-        e.printStackTrace();
-    }
-});
-Thread.sleep(10000l);
-producer.shutdown();
-```
-
-> 消息消费
-
-```java
-//定义一个push模式的消费者
-DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("CG");
-consumer.setNamesrvAddr(ProductBase.ADDRESS);
-consumer.subscribe(ProductBase.TOPIC, "*");
-//设置从第一个消息开始消费
-consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
-//设置消费模式：默认集群
-consumer.setMessageModel(MessageModel.CLUSTERING);
-//注册监听
-consumer.registerMessageListener(new MessageListenerConcurrently() {
-
-    @Override
-    public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
-                                                    ConsumeConcurrentlyContext context) {
-        //如果broker有消息，就会触发这个方法
-        log.debug("{} Receive New Messages: {}", Thread.currentThread().getName(), msgs);
-        //返回mq需要的消费状态
-        return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
-    }
-});
-consumer.start();
-```
-
-## 顺序消费
-
-指的是严格按照消息的发送顺序进行消费
-
----
-
-默认情况下生产者会把消息以Round Robin轮询方式发送到不同的Queue分区队列；而消费消息时会从多个Queue上拉取消息，这种情况下的发送和消费是不能保证顺序的。如果将消息仅发送到同一个Queue中，消费时也只从这个Queue上拉取消息，就严格保证了消息的顺序性。  
-
----
-
-### 有序分类
-
-> 全局有序
-
-当发送和消费参与的Queue只有一个时所保证的有序是整个Topic中消息的顺序， 称为全局有序  
-
-> 分区有序
-
-当发送和消费参与的Queue只有一个时所保证的有序是整个Topic中消息的顺序， 称为全局有序 。
-
-- 在创建producer的时候，我们创建queue选择器，指定投放的queue是哪个
-
-- 可以实现MessageQueueSelector  接口来选择当前生产者投递的队列
 
 ## 延迟消息
 
