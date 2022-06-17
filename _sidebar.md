@@ -1,10 +1,6 @@
 ﻿* [首页](/)
 * java
-	* jvm
-    	* [jvm基础](/java/base/jvm/1-jvm)
-    	* [类加载子系统](/java/base/jvm/2-jvm)
-    	* [运行时数据区](/java/base/jvm/3-jvm)
-    	* [String Table](/java/base/jvm/4-jvm)
+	* [jvm](/java/base/jvm/)
 	* [通用](/java/base/common)
 	* [java基础](/java/base/javaBase)
     	* [Api](/java/base/api/api)
@@ -18,7 +14,7 @@
   * [自定义持久层](java/mybatis/1-custom-persistence)
 * Spring
 	* [Spring基础](java/spring/base.md)
-    * [依赖注入](java/spring/ioc.md)
+    * [依赖注入](java/spring/)
     * [spring-2](/java/spring/spring2.md)
 	* [Spring事件](/java/spring/event.md)
     * [spring-3](/java/spring/spring3.md)
@@ -75,8 +71,8 @@
     	* [redis实际应用](database/redis/2-redis-sample)
 	* [Mysql](/database/Mysql.md)
 	* [事务](/database/transaction)
-* 工具
-    * [Jenkins](/java/tool/jenkins.md)
+* [工具](/tool/)
+
     
 
 <footer id="mb-footer"></footer>
