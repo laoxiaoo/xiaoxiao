@@ -597,7 +597,6 @@ AFTER运行顺序：
 
 
 
-
 【命名参数】：明确指定封装参数时map的key；@Param("id")
 	多个参数会被封装成 一个map，
 		key：使用@Param注解指定的值
@@ -1150,7 +1149,7 @@ doQuery --填充缓存 --> PerpetualCache
 
 ### 使用
 
-开启全局二级缓存配置：<setting name="cacheEnabled" value="true"/>
+开启全局二级缓存配置：	<setting name="cacheEnabled" value="true"/>
 
 去mapper.xml中配置使用二级缓存：<cache></cache>
 
@@ -1163,7 +1162,8 @@ doQuery --填充缓存 --> PerpetualCache
 ```java
 SqlSession sqlSession = sqlSessionFactory.openSession();   
 Configuration configuration = sqlSession.getConfiguration();    
-Cache cache = configuration.getCache("com.xiao.dao.StudentMapper");   cache.putObject("laoxiao", new Student());    
+Cache cache = configuration.getCache("com.xiao.dao.StudentMapper");   
+cache.putObject("laoxiao", new Student());    
 cache.getObject("laoxiao");
 ```
 

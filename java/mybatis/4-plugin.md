@@ -114,5 +114,5 @@ public class MyFirstPlugin implements Interceptor {
 </plugins>
 ```
 
-# 插件原理
+
 

@@ -12,6 +12,10 @@
 	* [canal](/java/tool/canal)
 * Mybatis
   * [自定义持久层](java/mybatis/1-custom-persistence)
+  * [架构设计](java/mybatis/2-architecture)
+  * [基本应用]
+  * [插件](/java/mybatis/3-plugin)
+  * [高级应用](/java/mybatis/3-plugin)
 * Spring
 	* [Spring基础](java/spring/base.md)
     * [依赖注入](java/spring/)
