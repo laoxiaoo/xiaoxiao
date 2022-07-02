@@ -62,6 +62,8 @@ producer.shutdown();
 
 # 消息消费
 
+## 示例代码
+
 ```java
 //定义一个push模式的消费者
 DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("CG");
@@ -85,6 +87,16 @@ consumer.registerMessageListener(new MessageListenerConcurrently() {
 consumer.start();
 ```
 
+## 消费模式
+
+*Topic模式*:
+
+广播消费模式下，`相同`Consumer Group的每个Consumer实例都接收同一个Topic的全量消息。即每条消息都会被发送到Consumer Group中的**每个Consumer **
+
+*集群模式*
+
+集群消费模式下，相同Consumer Group的每个Consumer实例平均分摊同一个Topic的消息。即每条消息只会被发送到Consumer Group中的某个Consumer。  
+
 # 顺序消息
 
 指的是严格按照消息的发送顺序进行消费
@@ -95,7 +107,7 @@ consumer.start();
 
 *全局有序*:
 
-当发送和消费参与的Queue只有**一个**时所保证的有序是整个Topic中消息的顺序， 称为全局有序  
+当发送和消费参与的Queue只有**一个**时所保证的有序是整个Topic中消息的顺序， 称为全局有序
 
 ![image-20220528141719334](image/2-application/image-20220528141719334.png)
 
