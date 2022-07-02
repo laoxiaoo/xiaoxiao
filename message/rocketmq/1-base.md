@@ -13,8 +13,10 @@
 
 存储消息的物理实体。一个Topic中可以包含多个Queue，每个Queue中存放的就是该Topic的消息。一个Topic的Queue也被称为一个Topic中消息的分区（Partition）  
 
-- 同一个topic的queue可以被多个组的消费者消费，但不可以被同一个组的消费者消费
-  - ![20210727204517](1-base/20210727204517.png)即queue1不能同时被a, b消费，但是queue1和queue2同时被a消费
+- 同一个topic的queue可以被**多个组**的消费者消费，但不可以被**同一个组**的多个消费者消费
+- 即queue1不能同时被a, b消费，但是queue1和queue2同时被a消费
+
+![20210727204517](1-base/20210727204517.png)
 
 
 
@@ -61,6 +63,10 @@ RocketMQ中每个消息拥有唯一的MessageId，且可以携带具有业务标
 3. 消费者组中Consumer的数量应该小于等于订阅Topic的Queue数量。**如果超出Queue数量，则多出的Consumer将不能消费消息**。
 
 ![image-20220528111148824](image/1-base/image-20220528111148824.png)
+
+4. 不同的消费组，可以消费同一个topic(同一个消息，会发送给A,E)
+
+![202262215](image/1-base/202262215.png)
 
 ## 注意项
 

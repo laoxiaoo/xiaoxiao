@@ -222,3 +222,11 @@ public void getUserInfo() {
     System.out.println(userService.getUser());
 }
 ```
+
+与使用`@MockBean`不同，上节中调用`doReturn("").when(testService).doSomething()` 时`doSomething`方法被打桩。而`when(testService.doSomething()).thenReturn("")`则达不到此效果。原因是：使用`@SpyBean`修饰的`testService`是一个真实对象，所以`testService.doSomething()`会被真实调用
+
+即：**SpyBean会调用一下真实的方法**
+
+## @MockBean
+
+等同于@mock替换spring的bean

@@ -1,34 +1,3 @@
-
-
-# 架构
-
-![](https://gitee.com/apache/rocketmq/raw/master/docs/cn/image/rocketmq_architecture_1.png)
-
-## Producer
-
-消息发布的角色，支持分布式集群方式部署。Producer通过MQ的负载均衡模块选择相应的Broker集群队列进行消息投递，投递的过程支持快速失败并且低延迟。
-
-## Consumer
-
-- 消息消费的角色，支持分布式集群方式部署。支持以push推，pull拉两种模式对消息进行消费。同时也支持集群方式和广播方式的消费，它提供实时消息订阅机制，可以满足大多数用户的需求
-- RocketMQ中的消息消费者都是以消费者组（Consumer Group）的形式出现的。消费者组是同一类消费者的集合，这类Consumer消费的是同一个Topic类型的消息  
-
-**以下特点只针对集群消费**
-
-如：如果消费组里只有一个消费者，那么他只能：queue1,queue2轮询的消费
-
-如果他一个消费组有两个消费者，那么它会一人一个queue来消费
-
-![image-20210727211728103](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210727211728.png)
-
-**消费者组中Consumer的数量应该小于等于订阅Topic的Queue数量。如果超出Queue数量，则多出的
-Consumer将不能消费消息。 **
-
-> 注意
-
-1. 消费者组只能消费一个Topic的消息，不能同时消费多个Topic消息  
-2. 一个消费者组中的消费者必须订阅完全相同的Topic
-
 ## Name Server  
 
 NameServer是一个Broker与Topic路由的注册中心，支持Broker的动态注册与发现  
