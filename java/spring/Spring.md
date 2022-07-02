@@ -254,89 +254,15 @@ private static void lookUpByAnnotation(BeanFactory beanFactory) {
 }
 ```
 
-## 依赖注入
 
-- 依赖注入来源与依赖查找的来源并不是同一个
-
-## IOC依赖来源
-
-- 自定义bean：我们自定义的bean
-- 内建的bean
-- 容器内建依赖：beanfactory
--  IoC中，依赖查找和依赖注入的数据来源并不一样。因为BeanFactory、ResourceLoader、ApplicationEventPublisher、ApplicationContext这四个并不是Bean，它们只是一种特殊的依赖项，无法通过依赖查找的方式来获取，只能通过依赖注入的方式来获取。
-
-> ApplicationContext
-
-- applicationContext是BeanFactory子接口
-- 他提供了获取上下文，监听的方法
-
-![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/java/spring/20210128221447.png)
-
-- 查看源码可以得知，application有个getBeanFactory的方法
-- 他将BeanFactory组合进来了，所以，applicationContext虽然实现了BeanFactory,但他们是两个东西，一般我们需要beanfactory时，通常用ApplicationContext.getBeanFactory()
-
-> BeanFactory与FactoryBean
-
--  BeanFactory是IOC最基本的容器，负责管理bean，它为其他具体的IOC容器提供了最基本的规范
-- FactoryBean是创建bean的一种方式，帮助实现负责的初始化操作
-
-## IOC生命周期
-
-```java
-public void refresh() throws BeansException, IllegalStateException {
-    synchronized (this.startupShutdownMonitor) {
-
-        prepareRefresh();
-        //创建beanfactory
-        ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-        //对beanfactory进行初步的初始化操作
-        //加入一些bean依赖，和内建的非bean的依赖
-        prepareBeanFactory(beanFactory);
-
-        try {
-            postProcessBeanFactory(beanFactory);
-
-            invokeBeanFactoryPostProcessors(beanFactory);
-
-            //对bean的拓展和修改
-            registerBeanPostProcessors(beanFactory);
-            //国际化操作
-            initMessageSource();
-
-            initApplicationEventMulticaster();
-
-            onRefresh();
-
-            registerListeners();
-
-
-            finishBeanFactoryInitialization(beanFactory);
-            finishRefresh();
-        }
-```
 
 # Spring Bean
 
 ## BeanDefinition
 
-- 一个定义bean的元信息的接口
-- 用于保存 Bean 的相关信息，包括属性、构造方法参数、依赖的 Bean 名称及是否单例、延迟加载等
-- 它是实例化 Bean 的原材料，Spring 就是根据 BeanDefinition 中的信息实例化 Bean
-- 这个接口有setter，getter方式来进行操作
 
-> 元信息的一些属性
 
-| 属性(Property)           | 说明                                        |
-| ------------------------ | ------------------------------------------- |
-| Name                     | Bean的名称或者ID                            |
-| Class                    | Bean全类名,必须是具体类，不能用抽象类或接口 |
-| Scope                    | Bean的作用域(如: singleton、prototype 等)   |
-| Constructor arguments    | Bean构造器参数（用于依赖注入)               |
-| Properties               | Bean属性设置（用于依赖注入)                 |
-| Autowiring mode          | Bean自动绑定模式(如:通过名称byName)         |
-| Lazy initialization mode | Bean延迟初始化模式(延迟和非延迟)            |
-| Initialization method    | Bean初始化回调方法名称                      |
-| Destruction method       | Bean销毁回调方法名称                        |
+
 
 > > 定义元信息
 
