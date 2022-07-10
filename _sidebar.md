@@ -17,11 +17,7 @@
   * [插件](/java/mybatis/3-plugin)
   * [高级应用](/java/mybatis/3-plugin)
 * Spring
-	* [SpringIOC](java/spring/doc/2-ioc)
-	* [Spring基础](java/spring/base.md)
-    * [依赖注入](java/spring/)
     * [spring-2](/java/spring/spring2.md)
-	* [Spring事件](/java/spring/event.md)
     * [spring-3](/java/spring/spring3.md)
 	* [SpringAop](/java/spring/aop.md)
     * [SpringBoot](/java/spring/SpringBoot.md)

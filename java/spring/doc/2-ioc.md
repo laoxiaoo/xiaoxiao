@@ -73,3 +73,112 @@ public void refresh() throws BeansException, IllegalStateException {
         }
 ```
 
+# 注入方式
+
+- 手动模式
+  - xml资源模式
+  - java注解模式 @Bean
+  - API配置原信息：applicationContext.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+- 构造器注入 constructor
+- setter注入的缺陷：setter注入是无序的，构造器注入是有序的
+- 字段注入
+
+## 接口回调注入
+
+*Aware系列回调*：一般有Aware结尾的，都会有回调的方法，在bean初始化过程会去回调实现类aware接口的类
+
+- BeanFactoryAware
+- ApplicationContextAware：<b id="blue">BeanFactory</b>可以通过<b id="blue">ApplicationContextAware</b>来获取，也可以通过<b id="blue">BeanFactoryAware</b>回调来获取
+
+## 限定注入
+
+*使用注解@Qualifier限定*：通过Bean名称限定，通过分组限定
+
+如下：因为<b id="gray"> private List<Person> persons2</b>标注了`@Qualifier`注解，所以它只会注入标注了`@Qualifier`的bean
+
+```java
+public class QualifierDependencyDemo {
+
+    @Autowired
+    private List<Person> persons;
+    @Autowired
+    @Qualifier
+    private List<Person> persons2;
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
+        applicationContext.register(QualifierDependencyDemo.class);
+        applicationContext.refresh();
+
+        QualifierDependencyDemo bean = applicationContext.getBean(QualifierDependencyDemo.class);
+        //person person1 person2
+        System.out.println(bean.persons);
+        //person2
+        System.out.println(bean.persons2);
+        applicationContext.close();
+    }
+    @Bean
+    public SuperPerson superPerson() {
+        return new SuperPerson();
+    }
+    @Bean
+    public Person person1() {
+        return new Person(1);
+    }
+    @Bean
+    @Qualifier
+    public Person person2() {
+        return new Person(2);
+    }
+}
+```
+
+*基于注解@Qualifier拓展限定*：
+
+1. 定义一个注解，它标注了Qualifier
+
+```java
+@Target({ElementType.FIELD, ElementType.METHOD, ElementType.PARAMETER, ElementType.TYPE, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Inherited
+@Documented
+@Qualifier
+public @interface GroupBean {
+}
+```
+
+2. 使用GroupBean注解(可以看到，GroupBean注解的只有对应的bean，Qualifier有Qualifier和GroupBean注解对应分组的bean)
+
+```java
+public class QualifierDependencyDemo {
+
+    @Autowired
+    private List<Person> persons;
+
+    @Autowired
+    @Qualifier
+    private List<Person> persons2;
+
+    @Autowired
+    @GroupBean
+    private List<Person> persons3;
+    public static void main(String[] args) {
+        AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
+        applicationContext.register(QualifierDependencyDemo.class);
+        applicationContext.refresh();
+        QualifierDependencyDemo bean = applicationContext.getBean(QualifierDependencyDemo.class);
+        //person person1 person2
+        System.out.println(bean.persons);
+        //person2, person3
+        System.out.println(bean.persons2);
+        //person3
+        System.out.println(bean.persons3);
+        applicationContext.close();
+    }
+    @Bean
+    @GroupBean
+    public Person person3() {
+        return new Person(3);
+    }
+}
+```
+

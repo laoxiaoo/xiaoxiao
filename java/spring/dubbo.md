@@ -93,7 +93,9 @@ public String sayHello(@PathVariable("name") String name) {
 
 方法级别>类级别
 
-消费端>服务端
+**消费端>服务端**
+
+`一般情况下，我们都是在服务器端配置超时时间`
 
 # 集群容错
 
