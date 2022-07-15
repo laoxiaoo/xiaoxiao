@@ -509,6 +509,10 @@ git reset HEAD iss1.txt
 git checkout -- iss1.txt
 ```
 
+- 在执行`git commit --amend --no-edit`之后，但是message内容并没有发生变化，并且最重要的是只有一条commit记录。
+
+  如果要修改上一条的message，那么去掉`--no-edit`选项即可，`git commit --amend -m "xxxx"`。同理，commit记录同样只会有一条
+
 ## reset
 
 - 移动head
