@@ -31,47 +31,9 @@
 ## BeanFactory与FactoryBean
 
 - BeanFactory是IOC最基本的**容器**，负责管理bean，它为其他具体的IOC容器提供了最基本的规范
+  - 如<b id="blue">ApplicationContext</b>都是BeanFactory的子接口
 - FactoryBean是创建bean的一种方式，帮助实现负责的初始化操作
 
-# refresh过程
-
-```java
-public void refresh() throws BeansException, IllegalStateException {
-    synchronized (this.startupShutdownMonitor) {
-        //刷新前的预处理;
-        prepareRefresh();
-        //创建beanfactory
-        ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
-        //对beanfactory进行初步的初始化操作
-        //加入一些bean依赖，和内建的非bean的依赖
-        //比如context的类加载器，BeanPostProcessor和XXXAware自动装配等
-        prepareBeanFactory(beanFactory);
-
-        try {
-            //BeanFactory准备工作完成后进行的后置处理工作
-            postProcessBeanFactory(beanFactory);
-            //执行BeanFactoryPostProcessor的方法；
-            //主要作用是让你能接触到bean definitions
-            invokeBeanFactoryPostProcessors(beanFactory);
-            //注册BeanPostProcessor（Bean的后置处理器），在创建bean的前后等执行
-            registerBeanPostProcessors(beanFactory);
-            //初始化MessageSource组件（做国际化功能；消息绑定，消息解析）；
-            initMessageSource();
-            //初始化事件派发器
-            initApplicationEventMulticaster();
-            //子类重写这个方法，在容器刷新的时候可以自定义逻辑；如创建Tomcat，Jetty等WEB服务器
-            onRefresh();
-            //注册应用的监听器。就是注册实现了ApplicationListener接口的监听器bean，
-            //这些监听器是注册到ApplicationEventMulticaster中的
-            registerListeners();
-
-            ////初始化所有剩下的非懒加载的单例bean
-            finishBeanFactoryInitialization(beanFactory);
-            //完成context的刷新。主要是调用LifecycleProcessor的onRefresh()方法，
-            //并且发布事件（ContextRefreshedEvent）
-            finishRefresh();
-        }
-```
 
 # 注入方式
 
@@ -83,12 +45,56 @@ public void refresh() throws BeansException, IllegalStateException {
 - setter注入的缺陷：setter注入是无序的，构造器注入是有序的
 - 字段注入
 
+
+> @Autowired
+
+自动装配位置：构造函数、set方法上、参数上
+
+在有参构造方法中，默认会寻找参数所注入的bean，如：这个时候，默认注入的就是testBean
+
+```java
+@Service
+public class TestService {
+    private TestBean testBean;
+
+    public TestService(TestBean testBean) {
+        this.testBean = testBean;
+    }
+```
+
+
 ## 接口回调注入
 
 *Aware系列回调*：一般有Aware结尾的，都会有回调的方法，在bean初始化过程会去回调实现类aware接口的类
 
 - BeanFactoryAware
 - ApplicationContextAware：<b id="blue">BeanFactory</b>可以通过<b id="blue">ApplicationContextAware</b>来获取，也可以通过<b id="blue">BeanFactoryAware</b>回调来获取
+
+
+```java
+@Component
+public class Red implements ApplicationContextAware, BeanNameAware,EmbeddedValueResolverAware {
+
+    public void setApplicationContext(ApplicationContext applicationContext) throws BeansException {
+        System.out.println("获取容器信息:"+applicationContext.getClass());
+    }
+
+    public void setBeanName(String s) {
+        System.out.println("获取该类的beanname："+s);
+    }
+
+    public void setEmbeddedValueResolver(StringValueResolver stringValueResolver) {
+        System.out.println("取出容器加载配置文件的属性值："+stringValueResolver.resolveStringValue("${testBean.realName}"));
+    }
+}
+```
+
+输出结果：
+
+获取该类的beanname：red
+取出容器加载配置文件的属性值：真实的张三
+获取容器信息:class org.springframework.context.annotation.AnnotationConfigApplicationContext
+
 
 ## 限定注入
 
@@ -178,6 +184,229 @@ public class QualifierDependencyDemo {
     @GroupBean
     public Person person3() {
         return new Person(3);
+    }
+}
+```
+
+## 优先注入
+
+> @Primary首选bean
+
+@autowired注解注入bean时，默认的时先找同class类型的bean，如果有多个bean，则按照名称注入，此时可以指定@qualifile来注入，但如果不想这样写时，可以用@Primary方式，让这个产生的bean优先注入
+
+```
+@Bean
+@Primary
+public TestBean testBean(){
+   return  new TestBean();
+}
+```
+
+在@bean中，也可以为参数默认注入bean，这个@autowired可以省略
+
+```java
+@Bean
+@Primary
+public TestBean testBean(@Autowired Cat cat){
+   return  new TestBean();
+}
+```
+
+# Spring加载
+
+## Xml方式
+
+1. 定义一个xml的配置文件
+
+```properties
+<?xml version="1.0" encoding="UTF-8"?>
+<beans xmlns="http://www.springframework.org/schema/beans"
+       xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+       xmlns:persons="http://www.xiao.org/schema/persons"
+       xsi:schemaLocation="http://www.springframework.org/schema/beans
+        http://www.springframework.org/schema/beans/spring-beans.xsd
+">
+
+    <bean id="person" class="com.xiao.pojo.Person">
+        <property name="age" value="12"></property>
+        <property name="name" value="老肖"></property>
+    </bean>
+
+</beans>
+```
+
+2. 加载xml（自定义环境）
+
+```java
+ClassPathXmlApplicationContext context
+        = new ClassPathXmlApplicationContext("classpath:/META-INF/my-bean.xml");
+context.refresh();
+Person person = context.getBean(Person.class);
+System.out.println(person);
+context.close();
+```
+
+## 注解方式
+
+
+
+## 注解加载XMl
+
+在classpath下建立spring文件，然后在启动类加载配置，就会加载spring文件，产生对应的bean
+
+```java
+@ImportResource(locations = "classpath:test.xml")
+@SpringBootApplication
+public class App2
+```
+
+# Refresh过程
+
+```java
+public void refresh() throws BeansException, IllegalStateException {
+    synchronized (this.startupShutdownMonitor) {
+        //刷新前的预处理;
+        prepareRefresh();
+        //创建beanfactory
+        ConfigurableListableBeanFactory beanFactory = obtainFreshBeanFactory();
+        //对beanfactory进行初步的初始化操作
+        //加入一些bean依赖，和内建的非bean的依赖
+        //比如context的类加载器，BeanPostProcessor和XXXAware自动装配等
+        prepareBeanFactory(beanFactory);
+
+        try {
+            //BeanFactory准备工作完成后进行的后置处理工作
+            postProcessBeanFactory(beanFactory);
+            //执行BeanFactoryPostProcessor的方法；
+            //主要作用是让你能接触到bean definitions
+            invokeBeanFactoryPostProcessors(beanFactory);
+            //注册BeanPostProcessor（Bean的后置处理器），在创建bean的前后等执行
+            registerBeanPostProcessors(beanFactory);
+            //初始化MessageSource组件（做国际化功能；消息绑定，消息解析）；
+            initMessageSource();
+            //初始化事件派发器
+            initApplicationEventMulticaster();
+            //子类重写这个方法，在容器刷新的时候可以自定义逻辑；如创建Tomcat，Jetty等WEB服务器
+            onRefresh();
+            //注册应用的监听器。就是注册实现了ApplicationListener接口的监听器bean，
+            //这些监听器是注册到ApplicationEventMulticaster中的
+            registerListeners();
+
+            ////初始化所有剩下的非懒加载的单例bean
+            finishBeanFactoryInitialization(beanFactory);
+            //完成context的刷新。主要是调用LifecycleProcessor的onRefresh()方法，
+            //并且发布事件（ContextRefreshedEvent）
+            finishRefresh();
+        }
+```
+
+## Xml加载过程
+
+
+
+## 注解加载过程
+
+
+
+
+
+# Bean 作用域
+## 原生作用域
+> singleton
+
+1. 主要是由BeanDefinition#isSingleton来进行元信息的判断
+2. singleton 查找和注入都是同一个同一个对象
+3. prototype 查找和注入 都是新生成的对象
+4. singleton 有init和destroy  
+5. prototype只有init
+
+> request scope
+
+1. 每次返回前端的bean是新生成的
+2. 但是后端的bean是cglib提升的，单例的
+
+> ApplicationScope
+1. API:ServletContextScope
+
+## 自定义作用域
+
+- 实现scope
+
+```java
+public class ThreadLocalScope implements Scope {
+
+    public static final String SCOPE_NAME="thread-local";
+
+    private final NamedThreadLocal<Map<String, Object>> threadLocal = new NamedThreadLocal("thread-local-scope") {
+        @Override
+        protected Object initialValue() {
+            //没有获取到对象是兜底返回
+            return new HashMap<>();
+        }
+    };
+
+    @Override
+    public Object get(String name, ObjectFactory<?> objectFactory) {
+        Map<String, Object> context = threadLocal.get();
+        Object object = context.get(name);
+        if(ObjectUtils.isEmpty(object)) {
+            object = objectFactory.getObject();
+            context.put(name, object);
+        }
+        return object;
+    }
+
+    @Override
+    public Object remove(String name) {
+        return threadLocal.get().remove(name);
+    }
+
+    @Override
+    public void registerDestructionCallback(String name, Runnable callback) {
+
+    }
+
+    @Override
+    public Object resolveContextualObject(String key) {
+        return threadLocal.get().get(key);
+    }
+
+    @Override
+    public String getConversationId() {
+        return String.valueOf(Thread.currentThread().getId());
+    }
+}
+```
+
+- 注入scope
+
+```java
+public class ThreadLocalScopeDemo {
+
+    @Bean
+    @Scope(ThreadLocalScope.SCOPE_NAME)
+    public Person person() {
+        return new Person(String.valueOf(Thread.currentThread().getId()));
+    }
+
+    public static void main(String[] args) throws Exception {
+        AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext();
+        applicationContext.register(ThreadLocalScopeDemo.class);
+        applicationContext.addBeanFactoryPostProcessor(beanFactory -> {
+            beanFactory.registerScope(ThreadLocalScope.SCOPE_NAME, new ThreadLocalScope());
+        });
+
+        applicationContext.refresh();
+        for(int i=0; i<3; i++) {
+            new Thread(() -> {
+                Person bean = applicationContext.getBean(Person.class);
+                System.out.println(bean);
+                Person bean1 = applicationContext.getBean(Person.class);
+                System.out.println(bean1);
+            }).start();
+        }
+        Thread.sleep(Integer.MAX_VALUE);
+        applicationContext.close();
     }
 }
 ```

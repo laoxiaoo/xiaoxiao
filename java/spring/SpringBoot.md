@@ -325,34 +325,6 @@ public class HttpEncodingAutoConfiguration {
 
 
 
-## 加载spring的配置文件
-
-在classpath下建立spring文件，然后在启动类加载配置，就会加载spring文件，产生对应的bean
-
-```java
-@ImportResource(locations = "classpath:test.xml")
-@SpringBootApplication
-public class App2
-```
-
-另一种写法，不写spring.xml,@Bean返回的bean id 默认是方法名
-
-```java
-@Configuration
-public class TestConfig {
-
-    @Bean
-    public TestService testService(){
-        return new TestService();
-    }
-}
-```
-
-
-
-
-
-
 
 # 日志
 
