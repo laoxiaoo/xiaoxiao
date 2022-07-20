@@ -160,6 +160,7 @@ public void multicastEvent(final ApplicationEvent event, ResolvableType eventTyp
 ```
 
 ## 事件多播器
+拥有监听器对象，提供发布事件的功能，遍历监听器，监听器来处理自己需要处理的事件
 
 在refresh（）方法中，在其他bean创建之前，执行initApplicationEventMulticaster();方法，来初始化事件多播器
 
