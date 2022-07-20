@@ -444,6 +444,91 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 }
 ```
 
+## 循环依赖问题
+
+在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry中，有三个map，分别是三个`存放Bean`的缓存
+
+```java
+//一级缓存:存放的是已经初始化好了的Bean
+private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
+
+//三级缓存:存放的是一个函数，里面
+private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
+
+//二级缓存: 存放的是实例化了，但是未初始化的Bean
+private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
+```
+
+> 实现过程：
+
+A对象依赖B对象， B对象依赖A对象
+
+1. A对象实例化后立马将自己放入三级缓存中（`提前暴露自己`）,然后去实例化B
+
+2.  B实例化后，`在属性设置的时候`发现需要A，于是B先查一级缓存，没有，再查二级缓存，还是没有，再查三级缓存，找到了A然后把三级缓存里面的这个A放到二级缓存里面，并删除三级缓存里面的A
+3. B顺利初始化完毕，将自己放到一级缓存里面（此时B里面的A依然是创建中状态,然后回来接着创建A，此时B已经创建结束，直接从一级缓存里面拿到B，然后完成创建，并将A自己放到一级缓存里面。
+
+> 源码解析
+
+1. 从org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton入手
+
+```java
+if (mbd.isSingleton()) {
+   sharedInstance = getSingleton(beanName, () -> {
+      try {
+         return createBean(beanName, mbd, args);
+      }
+   });
+}
+```
+
+2. 进入org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean方法，实例化bean
+
+```java
+protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
+      throws BeanCreationException {
+   BeanWrapper instanceWrapper = null;
+   if (instanceWrapper == null) {
+       //创建Bean实例，仅仅调用构造方法,但是尚未设置属性
+      instanceWrapper = createBeanInstance(beanName, mbd, args);
+   }
+
+   if (earlySingletonExposure) {
+       //往三级缓存放入一个方法，方法里面可以获取已经实例化的bean
+      addSingletonFactory(beanName, () -> getEarlyBeanReference(beanName, mbd, bean));
+   }
+
+   // Initialize the bean instance.
+   Object exposedObject = bean;
+   try {
+       //属性设置
+      populateBean(beanName, mbd, instanceWrapper);
+      exposedObject = initializeBean(beanName, exposedObject, mbd);
+   }
+}
+```
+
+3. 在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton中我们发现它会从三级缓存中取出*缓存的函数*调用，
+   1. 其实就是调用getEarlyBeanReference方法
+   2. 这个方法调用*SmartInstantiationAwareBeanPostProcessor*可以做一些拓展（**二级缓存的作用**）
+
+```java
+protected Object getEarlyBeanReference(String beanName, RootBeanDefinition mbd, Object bean) {
+   Object exposedObject = bean;
+   if (!mbd.isSynthetic() && hasInstantiationAwareBeanPostProcessors()) {
+      for (BeanPostProcessor bp : getBeanPostProcessors()) {
+         if (bp instanceof SmartInstantiationAwareBeanPostProcessor) {
+            SmartInstantiationAwareBeanPostProcessor ibp = (SmartInstantiationAwareBeanPostProcessor) bp;
+            exposedObject = ibp.getEarlyBeanReference(exposedObject, beanName);
+         }
+      }
+   }
+   return exposedObject;
+}
+```
+
+4. 最终在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton方法中，调用org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#addSingleton方法，将bean放入一级缓存中
+
 ## 初始化和销毁
 
 在注入bean的时候，执行初始化方法，在销毁容器时，执行bean的销毁方法

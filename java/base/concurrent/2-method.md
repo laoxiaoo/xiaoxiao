@@ -1,4 +1,6 @@
-# Sleep
+# 线程方法介绍
+# 线程阻塞
+## Sleep
 
 ```java
 Thread.sleep(1000);
@@ -12,15 +14,18 @@ Thread.sleep(1000);
 TimeUnit.SECONDS.sleep(3);
 ```
 
-# Yield
+> 防止Cpu100%的方案
 
-Thread.yield();
+- 死循环中，不让空转一直耗费cpu，加一个sleep可以让出cpu使用权给其他程序
 
-1. 可以使线程从Running进入Runnable状态 
-2. 即：可以使线程从Running进入Runnable状态 
-3. cpu会从众多的可执行态里选择，也就是说，当前也就是刚刚的那个线程还是有可能会被再次执行到的，并不是说一定会执行其他线程而该线程在下一次中不会执行到了
+```java
+while (true) {
+    TimeUnit.SECONDS.sleep(1);
+}
+```
 
-# Join
+
+## Join
 
 阻塞等待线程结束
 
@@ -45,11 +50,20 @@ log.debug("main 执行结束");
 - java.lang.Thread#join(long)
 - 最多等待long毫秒
 
-# wait | notify
+## wait
 
+# 恢复线程运行
+## Yield
+Thread.yield();
 
+1. 可以使线程从Running进入Runnable状态 
+2. 即：可以使线程从Running进入Runnable状态 
+3. cpu会从众多的可执行态里选择，也就是说，当前也就是刚刚的那个线程还是有可能会被再次执行到的，并不是说一定会执行其他线程而该线程在下一次中不会执行到了
 
-# interrupt
+## notify
+配合<b id="blue">wait</b>方法使用
+
+## interrupt
 
 - 打断sleep，wait, join 的线程
 - 当睡眠中打断后，打断标识：false，正常过程，设置打断，标识为true

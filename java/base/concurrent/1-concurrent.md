@@ -15,34 +15,10 @@
 
 # 线程常见方法
 
-## sleep
-
-- 将线程有Runnable转为Time Waiting状态
-- 其他线程可以使用interrupt方法打断正在sleep的线程，这时，线程抛出java.lang.InterruptedException异常
-
-```java
-Thread.sleep(1000);
-```
-
-- 建议使用TimeUnit来代替Thread，如：
-
-```java
-TimeUnit.SECONDS.sleep(3);
-```
 
 ## yield
 
 - 可以使线程从Running进入Runnable状态 
-
-## 防止Cpu100%的方案
-
-- 死循环中，不让空转一直耗费cpu，加一个sleep可以让出cpu使用权给其他程序
-
-```java
-while (true) {
-    TimeUnit.SECONDS.sleep(1);
-}
-```
 
 ## join
 
