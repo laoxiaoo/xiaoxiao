@@ -21,24 +21,6 @@ Caused by: org.springframework.beans.factory.BeanCurrentlyInCreationException
 
 ## 解决原理
 
-- 在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry中，有三个map，分别是三个缓存
-
-```java
-//一级缓存:存放的是已经初始化好了的Bean
-private final Map<String, Object> singletonObjects = new ConcurrentHashMap<>(256);
-
-//三级缓存:
-private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(16);
-
-//二级缓存: 存放的是实例化了，但是未初始化的Bean
-private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
-```
-
-- 步骤
-
-1. A创建过程中需要B，于是A将自己放到三级缓里面，去实例化B
-2. B实例化的时候发现需要A，于是B先查一级缓存，没有，再查二级缓存，还是没有，再查三级缓存，找到了A然后把三级缓存里面的这个A放到二级缓存里面，并删除三级缓存里面的A
-3. B顺利初始化完毕，将自己放到一级缓存里面（此时B里面的A依然是创建中状态,然后回来接着创建A，此时B已经创建结束，直接从一级缓存里面拿到B，然后完成创建，并将A自己放到一级缓存里面。
 
 > ObjectFactory使用来干嘛的
 
