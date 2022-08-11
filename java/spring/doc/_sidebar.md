@@ -2,3 +2,6 @@
 * [SpringBean](java/spring/doc/3-springbean)
 * [Spring事件监听](/java/spring/doc/4-event.md)
 * [Spring配置属性管理](/java/spring/doc/5-environment)
+* [Spring编程模型](/java/spring/doc/6-model)
+* [Spring工具](/java/spring/doc/7-util)
+* [Servlet](/java/spring/doc/8-servlet)

@@ -9,12 +9,11 @@
 * Mybatis
   * [自定义持久层](java/mybatis/1-custom-persistence)
   * [架构设计](java/mybatis/2-architecture)
-  * [基本应用](/java/mybatis/3-plugin)
-  * [插件](/java/mybatis/3-plugin)
-  * [高级应用](/java/mybatis/3-plugin)
+  * [基本应用](/java/mybatis/3-advanced-application)
+  * [插件](/java/mybatis/4-plugin)
+  * [高级应用](/java/mybatis/5-cache)
 * Spring
-    * [spring-2](/java/spring/spring2.md)
-    * [spring-3](/java/spring/spring3.md)
+    * [Spring](/java/spring/doc/)
 	* [SpringAop](/java/spring/aop.md)
     * [SpringBoot](/java/spring/SpringBoot.md)
     * [SpringMvc](/java/spring/SpringMvc.md)	
