@@ -61,8 +61,8 @@
 	* [Shell](/server/shell)
 	* [k8s](/server/k8s)
 * 数据库
-	* Elasticsearch
-		* [Elasticsearch](/database/Elasticsearch.md)
+	* [Elasticsearch](/database/es/)
+	* [Elasticsearch](/database/Elasticsearch.md)
 	* Redis
     	* [redis基础](database/redis/1-redis-base)
     	* [redis数据结构](database/redis/2-redis-datastructure)

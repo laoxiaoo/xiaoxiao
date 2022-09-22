@@ -294,6 +294,98 @@ https://docs.oracle.com/en/java/javase/11/tools/tools-and-command-reference.html
 
 ```
 
+# 堆
+
+![](./image/3-jvm/20200630234840.jpg)
+
+## 核心概述
+
+- 堆是线程共享的，但还是有划分私有的堆空间
+- 堆可以是物理上不连续，但逻辑上连续的内存空间
+- 并非所有的堆是线程共享的，小块的**TLAB空间**是线程私有的
+
+## 内存细分
+
+- 7以前：新生代+老年代+永久区
+- 8以后：新生代+老年代+元空间（本地内存）
+
+> 新生代老年代
+
+https://docs.oracle.com/javase/8/
+
+- 存储jvm中的java对象可以被划分为两类
+  - 一类是生命周期短
+  - 一类是生命周期长，甚至与jvm生命周期保持一致
+- 堆区细分的话，分为年轻代和老年代
+- 年轻代分为eden区/S0区，S1区（有时叫from和to区）
+  - 比例2:1(老年代:年轻代)
+  - 新生的对象在eden，没有被第一次GC，则进入S区
+
+![](./image/3-jvm/20200701215552.png)
+
+![](./image/3-jvm/2019713122911.png)
+
+
+
+> 设置新生代老年代比例
+
+https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html#BGBCIEFC
+
+- 默认设置比例为2  新生代/老年代=1/ 2
+- 一般不调整，如果知道明细的很多对象周期长，则可以将老年代增大
+
+```shell
+-XX:NewRatio=2
+```
+
+- 默认的`Eden:S0:S1`在官方文档中是`8:1:1`,但是因为自适应问题，不会绝对的按照这个比例，如果需要按照比例分配,可以配置参数
+
+```shell
+-XX:SurvivorRatio=8
+```
+
+## 设置堆空间大小
+
+**建议设置xms和xmx设置一样大**，避免GC之后造成堆内存减少，消耗性能
+
+- 设置的是年轻代+老年代
+- -Xms:堆区的起始内存，默认 **物理/64**
+  - -X：jvm运行参数，ms是缩写，既memory start
+- -Xmx:堆区最大的内存， 默认 **物理/4**
+
+```java
+public static void main(String[] args) {
+    //堆内存总量
+    long totalMemory = Runtime.getRuntime().totalMemory() / 1024 / 1024;
+    //最大堆内存
+    long maxMemory = Runtime.getRuntime().maxMemory() / 1024 / 1024;
+
+    System.out.println("-Xms:" + totalMemory + "M");
+    System.out.println("-Xmx:" + maxMemory + "M");
+
+    System.out.println("系统内存大小:" + totalMemory*64 + "M");
+    System.out.println("系统内存大小:" + maxMemory*4 + "M");
+}
+```
+
+## 堆内存分配策略
+
+- 优先分配Eden
+- 大对象直接分配到老年代
+  - 尽量避免程序出现过多的大对象
+  - 尤其是那种朝生即死的大对象
+- 长期存活的对象存入老年代（15岁）
+- s区相同年龄的对象大小大于s区的一半，则直接进入老年代
+
+## TLAB内存区域
+
+- 为每个线程在Eden区分配了一部分（默认eden的1%）私有的内存区
+- 增加内存吞吐量
+- 避免线程安全问题
+- 不是所有对象都能在tlab区分配对象（他比较少）
+- 命令行 jinfo -flag UseTLAB 进程号  可以查看是否开启
+- 一旦对象分配TLAB区域失败，JVM就会尝试使用**加锁**的机制，确保数据的原子性
+
 # 本地方法栈
 
 - 他是调用C相关的方法的存储
