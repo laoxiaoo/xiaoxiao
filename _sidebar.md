@@ -5,7 +5,6 @@
 	* [java基础](/java/base/javaBase)
     	* [Api](/java/base/api/api)
 	* [并发编程](/java/base/concurrent/)
-	* [canal](/java/tool/canal)
 * Mybatis
   * [自定义持久层](java/mybatis/1-custom-persistence)
   * [架构设计](java/mybatis/2-architecture)
@@ -67,10 +66,9 @@
     	* [redis基础](database/redis/1-redis-base)
     	* [redis数据结构](database/redis/2-redis-datastructure)
     	* [redis实际应用](database/redis/2-redis-sample)
-	* [Mysql](/database/Mysql.md)
+	* [Mysql](/database/mysql/)
 	* [事务](/database/transaction)
 * [工具](/tool/)
-
     
 
 <footer id="mb-footer"></footer>
