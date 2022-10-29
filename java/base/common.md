@@ -1,3 +1,5 @@
+# 常用的一些api
+
 # Jackson
 
 ## 概述
@@ -416,6 +418,12 @@ public class JacksonConfig {
 
 }
 
+```
+
+## 集合类转换
+
+```java
+List<userResource> list = new ObjectNapper ().readValue(userResourcesStr，newTypeReferenceList<uUserResource>>(){})
 ```
 
 # logback
