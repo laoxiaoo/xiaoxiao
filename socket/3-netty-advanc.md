@@ -1,3 +1,5 @@
+# Netty高级解决方案
+
 # 黏包半包
 
 **只要我们使用**<b id="blue">TCP-IP</b>**协议，都会产生这个现象**
@@ -52,7 +54,7 @@
 2. 滑动窗口:假设接收方的窗口只剩了128 bytes，发送方的报文大小是256 bytes，这时放不下了，只能先发送前128 bytes，等待ack后才能发送剩余部分，这就造成了半包
 3. MSS限制:当发送的数据超过MSS限制后，会将数据切分发送，就会造成半包
 
-## 解决方案
+## 解决方案（解码器）
 
 > 短连接
 >
@@ -82,6 +84,13 @@
    2.  lengthFieldLength：长度字段的长度
    3.  lengthAdjustment：以长度字段为基准，再过*lengthAdjustment*字节是内容
    4.  initialBytesToStrip：从头剥离几个字节，剩下的字节作为解析字节
+
+![image-20221029144921968](image/image-20221029144921968.png)
+
+lengthAdjustment：
+
+1. 如果报文 length = 10，content真正的长度为10，后续报文 = content = 10，那 lengthAdjustment = 0，报文长度无修修正
+2. 如果报文 length = 15，content真正的长度为10（说明length代表整个报文的长度，也就是 length + header+ content ），后续报文 = content = 10，后续报文和length（15）不等，所以报文长度需要修正，lengthAdjustment = -5
 
 # 简单的Http服务
 

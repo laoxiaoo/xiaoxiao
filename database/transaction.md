@@ -79,3 +79,39 @@
 
 ## 二阶段提交（2PC）
 
+
+
+
+
+# Spring事务处理
+
+## TransactionTemplate
+
+比注解更加细粒度的事务控制
+
+```java
+@Autowired
+private TransactionTemplate transactionTemplate;
+
+public void execute() {
+    transactionTemplate.execute(status -> {
+        //执行同一个事物的方法
+        return Boolean.TRUE;
+    });
+}
+```
+
+## 事务提交后执行
+
+```java
+TransactionSynchronizationManager.registerSynchronization(new TransactionSynchronizationAdapter() {
+    @Override
+    public void afterCommit() {
+        try {
+            //执行事物提交后的一些方法，可以是发送mq等一些
+        } catch (Exception e) {
+
+        }
+    }
+});
+```
