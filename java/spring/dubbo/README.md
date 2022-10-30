@@ -313,6 +313,24 @@ ref = createProxy(map);
 Invoker<T> invoker = cluster.join(directory);
 ```
 
+# 异步调用
+
+`接口处理`：
+
+```java
+@DubboService(version = "1.0.0", cluster = "failfast", retries = 1, methods = {@Method(name = "sayHello", async = true)})
+@Slf4j
+public class DemoManagerImpl implements DemoManager
+```
+
+`调用示例`
+
+```
+result = demoManager.sayHello(name);
+Future<Object> future = RpcContext.getContext().getFuture();//获取异步执行结果Future
+result = future.get();//获取具体的异步执行结果
+```
+
 # Dubbo执行流程
 
  start: 启动Spring容器时,自动启动Dubbo的Provider
@@ -368,6 +386,41 @@ car=com.xiao.spi.impl.CarImpl
 ExtensionLoader<Car> loader = ExtensionLoader.getExtensionLoader(Car.class);
 Car car = loader.getExtension("car");
 car.sayHello();
+```
+
+## @Adaptive作用
+
+一个接口有三个方法，分别是methodA，methodB，methodC。此接口有三个实现类impl1，impl2，impl3。接口通过@SPI注解指定默认实现为impl1，通过@Adaptive注解及URL参数生成一个动态类，可以完成以下动作。
+
+1. 接口能将每个方法的实现都对应不同实现类。例如接口可以的methodA由impl1执行，methodB由impl2执行，methodC由impl3执行。
+2. 接口能让方法按一定优先级选择实现类来执行。例如methodA方法上有注解@Adaptive({"key1","key2","key3"})先尝试查找参数URL中key1对应的实现类，未指定则取key2，还未指定则key3，再没指定则使用SPI注解规定的默认实现类去执行方法
+
+如：
+
+1. 定义一个接口
+
+```java
+@SPI
+public interface Person {
+    @Adaptive({"key1"})
+    void sayHello(URL url);
+
+}
+```
+
+2. 在配置文件专供配置对应key
+
+```
+person=com.xiao.spi.impl.PersonImpl
+person2=com.xiao.spi.impl.Person2Impl
+```
+
+3. 加载
+
+```java
+URL url = URL.valueOf("dubbo://0.0.0.0/test?key1=person2");
+Person person = ExtensionLoader.getExtensionLoader(Person.class).getAdaptiveExtension();
+person.sayHello(url);
 ```
 
 ## 加载原理
