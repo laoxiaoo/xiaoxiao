@@ -117,7 +117,7 @@ lpush article:用户id 文章id
 
 ## 用户之间的共同关注
 
-- A用户的关注放一个集合，粉丝放一个集合
+- A用户的关注放一个SET集合，B用户关注的放到一个set集合
 - A用户和B用户的关注求交集就是共同关注
 
 ## 抽奖活动
@@ -141,6 +141,94 @@ sadd 用户id:文章id  点赞用户1 点赞用户2
 SREM myset 点赞用户
 ```
 
+# 有序集合应用
+
+## 积分排行
+
+### 数据库的实现方式
+
+> 积分表设计
+
+```sql
+CREATE TABLE `t_integral` (
+	`id` INT NOT NULL,
+	`user_id` INT NOT NULL COMMENT '用户id',
+	`integral` INT NOT NULL COMMENT '积分',
+	`integral_type` INT NOT NULL COMMENT '积分类型'
+)
+COMMENT='积分表'
+COLLATE='utf8mb4_general_ci'
+;
+```
+
+> 实现排行版
+
+*8.0版本*：
+
+```sql
+SELECT user_id, SUM(integral) integral 
+,RANK() OVER(ORDER BY SUM(integral) DESC) ranks 
+FROM t_integral
+GROUP BY user_id
+ORDER BY ranks desc
+```
+
+*低版本*:
+
+```sql
+SELECT user_id, SUM(integral) integral 
+,@rank_num := @rank_num + 1 AS rank_num 
+FROM t_integral,(SELECT @rank_num := 0) r
+GROUP BY user_id
+ORDER BY rank_num desc
+```
+
+> 查询当前用户的排行榜
+
+```sql
+SELECT * FROM 
+(SELECT user_id, SUM(integral) integral 
+,@rank_num := @rank_num + 1 AS rank_num 
+FROM t_integral,(SELECT @rank_num := 0) r
+GROUP BY user_id
+ORDER BY rank_num DESC) A
+WHERE A.user_id=1
+```
+
+### Redis实现方式
+
+在数据库插入口，插入redis(当有积分时，往这个用户上添加积分)
+
+```shell
+ZINCRBY test_sort sort 积分 user_id
+```
+
+> 取前20的积分
+
+就是取某个范围
+
+```shell
+ZRANGE test_sort 0 19
+```
+
+> 获取成员的积分
+
+```shell
+ ZSCORE test_sort user_id
+```
+
+> 查询当前用户排多少名
+
+```shell
+ZREVRANK test_sort user_id
+```
+
+
+
+`如果取倒数的排行咋办?`
+
+这种需求很少见，但是，可以将积分取值负数，然后就是倒叙了
+
 # Feed流模式
 
 > 主要模式
@@ -161,7 +249,11 @@ SREM myset 点赞用户
 
 2. 离线的粉丝上线后，再去拉取动态。来完成推与拉。
 
-# 购物车功能
+
+
+# HashMap应用
+
+## 购物车功能
 
 `如果需要考虑购物车顺序等操作，则可以往hash里存入对象`
 
@@ -254,6 +346,47 @@ GEORADIUSBYMEMBER key member radius m|km|ft|mi [WITHCOORD] [WITHDIST] [WITHHASH]
 127.0.0.1:6379> BITCOUNT u1:month 
 (integer) 2
 ```
+
+## 获取连续签到次数
+
+> 判断自己是否有没有**签到**
+
+有一种方式就是， 将取到的二进制，右移一位，再左移一位，和自己进行比较，如果相等，表示未签到
+
+如：
+
+```shell
+## 这里有七天签到
+1001110
+## 右移一位
+0100111
+## 再左移一位
+1001110
+### 1001110 和 1001110 发现相等，表示最后一位不是1,没有签到
+```
+
+> 连续签到伪代码
+
+```java
+int getCount(int day, int userid) {
+    //通过BITFIELD 获取day天的签到数据
+    var data = "BITFIELD userid 0 day";
+    //循环比对
+    int sign = 0;
+    for(int i=day; i>0; i--) {
+        if(data>>1<<1 == data ) {
+            //如果不是今天，则跳出循环，表示断签了
+            if(i!=data) break;
+        } else {
+            sign++;
+        }
+        //右移一位,计算昨天有没有签到
+        data = data >>1
+    }
+}
+```
+
+
 
 # 网站用户的上线次数统计
 
