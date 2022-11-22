@@ -1,10 +1,6 @@
 ﻿* [首页](/)
-* java
-	* [jvm](/java/base/jvm/)
-	* [通用](/java/base/common)
-	* [java基础](/java/base/javaBase)
-    	* [Api](/java/base/api/api)
-	* [并发编程](/java/base/concurrent/)
+* [JAVA](/java/base/)
+	
 * Mybatis
   * [自定义持久层](java/mybatis/1-custom-persistence)
   * [架构设计](java/mybatis/2-architecture)

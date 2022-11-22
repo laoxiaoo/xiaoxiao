@@ -872,25 +872,6 @@ Background saving started
 
 - AOF持久化是通过保存Redis所执行的写命令来记录数据库状态的
 
-# 发布订阅
-
-- 发布
-  - channel：管道名称
-  - message：消息
-
-```shell
-127.0.0.1:6379> PUBLISH channel message
-```
-
-- 订阅
-
-```shell
-127.0.0.1:6379> SUBSCRIBE laoxiao 
-Reading messages... (press Ctrl-C to quit)
-1) "subscribe"
-2) "laoxiao"
-```
-
 # 主从复制
 
 - 只一个redis服务器的数据，复制到其他redis服务器

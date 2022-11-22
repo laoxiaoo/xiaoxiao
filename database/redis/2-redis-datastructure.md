@@ -1,3 +1,5 @@
+# 命令操作
+
 # 字符串操作
 
 ## Set
@@ -391,3 +393,23 @@ GEOADD key [NX|XX] [CH] longitude latitude member [longitude latitude member
 127.0.0.1:6379> ZREM china:city liuyang
 ```
 
+# 发布订阅
+
+*发布*：
+
+`channel`：管道名称
+
+`message`：消息
+
+```shell
+127.0.0.1:6379> PUBLISH channel message
+```
+
+*订阅*：
+
+```shell
+127.0.0.1:6379> SUBSCRIBE laoxiao 
+Reading messages... (press Ctrl-C to quit)
+1) "subscribe"
+2) "laoxiao"
+```

@@ -1,3 +1,5 @@
+
+
 # Bin log(逻辑日志)
 
 > 概念
@@ -44,7 +46,13 @@ expire_logs_days=30
 
 ![image-20210712223827118](./image/20210712223827.png)
 
-> Redo Log写入原理
+## LogBuffer
+
+LogBuffer主要是用于记录InnoDB引擎日志，在DML操作时会产生Redo和Undo日志
+
+
+
+### Redo Log写入原理
 
 - 以循环方式写入日志文件,不断的写与擦除,文件1写满时，切换到文件2，文件2写满时，再次切换到文件1。
 - writepos当前记录的位置,循环边写边后移
@@ -53,7 +61,7 @@ expire_logs_days=30
 
 ![image-20210712224508580](./image/20210712224508.png)
 
-> Flush log 原理(刷盘机制)
+### Flush log 原理(刷盘机制)
 
 - os buffer： 内核态的内存
 - innodb_flush_log_at_trx_commit：默认是1， （配置值： 0,1,2）
@@ -62,7 +70,7 @@ expire_logs_days=30
 
 ![image-20210712224838371](./image/20210712224838.png)
 
-> 日志刷盘规则
+*日志刷盘规则*：
 
 默认情况下事务每次提交的时候都会刷事务日志到磁盘中，这是因为变量 innodb_flush_log_at_trx_commit 的值为1。但是innodb不仅仅只会在有commit动作后才会刷日志到磁盘，这只是innodb存储引擎刷日志的规则之一。
 

@@ -1809,7 +1809,7 @@ public class HelloStartAutoConfiguration {
     }
 }
 ```
-- 建立META-INF/spring.factories文件
+- 建立META-INF/spring.factories文件(多个类用,隔开)
 ```
 org.springframework.boot.autoconfigure.EnableAutoConfiguration=\
     com.xiao.starter.HelloStartAutoConfiguration

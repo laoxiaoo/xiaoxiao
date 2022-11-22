@@ -1,8 +1,10 @@
+# Bigdecimal
+
+
+
 # 相关坑
 
-> 1. 浮点类型
-
-
+## 浮点类型
 
 ```java
 BigDecimal a = new BigDecimal(0.01);
@@ -24,9 +26,9 @@ b = 0.01
 
 *1. 在使用BigDecimal构造函数时，尽量传递字符串而非浮点类型；*
 
-*2. 如果无法满足第一条，则可采用BigDecimal#valueOf方法来构造初始化值。*
+*2. 如果无法满足第一条，则可采用*  **BigDecimal#valueOf方法** *来构造初始化值*
 
-> 2. 浮点精度
+## 浮点精度
 
 **通常情况，如果比较两个BigDecimal值的大小，采用其实现的compareTo方法；如果严格限制精度的比较，那么则可考虑使用equals方法**
 
@@ -37,7 +39,7 @@ System.out.println(a.equals(b));
 System.out.println(a.compareTo(b));
 ```
 
-> 3. 设置精度
+## 设置精度
 
 ```java
 BigDecimal a = new BigDecimal("1.0");
@@ -66,7 +68,9 @@ a.divide(b);
 - RoundingMode.HALF_EVEN：向“最接近的”数字舍入，如果与两个相邻数字的距离相等，则向相邻的偶数舍入。如果舍弃部分左边的数字为奇数，则舍入行为与 ROUNDHALFUP 相同;如果为偶数，则舍入行为与 ROUNDHALF_DOWN 相同。注意，在重复进行一系列计算时，此舍入模式可以将累加错误减到最小。此舍入模式也称为“银行家舍入法”，主要在美国使用。四舍六入，五分两种情况。如果前一位为奇数，则入位，否则舍去。以下例子为保留小数点1位，那么这种舍入方式下的结果。1.15 ==> 1.2 ,1.25 ==> 1.2
 - RoundingMode.UNNECESSARY：断言请求的操作具有精确的结果，因此不需要舍入。如果对获得精确结果的操作指定此舍入模式，则抛出ArithmeticException。
 
-> 4. 三种字符串输出
+`在常见的除法运算中，一般采用的都是 RoundingMode.HALF_DOWN(截取)，这样可以最大限度的保证资损问题`
+
+## 三种字符串输出
 
 - toPlainString()：不使用任何科学计数法；
 - toString()：在必要的时候使用科学计数法；
