@@ -84,3 +84,82 @@ public class MyThreadPool {
     }
 }
 ```
+
+
+
+
+# 线程池七大参数
+
+```java
+public ThreadPoolExecutor(int corePoolSize,
+                          int maximumPoolSize,
+                          long keepAliveTime,
+                          TimeUnit unit,
+                          BlockingQueue<Runnable> workQueue,
+                          ThreadFactory threadFactory,
+                          RejectedExecutionHandler handler)
+```
+
+*corePoolSize*: 核心线程数，既执行外部请求的线程数量，当线程池的数目达到core值后，任务会放入缓存的队列中。
+
+相当于我们上面的work数组的大小
+
+*maximumPoolSize*：最大的同步执行的线程数量，如果线程大于max，则采用拒绝策略（队列满了才会使用这个参数）
+
+- 这里面包含了**救急线程数**，所以：救急线程数=max-核心线程数
+- 如果阻塞队列放不下了，那么那个任务就会丢入救急线程work线程中
+
+*keepAliveTime*：当线程数超过core，并且这个线程的空闲时间超过keep，则销毁线程到core这个数量
+
+- 对应的是救急线程（救急线程空闲时间超了，则销毁当前线程）
+
+TimeUnit：keepAliveTime的时间单位
+
+- 对应的是救急线程
+
+workQueue：一个阻塞队列
+
+- 如果是有界队列，则线程数少于core时，创建线程，如果大于core，则任务加入本队列中。如果队列满了但是，线程数小于max，则开始创建线程
+- 如果时无界队列，则max没有用（**因为队列永远不会满**）
+
+ThreadFactory： 生产线程的工厂，一般默认(可以为线程起一个好名字)
+
+RejectedExecutionHandler：拒绝策略
+
+- 如果救急线程都满了，那么才会触发拒绝策略
+
+# 线程池拒绝策略
+
+AbortPolicy（默认）: 直接抛出RejectedExecutionException异常阻止系统正常运行。
+
+CallerRunsPolicy: 不会抛弃任务，也不会抛出异常，而是将某些任务返回给调用的线程执行，如main方法的线程调用的线程池，则返回给main方法执行
+
+ThreadPoolExecutor.DiscardPolicy：也是丢弃任务，但是不抛出异常。 
+ThreadPoolExecutor.DiscardOldestPolicy：丢弃队列最前面的任务（它放弃最旧的未处理请求），然后重新尝试执行任务（重复此过程）
+
+![](./image/20210622220741.png)
+
+
+# 关闭线程池
+
+```java
+/*
+线程池状态变为 SHUTDOWN
+- 不会接收新任务
+- 但已提交任务会执行完
+- 此方法不会阻塞调用线程的执行
+*/
+void shutdown();
+```
+
+- 返回值为队列中的任务
+
+```java
+/*
+线程池状态变为 STOP
+- 不会接收新任务
+- 会将队列中的任务返回
+- 并用 interrupt 的方式中断正在执行的任务
+*/
+List<Runnable> shutdownNow();
+```

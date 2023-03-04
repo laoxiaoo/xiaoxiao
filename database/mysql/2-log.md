@@ -127,6 +127,8 @@ creator_trx_id:表示生成该`Readview`的事务的`事务id
 
 > ReadView如何判断版本链中的哪个版本可用?
 
+*trx_id*表示当前要读取的那一条数据的事务id
+
 trx_id == creator_trx_id: 可以访问这个版本（当前数据的创建者）
 
 trx_id  < min_trx_id:  可以访问这个版本（表示trx_id这个数据已经提交）
