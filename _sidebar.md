@@ -58,10 +58,7 @@
 * 数据库
 	* [Elasticsearch](/database/es/)
 	* [Elasticsearch](/database/Elasticsearch.md)
-	* Redis
-    	* [redis基础](database/redis/1-redis-base)
-    	* [redis数据结构](database/redis/2-redis-datastructure)
-    	* [redis实际应用](database/redis/2-redis-sample)
+	* [Redis](/database/redis/)
 	* [Mysql](/database/mysql/)
 	* [事务](/database/transaction)
 * [工具](/tool/)
