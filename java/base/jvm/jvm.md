@@ -61,27 +61,6 @@
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-## GC日志
-
-- OutOfMemeryError之前一定发生FullGC，因为FullGC之后，老年代内存不够才会报错误
-
-![](../..//image/java/jvm/20210509204844.png)
-
-
-
-
-
 - 虚拟机空间担保策略
 
 ```tex
