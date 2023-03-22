@@ -429,6 +429,20 @@ Alter table … drop column [column_name]
 Alter table … drop [index/key] [index_name]
 ```
 
+## 修改字段
+
+*修改字段长度与注释*
+
+```sql
+alter table users modify column username varchar(30) comment '注释';
+```
+
+*修改自动名称*
+
+```sql
+ALTER TABLE 表名 CHANGE 旧字段名 新字段名 字段类型(长度);
+```
+
 ## 常用函数
 
 -   Isnull(expr)操作符  
