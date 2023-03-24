@@ -13,7 +13,6 @@
 
 ```mermaid
 graph TD;
-
 	Thread1 --> Socket1
 	THread2 --> Socket2
 	Thread3 --> Socket3
@@ -30,7 +29,7 @@ graph TD;
 一个线程处理多个socket
 
 ```mermaid
-graph TD;
+graph TD
 
 thread1 --> socket1
 thread1 --> socket2

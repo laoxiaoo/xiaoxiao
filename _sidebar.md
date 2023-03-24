@@ -56,10 +56,8 @@
 	* [k8s](/doc/server/k8s)
 * 数据库
 	* [Elasticsearch](/doc/database/es/)
-	* [Elasticsearch](/doc/database/Elasticsearch.md)
 	* [Redis](/doc/database/redis/)
 	* [Mysql](/doc/database/mysql/)
-	* [事务](/doc/database/transaction)
 * [工具](/doc/tool/)
     
 

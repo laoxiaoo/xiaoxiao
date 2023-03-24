@@ -1,19 +1,10 @@
-# 名词
-
-- 数据data
-- 数据库database
-- 数据库管理系统dbms
-  - 目前分为关系型和非关系型
-- 实例instance
-  - 启动一个数据库叫一个实例
-
 # Mysql分层
 
 ## 结构
 
 ![](./image/20210708163932.png)
 
-![image-20210712212602360](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210712212609.png)
+![image-20210712212602360](./image/20210712212609.png)
 
 ## 查询操作
 

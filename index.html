@@ -1,43 +1,51 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
   <meta charset="UTF-8">
   <title>老肖的笔记</title>
   <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
   <meta name="description" content="Description">
-  <meta name="viewport" content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <meta name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
   <link rel="stylesheet" href="./js/vue.css">
   <style>
     .markdown-section blockquote {
-        background-color: rgba(66, 185, 131, .1);
+      background-color: rgba(66, 185, 131, .1);
     }
+
     .markdown-section blockquote p {
-        padding-top: 10px;
-        padding-bottom:10px;
+      padding-top: 10px;
+      padding-bottom: 10px;
     }
+
     .markdown-section em {
       color: #42b983;
       font-size: 17px;
     }
+
     .markdown-section strong {
       color: #42b983;
       font-size: 15px;
     }
+
     .markdown-section h2 {
-        font-size: 1.75rem;
-        margin: 15px 0 0.8rem;
+      font-size: 1.75rem;
+      margin: 15px 0 0.8rem;
     }
+
     b[id="blue"] {
-    background-color: #02aaf4; 
+      background-color: #02aaf4;
     }
 
     b[id="gray"] {
-        background-color: #4c4c4c;
+      background-color: #4c4c4c;
     }
 
     b[id="red"] {
-        background-color: red;
+      background-color: red;
     }
+
     b {
       display: inline;
       padding: .2em .6em;
@@ -51,30 +59,33 @@
       border-radius: .1rem;
       border-radius: 6px;
     }
+
     .markdown-section h1 {
-        font-size: 1.5rem;
-        margin: 0 0 1rem;
+      font-size: 1.5rem;
+      margin: 0 0 1rem;
     }
+
     .markdown-section h2 {
-        font-size: 1.35rem;
-        margin: 15px 0 0.8rem;
+      font-size: 1.35rem;
+      margin: 15px 0 0.8rem;
     }
 
     .markdown-section h2 a span {
-        color: #FF8000;
+      color: #FF8000;
     }
 
     .markdown-section h3 a span {
-        color: #F2BD00;
+      color: #F2BD00;
     }
-
   </style>
   <!-- Theme: Simple Dark -->
- <!-- <link rel="stylesheet" 
+  <!-- <link rel="stylesheet" 
   href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css"> -->
   <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">-->
+
 <body>
   <div id="app"></div>
+  <script src="https://cdn.jsdelivr.net/npm/mermaid/dist/mermaid.min.js"></script>
   <script>
     window.$docsify = {
       name: '',
@@ -82,7 +93,7 @@
       loadSidebar: true,
       alias: {
         //配置后所有页面都会访问根目录的sidebar
-      //'/.*/_sidebar.md': './_sidebar.md'
+        //'/.*/_sidebar.md': './_sidebar.md'
         '/.*/_navbar.md': '/_navbar.md'
       },
       //侧边栏菜单层级
@@ -90,19 +101,45 @@
       loadNavbar: true,//顶部导航
       coverpage: true,
       onlyCover: true,
-      search: {paths: 'auto',placeholder: '搜索',noData: '找不到结果',depth: 3, },
-      autoHeader: true
+      search: { paths: 'auto', placeholder: '搜索', noData: '找不到结果', depth: 3, },
+      autoHeader: true,
+      plugins: [
+        function (hook, vm) {
+          hook.ready(function () {
+            // 类似 jQuery.ready 初始化 mermaid, 禁用自动渲染
+            mermaid.initialize({ startOnLoad: false });
+          });
+          hook.doneEach(function () {
+            // 类似 jQuery.ready 初始化 mermaid, 禁用自动渲染
+            mermaid.init(undefined, '.mermaid');
+          });
+        }
+      ],
+      markdown: {
+        renderer: {
+          code: function (code, lang) {
+            if (lang === "mermaid") {
+              return (
+                '<div class="mermaid">' + code + "</div>"
+              );
+            }
+            return this.origin.code.apply(this, arguments);
+          }
+        }
+      }
     }
   </script>
-  
+
   <script src="./js/docsify.min.js"></script>
-  <!-- <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script> --
-  <!--全局搜索-->
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script> -->
+  <!-- 全局搜索-->
   <script src="./js/search.js"></script>
   <!--java高亮-->
   <script src="./js/prism-java.min.js"></script>
   <!--<script src="./js/docsify-sidebarFooter.min.js"></script>-->
   <!--侧边栏收缩-->
   <script src="./js/docsify-sidebar-collapse.min.js"></script>
+  
 </body>
+
 </html>
