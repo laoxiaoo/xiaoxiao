@@ -309,11 +309,11 @@ sh '''
 
 - 在一些脚本中，有些参数需要动态的控制，如版本号等
 
-![](D:/git/gitee/xiaoxiao/image/jkens/20210324154123.png)
+![](./image/jenkins/20210324154123.png)
 
 - 在项目中传入对应的参数
 
-![](D:/git/gitee/xiaoxiao/image/jkens/20210324154732.png)
+![](./image/jenkins/20210324154732.png)
 
 # 构建触发器
 
@@ -369,7 +369,7 @@ authorized_keys
   - jenkins -> 系统配置 -> publish over ssh
   - path to key (私钥路径): /var/jenkins_home/.ssh/id_rsa
 
-![](D:/git/gitee/xiaoxiao/image/java/jenkins/20201019001250.png)
+![](./image/jenkins/20201019001250.png)
 
 - 插件按照后需要重启
 - 流水线选择sshpublisher,生成pipeline模板， 在execCommand里面写入代码
@@ -436,7 +436,7 @@ stage('Build') {
 - 安装 Jenkins Control Plugin插件
 - 配置相关信息
 
-![1608079876705](D:/git/gitee/xiaoxiao/image/jkens/1608079876705.png)
+![1608079876705](./image/jenkins/1608079876705.png)
 
 password:在用户列表 --> 设置 --->  API Token中获取
 
