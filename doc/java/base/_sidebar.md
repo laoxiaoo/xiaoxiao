@@ -2,9 +2,10 @@
     * [jvm基础](/doc/java/base/jvm/doc/1-jvm)
     * [类加载子系统](/doc/java/base/jvm/doc/2-jvm)
     * [运行时数据区](/doc/java/base/jvm/doc/3-jvm)
-    * [String Table](/doc/java/base/jvm/doc/4-jvm)
-    * [gc](/doc/java/base/jvm/doc/5-gc)
-    * [调优](/doc/java/base/jvm/doc/6-optimize)
+    * [对象](/doc/java/base/jvm/doc/4-object)
+    * [String Table](/doc/java/base/jvm/doc/5-jvm)
+    * [gc](/doc/java/base/jvm/doc/6-gc)
+    * [调优](/doc/java/base/jvm/doc/7-optimize)
 * [通用](/doc/java/base/common)
 * Api
     * [基础Api](/doc/java/base/api/1-base)

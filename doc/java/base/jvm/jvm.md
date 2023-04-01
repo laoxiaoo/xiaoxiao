@@ -80,204 +80,36 @@
 
 
 
-# 方法区
 
-https://docs.oracle.com/javase/specs/jvms/se8/html/index.html
 
-## 栈堆方法区交互关系
 
-- 类结构放在方法区
 
-- new的对象放在堆空间
 
-- 对象所在的方法的栈帧存在栈区
 
-## 方法区介绍
 
-- jdk7是 永久代 Per ,  JDK8是元空间 MetaspaceSize
 
-- 创建在线程启动的时候**类加载器**加载类到方法区
-- 过多的生成放射类可能导致方法区OOM
 
-- 线程共享的
-- 方法区（Metaspace）大小，决定系统可以保存多少个类
 
-## 设置固定大小
 
-https://docs.oracle.com/javase/8/docs/technotes/tools/unix/java.html#BGBCIEFC
 
-```tex
-##设置元空间最大值（默认-1，无限制）
--XX:MaxMetaspaceSize=size
-##设置初始大小（默认21M）
--XX:MetaspaceSize=size
-```
 
-- -XX:Metaspacesize:设置初始的元空间大小。对于一个64位的服务器端JVM来说其默认的-XX:MetaspaceSize值为21MB。这就是初始的高水位线，一旦触及这个水位线，Full Gc将会被触发并卸载没用的类（即这些类对应的类加载器不再存活)然后这个高水位线将会重置。新的高水位线的值取决于Gc后释放了多少元空间。如果释放的空间不足，那么在不超过MaxMetaspacesize时，适当提高该值。如果释放空间过多，则适当降低该值。
-- 如果初始化的高水位线设置过低，上述高水位线调整情况会发生很多次。通过垃圾回收器的日志可以观察到Full GC多次调用。为了避免频繁地GC ，建议将-XX:Metaspacesize设置为一个相对较高的值。
 
-## 方法区的溢出
 
-方法区存的是类的定义
 
-可以通过ClassWriter来动态生成类/CGlib生成动态代理类来模拟溢出
 
-## 内部结构
 
-### 存储内容
 
-- 类型信息
-  - 类class，接口。枚举，注解
-  - 域（Field）信息：名称，类型，修饰符（public,private,static,final等）
-  - 方法信息
-- 常量
-- 静态变量
-- 及时编译的代码缓存
 
-## 全局常量
 
-- 既**static final **修饰的常量
 
-```java
-static int a=1;
-static final int b=2;
-```
 
-- 这种常量在**编译阶段**就已经赋值了
 
-- 其他static 变量在init阶段赋值
 
-## 运行时常量池
 
-- 类加载之后，从字节码读取的常量存储在方法区中
 
-- constant pool 
 
-  - 字面量信息
-  - 类型、域、方法的符号引用
 
-- 为什么需要常量池
 
-  - 常量池是字节码一部分
-
-  - jvm 在栈帧(frame) 中进行操作数和方法的动态链接(link)，为了便于链接，jvm 使用常量池来保存跟踪当前类中引用的其他类及其成员变量和成员方法。
-  
-    每个栈帧(frame)都包含一个运行常量池的引用，这个引用指向当前栈帧需要执行的方法，jvm使用这个引用来进行动态链接
-  
-  - 当真正的需要使用时，通过引用来调用常量（减少了代码文件大小），加载到内存中
-
-## 方法区GC
-
-- 虚拟机规范并没有要求方法区GC
-
-- 方法去GC收集主要回收：
-  - 常量池废弃的常量（字面量，符号引用）
-  - 不再使用的类型（类卸载）
-
-## 方法区的演进
-
-- 首先明确，只有HotSpot才有永久代
-
-| 版本         | 描述                                                         |
-| ------------ | ------------------------------------------------------------ |
-| jdk1.6及之前 | 有永久代（permanent generation） ，静态变量存放在永久代上    |
-| jdk1.7       | 有永久代，但已经逐步“去永久代”，字符串常量池、静态变量移除，保存在堆中 |
-| jdk1.8及之后 | 无永久代，类型信息、字段、方法、常量保存在本地内存的元空间，**但字符串常量池、静态变量仍在堆** |
-
-- 为什么设置永久代被元空间代替
-  - 永久代设置空间是很难确定的，因为工作中可能加载很多动态类
-  - 减少full gc
-
-## 字符串常量
-
-- String table为什么要变化
-  - 永久代GC频率低，导致String table回收效率不高，导致永久代不足
-  - 把字符串常量放到堆里能够和堆一起回收
-
-# 对象
-
-## 对象实例化
-
-### 对象创建方式
-
-- new 
-  - 变形1：xxx的静态方法
-  - 变性2：xxxbuilder/xxxfactory
-- Class的newInstance()(反射的方式，只能调用空参的构造器，权限必须是public)
-- Constructor的newInstance()
-  - 可以调用空参和带参的构造器
-  - 权限没有要求
-
-```java
-//调用有参的构造方法生成类实例
-Constructor<InternalClass> constructor
-        = InternalClass.class.getDeclaredConstructor(new Class[] {Integer.class});
-InternalClass instance = constructor.newInstance(new Integer[] {1});
-log.debug("instance {}", instance);
-```
-
-- 使用clone()
-  - 当前类需要实现Cloneable的接口
-- 使用反序列化
-  - 从文件中/网络中获取对象的二进制流
-
-### 创建对象步骤
-
-- 判断对应的类是否加载、链接、初始化
-  - new指令，首先检查这个指令的参数能不能在Metasoace常量池定位到符号引用，检测到了证明这个类被加载了， 就直接使用
-  - 没有，在双亲委派模式下加载类
-- 为对象分配内存
-  - 规整内存------指针碰撞
-  - 不规整内存--------虚拟机维护列表，记录哪些可用，哪些不可用
-- 处理并发安全问题
-  - 采用CAS
-  - 每个线程分配一个TLAB
-- 初始化分配到空间(属性的默认初始化，零值初始化)
-- 设置对象头
-  - 记录当前所属的类
-  - 记录hash值
-- 执行init方法进行初始化(类构造器<init>)
-
-## 对象内存布局
-
-### 对象头
-
-- 运行时元数据
-  - hash值（hashcode）
-  - GC分代年龄
-  - 锁状态标志
-- 类型指针
-  - 指向类元数据instanceKlass，确定该对象的类型
-- 如果创建的是数组，还需要记录数组的长度
-
-### 实例数据
-
-- instance data
-
-- 说明
-  - 他是对象的真正存储有效信息
-- 规则
-  - 相同宽度的字段总是被分配在一起
-  - 父类定义的变量会出现在子类之前
-
-### 对齐填充
-
-- 不是必须，就起到占位符作用
-
-### 图示
-
-```java
-public class CustomerTest {
-    public static void main(String[] args) {
-        Customer cust = new Customer();
-    }
-}
-```
-
-- 局部变量表存了一个cust的变量
-- cust指向堆空间
-
-![](../..//image/java/jvm/20200719164542.png)
 
 ## 对象访问定位
 
