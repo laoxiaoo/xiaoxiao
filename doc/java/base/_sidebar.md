@@ -4,8 +4,9 @@
     * [运行时数据区](/doc/java/base/jvm/doc/3-jvm)
     * [对象](/doc/java/base/jvm/doc/4-object)
     * [String Table](/doc/java/base/jvm/doc/5-jvm)
-    * [gc](/doc/java/base/jvm/doc/6-gc)
-    * [调优](/doc/java/base/jvm/doc/7-optimize)
+    * [字节码文件](/doc/java/base/jvm/doc/6-classfile)
+    * [gc](/doc/java/base/jvm/doc/7-gc)
+    * [调优](/doc/java/base/jvm/doc/8-optimize)
 * [通用](/doc/java/base/common)
 * Api
     * [基础Api](/doc/java/base/api/1-base)

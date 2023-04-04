@@ -87,3 +87,110 @@ public class CustomerTest {
 - cust指向堆空间
 
 ![](./image/20200719164542.png)
+
+
+# 对象访问定位
+
+- jvm如何通过栈帧中的对象引用访问到对象的实例?
+  - 通过栈上reference访问
+
+# 对象访问方式
+
+- 句柄访问(效率低，要访问先得访问句柄，然后再访问对象) 
+  - 一个对象有一个句柄
+
+![](../..//image/java/jvm/20210513225422.png)
+
+- 直接访问(hotspot)
+  - 如果对象地址发生移动（复制算法回收垃圾时），就要去更改reference
+
+![](../..//image/java/jvm/20210513230344.png)
+
+
+
+
+# 执行引擎
+
+## 概述
+
+- jvm主要任务
+  - 负责装载字节码到其内部
+  - 只要编译成jvm可以识别的字节码，都可以在jvm上执行 
+- 执行引擎任务
+  - 将**字节码指令**解释/翻译为平台上的本地机器指令
+
+## 为什么java是半编译半解释语言？
+
+```tex
+因为java既可以用解释器解释
+又可以用JIT编译器编译
+```
+
+- 解释器
+  - 虚拟机启动时，对字节码逐行的解释方式执行，翻译成机器指令执行
+- JIT编译器
+  - 虚拟机将源代码直接编译成机器相关的机器语言（并不会马上执行）
+
+![](./image/20210514213755.png)
+
+
+
+# 本地内存
+
+- 直接内存在java堆外的，直接向系统申请的内存区间
+- 来源于NIO
+- 有时候，我们将虚拟机内存分配过大，却忽略了直接内存的存在，从而导致了本地内存的OOM
+- 如果不指定，则默认值于堆空间最大值（-Xmx）一样大小
+
+
+# 四种引用
+
+## 强引用
+
+最传统的“引用”的定义，是指在程序代码之中普遍存在的引用赋值，即类似“object obj=new object()”这种引用关系。无论任何情况下，只要强引用关系还存在，垃圾收集器就永远不会回收掉被引用的对象。
+
+## 软引用
+
+- 内存不足既回收
+
+在系统将要发生内存溢出之前，将会把这些对象列入回收范围之中进行第二次回收。如果这次回收后还没有足够的内存，才会抛出内存溢出异常。
+
+```java
+Object o = new Object();
+SoftReference<Object> reference = new SoftReference<>(o);
+//销毁强引用
+o = null;
+//获取软引用对象
+Object o1 = reference.get();
+```
+
+## 弱引用
+
+- GC既回收
+
+弱引用(weakReferehce):被弱引用关联的对象只能生存到下一次垃圾收集之前。当垃圾收集器工作时，无论内存空间是否足够，都会回收掉被弱引用关联的对象。
+
+```java
+Object o = new Object();
+WeakReference<Object> weakReference = new WeakReference<>(o);
+o = null;
+Object o1 = weakReference.get();
+```
+
+- 相关类：WeakHashMap
+
+### 虚引用
+
+虚引用(PhantomReference) :一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，也无法通过虚引用来获得一个对象的实例。**为一个对象设置虚引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知。**（用来对象回收跟踪）
+
+```java
+Object o = new Object();
+ReferenceQueue<Object> referenceQueue = new ReferenceQueue<>();
+PhantomReference<Object> reference = new PhantomReference<>(o, referenceQueue);
+//一旦将Object对象回收，就会将虚引用存放到ReferenceQueue队列
+o = null;
+```
+
+
+
+
