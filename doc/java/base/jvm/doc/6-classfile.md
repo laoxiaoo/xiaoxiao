@@ -85,6 +85,8 @@
 
 ![](./image/20210526220610.png)
 
+![image-20230406105415438](image/image-20230406105415438.png)
+
 - idea插件
   - jclasslib Bytecode
 
@@ -232,7 +234,7 @@ class Son extends Father {
 //输出： 0   30
 ```
 
-- 构造方法初始化
+- 构造方法初始化(就是调用<init>)
 
 ```shell
  0 aload_0
