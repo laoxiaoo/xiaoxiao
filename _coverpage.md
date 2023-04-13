@@ -1,6 +1,6 @@
-﻿![logo](https://wx.qlogo.cn/mmopen/vi_32/Q0j4TwGTfTIyNIia6IFvSwtacP7OMdWaMNj430XXib1Yg0XfwWiaTMYH8PZGJh8IfdbJathqJfkOVVrUPjmgMic9BQ/132)
+﻿![logo](./20230304140618.jpg ':size=250')
 
-# 小肖的笔记
+# 老肖的笔记
 
 > 全栈学习笔记
 
