@@ -31,11 +31,16 @@ Background saving started
 
 ### 触发操作
 
+1. save 或者bgsave命令手动执行
+2. 根据配置文件自动执行
+3. 客户端发送shutdown，系统会先save，阻塞执行
+4. 主从架构，从节点发送psyn
+
 自动触发是由我们的配置文件来完成的
 
 ### 恢复操作
 
- 将rdb文件放到对应文件下，redis启动会自动检查
+ 将rdb文件放到对应文件下，redis启动会自动检查,然后重新加载到内存中
 
 ```shell
 127.0.0.1:6379> config get dir
