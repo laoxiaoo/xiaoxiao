@@ -189,6 +189,20 @@ dbfilename dump.rdb
 requirepass 123456
 ```
 
+## 日志
+```shell
+## 日志级别
+loglevel notice
+
+## 日志文件名
+logfile ""
+
+```
+## 最大的客户端连接数
+
+```shell
+ maxclients 10000
+```
 
 
 ## 以守护进程运行
@@ -200,3 +214,32 @@ daemonize yes
 pidfile /var/run/redis_6379.pid
 ```
 
+# 安全配置
+
+## 命令行配置
+
+```shell
+## 默认获取密码是为空的
+127.0.0.1:6379> config get requirepass
+1) "requirepass"
+2) ""
+## 设置密码
+127.0.0.1:6379> config set requirepass 123456
+OK
+## 再吃执行命令没有权限
+127.0.0.1:6379> config set requirepass
+(error) ERR Unknown subcommand
+## 认证
+127.0.0.1:6379> auth 123456
+OK
+###
+127.0.0.1:6379> config get requirepass
+1) "requirepass"
+2) "123456"
+```
+
+## 配置文件配置
+```shell
+# 在配置文件中设置密码
+requirepass 123456
+```

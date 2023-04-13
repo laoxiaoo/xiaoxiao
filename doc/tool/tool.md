@@ -246,3 +246,7 @@ mvn idea:idea
 
 这个命令可以检查并继续下载未下载完整的依赖jar。
 
+
+
+# 进程管理工具supervisor
+
