@@ -209,39 +209,7 @@ targetService.sayHello();
 
 
 
-# Spring Aop原理
-
->  EnableAspectJAutoProxy
-
-1. Spring的Aop起源于@EnableAspectJAutoProxy注解
-
-```java
-@Import(AspectJAutoProxyRegistrar.class)
-public @interface EnableAspectJAutoProxy
-```
-
-2. 这个注解是一个Spring的Enable编程，利用ImportBeanDefinitionRegistrar进行注册
-   1. 它在这个方法里注册了AnnotationAwareAspectJAutoProxyCreator（自动代理注册器）这个bean
-
->AnnotationAwareAspectJAutoProxyCreator
-
-![image-20210707165920248](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210707165927.png)
-
-1. 我们发现这个类实现了BeanPostProcessor后置处理器和 Aware模型
-   1. 凡是Aware的都会有一个setBeanFactory方法
-   2. BeanPostProcessor在refresh方法注册阶段进行创建
-2. 在后置通知方法AbstractAutoProxyCreator#postProcessAfterInitialization中
-   1. 通过AbstractAutoProxyCreator#wrapIfNecessary代理对象的创建
-   2. 注意：**Spring 默认是jdk代理的，如果是直接使用类而不是接口，则是cglib**
-   3. 当强制使用cglib时：需要配置`spring.aop.proxy-target-class=true`或`@EnableAspectJAutoProxy(proxyTargetClass = true`)
-
-> 执行阶段
-
- JdkDynamicAopProxy/CglibAopProxy将每一个通知方法又被包装为方法拦截器，形成一条责任链调用
-
-
-
-# 实现Aop的方式
+# Spring提升代理类方式
 
 ## 1-EnableAspectJAutoProxy注解的方式
 
@@ -310,13 +278,141 @@ Map<String, String> proxy = aspect.getProxy();
 proxy.put("laoxiao", "laoxiao");
 ```
 
-# Around和Before的执行顺序
 
-如果是同一个bean里面，则先around再before
+# Spring 实现AOP
+1 导入依赖包
 
-如果不同的bean，则先按照order的排序执行 
+```xml
+<dependency>
+    <groupId>org.springframework</groupId>
+    <artifactId>spring-aspects</artifactId>
+    <version>4.3.12.RELEASE</version>
+</dependency>
+```
+
+2 建立一个aop需要拦截的类
+
+```java
+public class AopClass {
+    public String aopMethod(String name){
+        return "进过aop method 方法处理："+name;
+    }
+}
+```
+
+3 定义日期切面方法
+
+通知方法：
+ * 前置通知(@Before)：logStart：在目标方法(div)运行之前运行
+ * 后置通知(@After)：logEnd：在目标方法(div)运行结束之后运行（无论方法正常结束还是异常结束）
+ * 返回通知(@AfterReturning)：logReturn：在目标方法(div)正常返回之后运行
+ * 异常通知(@AfterThrowing)：logException：在目标方法(div)出现异常以后运行
+ * 环绕通知(@Around)：可以在方法之前、之后、发生异常时执行，手动推进目标方法运行（joinPoint.procced()）
+
+给切面类的目标方法标注何时何地运行（通知注解:@Aspect）
+
+```java
+@Aspect
+public class LogAspects {
+    // * 表示所有方法， .. 表示多个参数
+    @Pointcut("execution(public String com.xiao.aop.AopClass.*(..)) ")
+    public void pointCut(){
+    }
+    @Before("pointCut()")
+    public void logStart(JoinPoint joinPoint){
+        Object[] args = joinPoint.getArgs();
+        System.out.println(joinPoint.getSignature().getName()+"方法开始切入之前：参数："+args);
+    }
+    @After("pointCut()")
+    public void logEnd(JoinPoint joinPoint){
+        System.out.println(""+joinPoint.getSignature().getName()+"结束。。。@After");
+    }
+    @AfterReturning(value = "pointCut()", returning ="result")
+    public void logReturn(JoinPoint joinPoint, Object result){
+        System.out.println(""+joinPoint.getSignature().getName()+"正常返回。。。@AfterReturning:运行结果：{"+result+"}");
+    }
+    @AfterThrowing(value = "pointCut()", throwing = "execution")
+    public void logException(JoinPoint joinPoint, Exception execution){
+        System.out.println(""+joinPoint.getSignature().getName()+"异常返回。。。@AfterThrowing:运行结果：{"+execution+"}");
+    }
+}
+```
+
+配置配置类
+
+```java
+@EnableAspectJAutoProxy
+@Configuration
+public class MainConfigAop {
+    @Bean
+    public LogAspects logAspects(){
+        return new LogAspects();
+    }
+    @Bean
+    public AopClass aopClass(){
+        return new AopClass();
+    }
+}
+```
+
+调用：
+
+```java
+@Test
+public void testBeanConfig3(){
+    AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(MainConfigAop.class);
+    //获取这个配置类中的容器中的所有bean
+    AopClass aopClass = (AopClass)applicationContext.getBean("aopClass");
+    aopClass.aopMethod("老小");
+    applicationContext.close();
+}
+```
+
+输出：
+
+aopMethod方法开始切入之前：参数：[Ljava.lang.Object;@1465398
+进入方法
+aopMethod结束。。。@After
+aopMethod正常返回。。。@AfterReturning:运行结果：{进过aop method 方法处理：老小}
+
+## 环绕通知
+
+```java
+public class SurroundMethod implements MethodInterceptor{
+    public Object invoke(MethodInvocation invocation) {
+        Object result = null;
+        try {
+            System.out.println("环绕通知里面的【前置通知】。。。");
+            result = invocation.proceed();  //这里相当于执行目标方法 如果不写目标方法就不会执行
+            // result是目标方法的返回值
+            System.out.println("环绕通知里面的【后置通知】...");
+        } catch (Throwable e) {
+            System.out.println("这里是执行环绕通知里面的【异常通知】。。。");
+            e.printStackTrace();
+        } finally{
+　　　　　　　System.out.println("这里是执行环绕通知里面的【最终通知】");
+　　　　　}
+        return result;
+        //也可以返回其他  return “123”;  那么目标方法的返回值就是 "123"
+    } 
+}
+```
 
 
+
+## 总结
+
+1 @Aspect 标示切面类，在切面方法中标示对应的处理时机
+
+2 将切面类和被切类注入容器中
+
+3 在配置类启动切面注解@EnableAspectJAutoProxy
+
+## Around和Before的执行顺序
+
+如果是同一个bean的around方法和before方法执行顺序，先around再before
+
+如果不同的bean，则先按照order的排序执行，order靠前的，优先执行 
 
 # 间接代理
 
