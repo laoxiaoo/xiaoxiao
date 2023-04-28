@@ -4,7 +4,7 @@
 - 查找适配器：处理不同方式注册的controller，找到对应的controller后，调用对应的方法，返回对应的modeandview
 - 通过viewresolver来解析视图
 
-![](../image/springmvc/20190720131039.png)
+![](./springmvc/20190720131039.png)
 
 # DispatcherServlet
 

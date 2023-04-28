@@ -89,8 +89,3 @@ if (earlySingletonExposure) {
 
 **注意：此时，a的实例化方法还在调用中（如果是循环依赖），b的创建只是通过a的方法调用geBean的时候创建的**
 
-# @Resource和@Autowire的区别
-
-@Resource和@Autowired都可以用来装配bean，都可以用于字段或setter方法。
-@Autowired默认按类型装配，默认情况下必须要求依赖对象必须存在，如果要允许null值，可以设置它的required属性为false。
-@Resource默认按名称装配，当找不到与名称匹配的bean时才按照类型进行装配。名称可以通过name属性指定，如果没有指定name属性，当注解写在字段上时，默认取字段名，当注解写在setter方法上时，默认取属性名进行装配。

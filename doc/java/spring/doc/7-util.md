@@ -484,6 +484,11 @@ System.out.println(person);
 
 Person(name=laoxiao, age=18)
 
+# @Configuration
+
+主要用于标识一个bean，用来标识这个bean是用于配置的
+
+
 # 条件装配（condition）
 ## @condition
 
@@ -649,3 +654,15 @@ testBeanWindows
 myDefBean
 ```
 
+# @Resource和@Autowire的区别
+
+1. @Resource和@Autowired都可以用来装配bean，都可以用于字段或setter方法。
+
+`@Autowired`
+1. @Autowired默认按类型装配，如果类型有多个，根据名称进行装配  
+2. 默认情况下必须要求依赖对象必须存在，如果要允许null值，可以设置它的required属性为false。     
+3. 他是spring层面定义的  
+
+`@Resource`  
+1. @Resource默认按名称装配，当找不到与名称匹配的bean时才按照类型进行装配。名称可以通过name属性指定，如果没有指定name属性，当注解写在字段上时，默认取字段名，当注解写在setter方法上时，默认取属性名进行装配。   
+2. 他是jdk层面定义的注解   

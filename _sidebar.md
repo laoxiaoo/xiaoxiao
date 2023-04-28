@@ -17,7 +17,6 @@
 * Spring Cloud
     * [SpringCloud2018](/doc/java/spring/SpringCloud.md)
     * [注册中心](/doc/java/springcloud/register.md)
-    * [负载均衡](/java/springcloud/loadBalance.md)
     * [流量容错](/java/springcloud//trafficFault-tolerant)
 * 网络编程
     * [NIO编程](/doc/socket/1-nio)
@@ -32,7 +31,6 @@
     * [mybatis](/doc/java/other/mybatis.md)
 	* [MybatisPlus](/doc/java/other/MybatisPlus.md)
     * [设计模式](/doc/java/other/gof.md)
-	* [常用工具](/doc/java/tool/util.md)
 * 前端
 	* [Angular](/doc/frontend/angular)
 	* [Vue](/doc/frontend/vue)

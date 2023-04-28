@@ -319,12 +319,6 @@ public class HttpEncodingAutoConfiguration {
 - 然后调用AutoConfigurationSorter#getInPriorityOrder
   - 如果没有配置order，则按照字母排序
 
-# @Configuration
-
-- @Bean在@Configuration中会被CGLIB提升
-
-
-
 
 # 日志
 
