@@ -77,6 +77,7 @@ beanFactory.getBeanNamesForType(BeanPostProcessor.class, true, false);
 
 ### 如何创建BeanPostProcessor
 
+
 ```java
 BeanPostProcessor pp = beanFactory.getBean(ppName, BeanPostProcessor.class);
 ```
@@ -141,9 +142,6 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 ```
 
 
-
-### 初始化流程
-
 这在initializeBean方法中看到invokeAwareMethods方法，这个方法是用来awar接口的方法回调
 
 ```java
@@ -158,180 +156,94 @@ protected Object initializeBean(final String beanName, final Object bean, RootBe
       }, getAccessControlContext());
    }
    else {
+         //执行aware的接口方法
 			invokeAwareMethods(beanName, bean);
 		}
 
 		Object wrappedBean = bean;
 		if (mbd == null || !mbd.isSynthetic()) {
+         //调用所有的后置处理器的postProcessBeforeInitialization方法
 			wrappedBean = applyBeanPostProcessorsBeforeInitialization(wrappedBean, beanName);
 		}
+      try {
+         //初始化方法
+         this.invokeInitMethods(beanName, wrappedBean, mbd);
+      }
+      if (mbd == null || !mbd.isSynthetic()) {
+         //执行所有的后置处理器的postProcessAfterInitialization（）方法
+         wrappedBean = this.applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);
+      }
 ```
 
-我们可以看到，applyBeanPostProcessorsBeforeInitialization方法，这个后置处理器处理方法，调用所有的后置处理器的postProcessBeforeInitialization方法
-
-然后执行invokeInitMethods(beanName, wrappedBean, mbd);初始化方法
-
-然后执行applyBeanPostProcessorsAfterInitialization(wrappedBean, beanName);方法，执行所有的后置处理器的postProcessAfterInitialization（）方法
-
-**我们的BeanPostProcessor(AnnotationAwareAspectJAutoProxyCreator)创建成功；得到aspectJAdvisorsBuilder**
+举这个例子，是为了说明，在spring refresh的过程中，初始化
+相关bean的前后会调用所有的后置处理器方法
+即执行org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessBeforeInstantiation等方法
+(AnnotationAwareAspectJAutoProxyCreator的父类)
 
 
 
-5) 把BeanPostProcessor注册到BeanFactory中
 
-4 finishBeanFactoryInitialization(beanFactory);完成BeanFactory初始化工作；
-
-创建剩下的单实例bean， **刚才上面创建的是后置处理器bean**
-
-```java
-// Instantiate all remaining (non-lazy-init) singletons.
-finishBeanFactoryInitialization(beanFactory);
-```
 
 ## 代理类初始化过程：
 
+### Bean实例化一阶段
+在finishBeanFactoryInitialization（初始化剩下的一些单实例Bean）方法中
+进入org.springframework.beans.factory.support.DefaultListableBeanFactory#preInstantiateSingletons方法
 
-在finishBeanFactoryInitialization方法中，调用beanFactory.preInstantiateSingletons();创建方法
+```java
+//获取所有bean定义的bean名
+List<String> beanNames = new ArrayList(this.beanDefinitionNames);
 
-进入preInstantiateSingletons方法
-
- new ArrayList<String>(this.beanDefinitionNames)获取所有bean定义的bean名
-
+```
 遍历获取容器中所有的Bean，依次创建对象getBean(beanName);
 
 getBean->doGetBean()->getSingleton()->
 
 创建bean
-
 先从缓存中获取当前bean（只要创建好的Bean都会被缓存起来），如果能获取到，说明bean是之前被创建过的，直接使用，否则再创建
 
-```java
-@Override
-public void preInstantiateSingletons() throws BeansException {
-   if (this.logger.isDebugEnabled()) {
-      this.logger.debug("Pre-instantiating singletons in " + this);
-   }
-   List<String> beanNames = new ArrayList<String>(this.beanDefinitionNames);
-
-   // Trigger initialization of all non-lazy singleton beans...
-   for (String beanName : beanNames) {
-```
-
-创建bean过程protected Object createBean(String beanName, RootBeanDefinition mbd, Object[] args)：
-
-​	在createBean方法中
-
-resolveBeforeInstantiation(beanName, mbdToUse);解析BeforeInstantiation
-
-希望后置处理器在此能返回一个代理对象；如果能返回代理对象就返回
-
-拿到所有后置处理器，如果是InstantiationAwareBeanPostProcessor;
-
-就执行**postProcessBeforeInstantiation**
-
-- 【BeanPostProcessor是在Bean对象创建完成初始化前后调用的】
-
-- 【InstantiationAwareBeanPostProcessor是在创建Bean实例之前先尝试用后置处理器返回对象的】
-
-  **AnnotationAwareAspectJAutoProxyCreator**实现的就是InstantiationAwareBeanPostProcessor后置处理器，所以，他会在任何bean创建之前，去尝试拦截
-
-  在创建的时候它去调用
+进入org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean方法后
 
 ```java
-Object bean = resolveBeforeInstantiation(beanName, mbdToUse);
-```
-
-如果不能就继续进入
-
-doCreateBean(final String beanName, final RootBeanDefinition mbd, final Object[] args)
-
-这个才是真正的去创建一个bean实例，和之前说创建后置处理器bean一样
-
-**所以， AnnotationAwareAspectJAutoProxyCreator，在所有bean创建之前会有一个拦截，因为实现了InstantiationAwareBeanPostProcessor，所以会调用postProcessBeforeInstantiation()返回一个代理的bean
-
----
-
-5 **AopClass(我们的被切面的类)和LogAspects我们的切面类创建bean过程**
-
-这两个bean是通过postProcessBeforeInstantiation来创建的
-
-1 判断当前bean是否在advisedBeans中（保存了所有需要增强bean）
-
-2 isInfrastructureClass(beanClass) 判断是否时切面类（AopClass不是）（@Aspect）
-
-3 shouldSkip(beanClass, beanName)判断是否需要跳过
-
-​	1）获取候选的增强器（切面里面的通知方法）【List<Advisor> candidateAdvisors】
-
-
-
-```java
-@Override
-	public Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
-		Object cacheKey = getCacheKey(beanClass, beanName);
-
-		if (beanName == null || !this.targetSourcedBeans.contains(beanName)) {
-			if (this.advisedBeans.containsKey(cacheKey)) {
-				return null;
-			}
-			if (isInfrastructureClass(beanClass) || shouldSkip(beanClass, beanName)) {
-				this.advisedBeans.put(cacheKey, Boolean.FALSE);
-				return null;
-			}
-		}
-		if (beanName != null) {.
-				Object proxy = createProxy(beanClass, beanName, specificInterceptors, targetSource);
-				this.proxyTypes.put(cacheKey, proxy.getClass());
-				return proxy;
-			}
-		}
-
-		return null;
-	}
-```
-
-判断是否切面的方法
-
-```java
-public class AnnotationAwareAspectJAutoProxyCreator extends AspectJAwareAdvisorAutoProxyCreator {
-@Override
-protected boolean isInfrastructureClass(Class<?> beanClass) {
-   return (super.isInfrastructureClass(beanClass) 
-   || this.aspectJAdvisorFactory.isAspect(beanClass));
-}
-```
-
-创建完AopClass类之后，调用postProcessAfterInitialization方法
-
-return wrapIfNecessary(bean, beanName, cacheKey);//包装如果需要的情况下
- * 1）.获取当前bean的所有增强器（通知方法）  Object[]  specificInterceptors
-      * 1.找到候选的所有的增强器（找哪些通知方法是需要切入当前bean方法的）
-      *2.获取到能在bean使用的增强器。
-      *3.给增强器排序
- * 2）.保存当前bean在advisedBeans中；
- * 3）.如果当前bean需要增强，创建当前bean的代理对象；
-      *1）.获取所有增强器（通知方法）
-      * 2）.保存到proxyFactory
-      * 3）.创建代理对象：Spring自动决定
-           *JdkDynamicAopProxy(config);jdk动态代理；
-           * ObjenesisCglibAopProxy(config);cglib的动态代理；
- * 		4）.给容器中返回当前组件使用cglib增强了的代理对象；
- * 		5）.以后容器中获取到的就是这个组件的代理对象，执行目标方法的时候，代理对象就会执行通知方法的流程；
-
-```java
-public abstract class AbstractAutoProxyCreator extends ProxyProcessorSupport
-		implements SmartInstantiationAwareBeanPostProcessor, BeanFactoryAware {
-@Override
-public Object postProcessAfterInitialization(Object bean, String beanName) throws BeansException {
-   if (bean != null) {
-      Object cacheKey = getCacheKey(bean.getClass(), beanName);
-      if (!this.earlyProxyReferences.contains(cacheKey)) {
-         return wrapIfNecessary(bean, beanName, cacheKey);
-      }
-   }
+//解析BeforeInstantiation
+//如果能返回代理对象就返回
+Object bean = resolveBeforeInstantiation(beanName, mbdToUse)
+if (bean != null) {
    return bean;
 }
+//如果不能返回代理就执行这个方法
+Object beanInstance = doCreateBean(beanName, mbdToUse, args);
 ```
+
+### 代理Bean生成阶段
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#resolveBeforeInstantiation方法
+AnnotationAwareAspectJAutoProxyCreator是InstantiationAwareBeanPostProcessor子类
+他的作用是在每个Bean创建之前，调用postProcessBeforeInstantiation方法
+```java
+//获取InstantiationAwareBeanPostProcessor后置处理器
+//在其他Bean创建之前尝试InstantiationAwareBeanPostProcessor#postProcessBeforeInstantiation
+//返回对象
+bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
+
+```
+进入
+org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessAfterInitialization方法
+
+```java
+//获取能在Bean使用的增强器
+Object[] specificInterceptors = getAdvicesAndAdvisorsForBean(bean.getClass(), beanName, null);
+if (specificInterceptors != DO_NOT_PROXY) {
+   this.advisedBeans.put(cacheKey, Boolean.TRUE);
+   //创建代理对象
+   Object proxy = createProxy(
+         bean.getClass(), beanName, specificInterceptors, new SingletonTargetSource(bean));
+   this.proxyTypes.put(cacheKey, proxy.getClass());
+   return proxy;
+}
+
+```
+
+## 代理类执行过程
 
 目标方法执行:
 
