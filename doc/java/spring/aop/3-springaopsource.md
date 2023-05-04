@@ -180,10 +180,6 @@ protected Object initializeBean(final String beanName, final Object bean, RootBe
 即执行org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessBeforeInstantiation等方法
 (AnnotationAwareAspectJAutoProxyCreator的父类)
 
-
-
-
-
 ## 代理类初始化过程：
 
 ### Bean实例化一阶段
@@ -240,27 +236,41 @@ if (specificInterceptors != DO_NOT_PROXY) {
    this.proxyTypes.put(cacheKey, proxy.getClass());
    return proxy;
 }
-
 ```
 
 ## 代理类执行过程
 
-目标方法执行:
-
 容器中保存了组件的代理对象（cglib增强后的对象），这个对象里面保存了详细信息（比如增强器，目标对象，xxx）；
- * 1）.CglibAopProxy.intercept();拦截目标方法的执行
- * 2）.根据ProxyFactory对象获取将要执行的目标方法拦截器链；
-      * List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
-      * 如何获取拦截器链
-           * 1）.List<Object> interceptorList保存所有拦截器 5
-                * 一个默认的ExposeInvocationInterceptor 和 4个增强器；
-           * 2）.遍历所有的增强器，将其转为Interceptor；
-                *registry.getInterceptors(advisor);
-           * 3）.将增强器转为List<MethodInterceptor>；
-                * 如果是MethodInterceptor，直接加入到集合中
-                * 如果不是，使用AdvisorAdapter将增强器转为MethodInterceptor；
-                * 转换完成返回MethodInterceptor数组；
+1. 进入到org.springframework.aop.framework.JdkDynamicAopProxy#invoke方法(JDK代理对象的执行方法)
+```java
+//获取该代理类的所有拦截器链的所有信息（创建bean的时候的后置处理器保存的）
+List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
 
+else {
+    MethodInvocation invocation =
+        new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
+    // Proceed to the joinpoint through the interceptor chain.
+    retVal = invocation.proceed();
+}
+```
+
+> 如何获取拦截器链
+
+org.springframework.aop.framework.AdvisedSupport#getInterceptorsAndDynamicInterceptionAdvice
+
+
+
+
+* 
+* 如何获取拦截器链
+     * 1）.List<Object> interceptorList保存所有拦截器 5
+          * 一个默认的ExposeInvocationInterceptor 和 4个增强器；
+     * 2）.遍历所有的增强器，将其转为Interceptor；
+          *registry.getInterceptors(advisor);
+     * 3）.将增强器转为List<MethodInterceptor>；
+          * 如果是MethodInterceptor，直接加入到集合中
+          * 如果不是，使用AdvisorAdapter将增强器转为MethodInterceptor；
+          * 转换完成返回MethodInterceptor数组；
 * 3）.如果没有拦截器链，直接执行目标方法;
      * 拦截器链（每一个通知方法又被包装为方法拦截器，利用MethodInterceptor机制）
  * 4）.如果有拦截器链，把需要执行的目标对象，目标方法，
