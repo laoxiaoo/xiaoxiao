@@ -2,8 +2,9 @@
 ```markmap
 
 
-- [arthas~~](/#/doc/tool/arthas.md)
-
-- 日常工具插件
+- [arthas](/#/doc/tool/arthas)
+- [工具插件](/#/doc/tool/tool)
+- [Jenkins](/#/doc/tool/jenkins.md)
+- [canal](/#/doc/tool/canal)
 
 ``` 
