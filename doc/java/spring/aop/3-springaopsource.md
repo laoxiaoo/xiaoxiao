@@ -89,7 +89,7 @@ public Object getBean(String name) throws BeansException {
 }
 ```
 
-doGetBean先尝试获取单实例bean, 此处可以参考[spring循环依赖文档]
+doGetBean先尝试获取单实例bean, 此处可以参考[springbean对象创建流程](/doc/java/spring/doc/3-springbean?id=bean对象创建流程)
 
 ```java
 if (mbd.isSingleton()) {
@@ -223,7 +223,7 @@ bean = applyBeanPostProcessorsBeforeInstantiation(targetType, beanName);
 
 ```
 进入
-org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessAfterInitialization方法
+org.springframework.aop.framework.autoproxy.AbstractAutoProxyCreator#postProcessAfterInitialization方法(初始化之后执行)
 
 ```java
 //获取能在Bean使用的增强器

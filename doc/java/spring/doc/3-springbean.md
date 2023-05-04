@@ -39,6 +39,7 @@ genericBeanDefinition.setPropertyValues(propertyValues);
 # Spring 的生命周期
 
 ## Refresh过程
+org.springframework.context.support.AbstractApplicationContext#refresh
 
 ```java
 public void refresh() throws BeansException, IllegalStateException {
@@ -84,7 +85,7 @@ public void refresh() throws BeansException, IllegalStateException {
 
 1. `上下文启动准备`
 
-- AbstractApplicationContext#prepareRefresh
+AbstractApplicationContext#prepareRefresh  刷新前的预处理;
 
 ```java
 //记录启动时间，状态标识
@@ -229,6 +230,35 @@ if (beanFactory.containsLocalBean(MESSAGE_SOURCE_BEAN_NAME)) {
 - 发布Spring应用上下文关闭时间
 - 注销Shutdown Hook（优雅关闭线程能够触发close事件）
 
+## 注解的方式加载Bean过程
+
+通过refresh->PostProcessorRegistrationDelegate#invokeBeanFactoryPostProcessors->PostProcessorRegistrationDelegate#invokeBeanDefinitionRegistryPostProcessors
+->ConfigurationClassPostProcessor#postProcessBeanDefinitionRegistry
+->ConfigurationClassPostProcessor#processConfigBeanDefinitions
+最终可以看到，解析 componentScan 的组件
+```java
+ConfigurationClassParser parser = new ConfigurationClassParser(
+				this.metadataReaderFactory, this.problemReporter, this.environment,
+				this.resourceLoader, this.componentScanBeanNameGenerator, registry);
+
+Set<BeanDefinitionHolder> candidates = new LinkedHashSet<>(configCandidates);
+Set<ConfigurationClass> alreadyParsed = new HashSet<>(configCandidates.size());
+do {
+   parser.parse(candidates);
+
+```
+进入到org.springframework.context.annotation.ConfigurationClassParser#doProcessConfigurationClass
+在这个方法中，将bean的定义解析成BeanDefinition
+```java
+//将component的注解扫描的bean定义扫描出来
+Set<BeanDefinitionHolder> scannedBeanDefinitions =
+						this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
+
+// Process any @Import annotations
+processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
+
+```
+
 ## Bean对象创建流程
 
 入口方法：org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization
@@ -305,67 +335,6 @@ protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredTy
             });
             bean = getObjectForBeanInstance(sharedInstance, name, beanName, mbd);
          }
-
-         else if (mbd.isPrototype()) {
-            // It's a prototype -> create a new instance.
-            Object prototypeInstance = null;
-            try {
-               beforePrototypeCreation(beanName);
-               prototypeInstance = createBean(beanName, mbd, args);
-            }
-            finally {
-               afterPrototypeCreation(beanName);
-            }
-            bean = getObjectForBeanInstance(prototypeInstance, name, beanName, mbd);
-         }
-
-         else {
-            String scopeName = mbd.getScope();
-            final Scope scope = this.scopes.get(scopeName);
-            if (scope == null) {
-               throw new IllegalStateException("No Scope registered for scope name '" + scopeName + "'");
-            }
-            try {
-               Object scopedInstance = scope.get(beanName, () -> {
-                  beforePrototypeCreation(beanName);
-                  try {
-                     return createBean(beanName, mbd, args);
-                  }
-                  finally {
-                     afterPrototypeCreation(beanName);
-                  }
-               });
-               bean = getObjectForBeanInstance(scopedInstance, name, beanName, mbd);
-            }
-            catch (IllegalStateException ex) {
-               throw new BeanCreationException(beanName,
-                     "Scope '" + scopeName + "' is not active for the current thread; consider " +
-                     "defining a scoped proxy for this bean if you intend to refer to it from a singleton",
-                     ex);
-            }
-         }
-      }
-      catch (BeansException ex) {
-         cleanupAfterBeanCreationFailure(beanName);
-         throw ex;
-      }
-   }
-
-   // Check if required type matches the type of the actual bean instance.
-   if (requiredType != null && !requiredType.isInstance(bean)) {
-      try {
-         T convertedBean = getTypeConverter().convertIfNecessary(bean, requiredType);
-         if (convertedBean == null) {
-            throw new BeanNotOfRequiredTypeException(name, requiredType, bean.getClass());
-         }
-         return convertedBean;
-      }
-      catch (TypeMismatchException ex) {
-         if (logger.isTraceEnabled()) {
-            logger.trace("Failed to convert bean '" + name + "' to required type '" +
-                  ClassUtils.getQualifiedName(requiredType) + "'", ex);
-         }
-         throw new BeanNotOfRequiredTypeException(name, requiredType, bean.getClass());
       }
    }
    return (T) bean;
@@ -414,6 +383,8 @@ protected Object createBean(String beanName, RootBeanDefinition mbd, @Nullable O
 }
 ```
 
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#doCreateBean
+
 ```java
 protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)
       throws BeanCreationException {
@@ -444,7 +415,47 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 }
 ```
 
+## Bean属性填充
+org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#populateBean
+
+```java
+//pvs 是一个 MutablePropertyValues 实例，里面实现了PropertyValues接口，
+//提供属性的读写操作实现，同时可以通过调用构造函数实现深拷贝
+PropertyValues pvs = (mbd.hasPropertyValues() ? mbd.getPropertyValues() : null);
+
+int resolvedAutowireMode = mbd.getResolvedAutowireMode();
+//判断bean的依赖注入方式：即是否标注有 @Autowired 注解或 autowire=“byType/byName” 的标签
+if (resolvedAutowireMode == AUTOWIRE_BY_NAME || resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+   //深拷贝当前已有的配置
+   MutablePropertyValues newPvs = new MutablePropertyValues(pvs);
+   // Add property values based on autowire by name if applicable.
+   if (resolvedAutowireMode == AUTOWIRE_BY_NAME) {
+      autowireByName(beanName, mbd, bw, newPvs);
+   }
+   // Add property values based on autowire by type if applicable.
+   if (resolvedAutowireMode == AUTOWIRE_BY_TYPE) {
+      autowireByType(beanName, mbd, bw, newPvs);
+   }
+   pvs = newPvs;
+}
+
+for (BeanPostProcessor bp : getBeanPostProcessors()) {
+   if (bp instanceof InstantiationAwareBeanPostProcessor) {
+      InstantiationAwareBeanPostProcessor ibp = (InstantiationAwareBeanPostProcessor) bp;
+      //调用
+      //org.springframework.beans.factory.annotation.AutowiredAnnotationBeanPostProcessor#postProcessProperties
+      //对@Autowire进行赋值
+      PropertyValues pvsToUse = ibp.postProcessProperties(pvs, bw.getWrappedInstance(), beanName);
+```
+
+> postProcessProperties
+拓展属性修改的后置处理器方法
+
+
 ## 循环依赖问题
+官网说明：https://docs.spring.io/spring-framework/docs/current/reference/html/core.html#beans-dependency-resolution
+![image-20210629165813136](./image/20210629165813.png)
+
 
 在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry中，有三个map，分别是三个`存放Bean`的缓存
 
@@ -511,6 +522,7 @@ protected Object doCreateBean(final String beanName, final RootBeanDefinition mb
 3. 在org.springframework.beans.factory.support.DefaultSingletonBeanRegistry#getSingleton中我们发现它会从三级缓存中取出*缓存的函数*调用，
    1. 其实就是调用getEarlyBeanReference方法
    2. 这个方法调用*SmartInstantiationAwareBeanPostProcessor*可以做一些拓展（**二级缓存的作用**）
+   3. 只有存在循环依赖时，才会调用getEarlyBeanReference方法
 
 ```java
 protected Object getEarlyBeanReference(String beanName, RootBeanDefinition mbd, Object bean) {
