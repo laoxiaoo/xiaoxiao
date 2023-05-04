@@ -11,8 +11,7 @@
     * [Spring](/doc/java/spring/doc/)
     * [SpringBoot](/doc/java/spring/SpringBoot.md)
 	* [AOP](/doc/java/spring/aop/)
-    * [SpringMvc](/doc/java/spring/SpringMvc.md)	
-	* [面试题](/doc/java/spring/interview.md)
+    * [SpringMvc](/doc/java/spring/SpringMvc.md)
 * 微服务
   * [dubbo](/doc/java/spring/dubbo/)
 * Spring Cloud
