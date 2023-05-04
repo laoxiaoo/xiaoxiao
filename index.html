@@ -125,6 +125,14 @@
             mermaid.init(undefined, '.mermaid');
             markmap.autoLoader.renderAll();
           });
+          hook.afterEach(function(html, next) {
+            var sc = document.createElement("script");
+            sc.src = "//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js";
+            sc.async = "async";
+            var s = document.getElementsByTagName("script")[0]; 
+            s.parentNode.insertBefore(sc, s);
+            next(html);
+          });
         }
       ],
       markdown: {
@@ -159,8 +167,7 @@
   <!--<script src="./js/docsify-sidebarFooter.min.js"></script>-->
   <!--侧边栏收缩-->
   <script src="./js/docsify-sidebar-collapse.min.js"></script>
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js">
-  </script>
+  
 </body>
 
 </html>
