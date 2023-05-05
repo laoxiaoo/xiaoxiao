@@ -254,3 +254,186 @@ mvn idea:idea
 
 
 
+# 小狼豪输入法
+
+## 简体中文设置
+
+![image-20230505095443983](image/tool/image-20230505095443983.png)
+
+## 文件夹说明
+
+如果配置没有生效，可以考虑是不是tab制表符的问题
+
+### 用户文件夹
+
+```tex
+default.yaml，全局设定
+weasel.yaml，发行版设定
+installation.yaml，安装信息(可配置同步目录)
+user.yaml，用户状态信息
+*.schema.yaml，输入方案
+*.dict.yaml，输入方案配套的词典源文件
+*.custom.yaml，用户对Rime全局配置、各输入方案配置、自制输入方案等定制文件
+```
+
+### 用户配置同步目录及词典文件
+
+```tex
+*.userdb，Rime记录用户输入习惯的目录文件
+UUID/，用户配置同步目录
+UUID/*.userdb.txt，Rime生成的用以同步的用户词典
+```
+
+
+
+## 微软拼音皮肤设置
+
+进入用户文件夹
+
+打开weasel.custom.yaml配置文件,覆盖配置，然后重新部署
+
+```yaml
+customization:
+  distribution_code_name: Weasel
+  distribution_version: 0.14.3
+  generator: "Weasel::UIStyleSettings"
+  modified_time: "Thu Jun 27 17:32:21 2019"
+  rime_version: 1.5.3
+
+patch:
+  "style/display_tray_icon": true
+  "style/horizontal": true #横排显示
+  "style/font_face": "Microsoft YaHei" #字体
+  "style/font_point": 13 #字体大小
+  "style/inline_preedit": true # 嵌入式候选窗单行显示
+
+
+  "style/layout/border_width": 0
+  "style/layout/border": 0
+  "style/layout/margin_x": 12 #候选字左右边距
+  "style/layout/margin_y": 12 #候选字上下边距
+  "style/layout/hilite_padding": 12 #候选字背景色色块高度 若想候选字背景色块无边界填充候选框，仅需其高度和候选字上下边距一致即可
+  "style/layout/hilite_spacing": 3 # 序号和候选字之间的间隔
+  "style/layout/spacing": 10 #作用不明
+  "style/layout/candidate_spacing": 24 # 候选字间隔
+  "style/layout/round_corner": 0 #候选字背景色块圆角幅度
+
+
+  "style/color_scheme": Micosoft
+  "preset_color_schemes/Micosoft":
+    name: "Micosoft"
+    author: "XNOM"
+    back_color: 0xffffff #候选框 背景色
+    border_color: 0xD77800 #候选框 边框颜色
+    text_color: 0x000000 #已选择字 文字颜色
+    hilited_text_color: 0x000000 #已选择字右侧拼音 文字颜色
+    hilited_back_color: 0xffffff #已选择字右侧拼音 背景色
+    hilited_candidate_text_color: 0xffffff #候选字颜色
+    hilited_candidate_back_color: 0xD77800 #候选字背景色
+    candidate_text_color: 0x000000 #未候选字颜色
+```
+
+## 自定义短语配置
+
+用户文件中，新建custom_phrase.txt文件家
+
+配置
+
+```yaml
+# Rime table
+# coding: utf-8
+#@/db_name custom_phrase.txt
+#@/db_type tabledb
+#
+# 用於【朙月拼音】系列輸入方案
+# 【小狼毫】0.9.21 以上
+#
+# 請將該文件以UTF-8編碼保存爲
+# Rime用戶文件夾/custom_phrase.txt
+#
+# 順序爲：文字、編碼、權重（決定重碼的次序、可選）
+#
+# 雖然文本碼表編輯較爲方便，但不適合導入大量條目
+#
+# no comment
+# 各字段以制表符（Tab）分隔
+<b id="blue"></b>	bb	1
+<b id="gray"></b>	bg	1
+<b id="red"></b>	br	1
+```
+
+## 时间输入
+
+通过lua脚本配合输出当前时间
+
+1. 在用户文件夹新建rime.lua文件
+
+```lua
+sj_translator = require("sj")
+```
+
+2. 在用户文件夹新建文件夹Lua， 注意大小写
+3. 在Lua文件夹下面新建文件sj.lua
+
+```lua
+--lua语言中的注释用“--”
+local function translator(input, seg)
+    if (input == "sj") then         --关键字更改，你也可以用or语句定义多个关键字
+        yield(Candidate("time", seg.start, seg._end, os.date("%Y%m%d%H%M%S"), " "))
+    end
+end
+return translator
+```
+
+4. 在xx.schema.yaml文件里配置
+
+```yaml
+  translators:
+    - lua_translator@sj_translator # 时间数字Lua
+```
+
+5. 重新部署
+6. 效果图sj
+
+![image-20230505144856830](image/tool/image-20230505144856830.png)
+
+## Shift上屏并切换英文
+
+```yaml
+# default.custom.yaml  对default.yaml的自定义设置
+patch:
+  "ascii_composer/switch_key":
+    Caps_Lock: commit_code
+    Shift_L: commit_code  # Shift上屏
+    Shift_R: commit_code
+```
+
+| 选项         | 注释                                                         |
+| ------------ | ------------------------------------------------------------ |
+| commit_text  | 提交候选区的文字，然后切换到英文模式。                       |
+| commit_code  | 提交已输入的编码（拼音字母），然后切换到英文模式。           |
+| inline_ascii | 仅样式配置内存在 inline_preedit=true 时有效。在输入法的编辑区临时切换到英文，提交后恢复中文。 |
+| noop         | 不执行任何操作。                                             |
+| clear        | 清除已输入的编码，然后切换到英文模式。                       |
+
+## 英文输入的支持
+
+[rime-easy-en](https://link.zhihu.com/?target=https%3A//github.com/BlindingDark/rime-easy-en)把`easy-en`作为明月输入发的扩展，扩展到明月拼音等输入法内
+
+只需要将`easy_en.schema.yaml`、`easy_en.dict.yaml`、`easy_en.yaml`和`lua/easy_en.lua`复制到 rime 配置目录。
+
+
+
+最后，在输入法的配置项内激活即可，比如：`明月拼音-简化版`(luna_pinyin_simp.custom.yaml)：
+
+```yaml
+patch:
+  __include: easy_en:/patch
+```
+
+某些特殊方案需要指定方案名称，如微软双拼：(double_pinyin_mspy是当前的输入法名称)
+
+```yaml
+patch:
+  __include: easy_en:/patch_double_pinyin_mspy
+```
