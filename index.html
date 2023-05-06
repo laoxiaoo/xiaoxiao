@@ -99,11 +99,44 @@
 
   </div>
   <script>
+
+    function loadScript(url, callback) {
+      var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement,
+        script,
+        options
+
+      if (typeof url === "object") {
+        options = url;
+        url = undefined;
+      }
+      s = options || {};
+      url = url || s.url;
+      callback = callback || s.success;
+      script = document.createElement("script");
+      script.async = s.async || false;
+      script.type = "text/javascript";
+      if (s.charset) {
+        script.charset = s.charset;
+      }
+      if (s.cache === false) {
+        url = url + (/\?/.test(url) ? "&" : "?") + "_=" + (new Date()).getTime();
+      }
+      script.src = url;
+      head.insertBefore(script, head.firstChild);
+      if (callback) {
+        document.addEventListener ? script.addEventListener("load", callback, false) : script.onreadystatechange = function () {
+          if (/loaded|complete/.test(script.readyState)) {
+            script.onreadystatechange = null
+            callback()
+          }
+        }
+      }
+    }
+
     window.$docsify = {
       name: '',
       repo: '',
       loadSidebar: true,
-      disqus: 'shortname',
       alias: {
         //配置后所有页面都会访问根目录的sidebar
         //'/.*/_sidebar.md': './_sidebar.md'
@@ -131,6 +164,7 @@
           hook.doneEach(function () {
             window.mermaid.run();
             markmap.autoLoader.renderAll();
+            loadScript('//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js')
           });
           hook.afterEach(function (html, next) {
 
@@ -167,7 +201,6 @@
   <!--<script src="./js/docsify-sidebarFooter.min.js"></script>-->
   <!--侧边栏收缩-->
   <script src="./js/docsify-sidebar-collapse.min.js"></script>
-  <script async src="//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js"></script>
 </body>
 
 </html>
