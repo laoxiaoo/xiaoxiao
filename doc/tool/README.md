@@ -8,3 +8,12 @@
 - [canal](/#/doc/tool/canal)
 
 ``` 
+
+```mermaid
+graph TD;
+
+thread --> selector
+selector --> channel1
+selector --> channel2
+selector --> channel3
+```
