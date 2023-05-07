@@ -138,3 +138,22 @@ Redis 可以在AOEF文件体积变得过大时，自动地在后台对AOE进行r
 1. 客户端执行bgrewriteaof命令
 2. auto-aof-rewrite-min-size 64mb  ## 文件超过64M
 3. auto-aof-rewrite-percentage 100   ## 当前写入日志文件的大小超过上一次rewrite之后的文件大小的百分之108时，也就是2倍时触发Rewrite
+
+# 混合模式
+
+Redis在重启时通常是加载AOF文件，但加载速度慢。因为RDB数据不完整，所以加载AOF
+
+## 开始方式
+
+```shell
+aof-use-rdb-preamble true
+```
+
+
+
+## 数据恢复
+
+当我们开启了混合持久化时，启动Redis依然优先加载aof文件，aof文件加载可能有两种情况如下
+
+1. aof文件开头是rdb的格式,先加载 rdb内容再加载剩余的aof
+2. aof文件开头不是rdb的格式，直接以aof格式加载整个文件
