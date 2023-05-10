@@ -1,10 +1,20 @@
 #
 
 1. 通过发送命令，让Redis服务器返回监控其运行状态，包括主服务器和从服务器
-
 2. 当哨兵监测到**master宕机，会自动将slave切换成master**，然后通过**发布订阅模式**通知其他的从服务器，修改配置文件，让它们切换主机
-
 3. 哨兵模式基于[主从复制](/doc/database/redis/5-replication)进行补充
+
+![image-20230509201807731](image/6-sentinel/image-20230509201807731.png)
+
+哨兵就是特殊的<b id="blue">redis节点</b>，只不过它不存储数据
+
+# 哨兵须知
+
+1. 端口26379
+2. 至少是基数倍的节点（选举）
+3. 运行必须指定配置文件
+
+
 
 # 单哨兵模式
 
@@ -52,6 +62,7 @@ Sentinel monitor redis-master 127.0.0.1 6379 1
 ## 告诉sentinel去监听地址为ip:port的一个master，
 ## 这里的master-name可以自定义，quorum是一个数字，
 ## 指明当有多少个sentinel认为一个master失效时，master才算真正失效
+## quorum 选举仲裁的节点数(一般总节点/2+1)
 sentinel monitor <master-name> <ip> <redis-port> <quorum>
 
 ## 设置连接master和slave时的密码，

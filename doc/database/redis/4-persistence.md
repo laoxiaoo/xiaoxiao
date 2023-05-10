@@ -114,7 +114,7 @@ appendfsync everysec
 
 ## 工作原理
 
-![image-20230505232227915](C:\Users\xiao\AppData\Roaming\Typora\typora-user-images\image-20230505232227915.png)
+![image-20230505232227915](./image/image-20230505232227915.png)
 
 ## 写入与恢复
 
