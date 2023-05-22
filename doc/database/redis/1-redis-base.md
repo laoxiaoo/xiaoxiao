@@ -243,3 +243,27 @@ OK
 # 在配置文件中设置密码
 requirepass 123456
 ```
+
+
+# Redis为什么快
+
+1. 首先，采用了多路复用io阻塞机制
+2. 然后，数据结构简单，操作节省时间
+3. 最后，运行在内存中，自然速度快
+
+
+# Redis 缓存过期淘汰策略
+
+- 定期删除： 每隔一段时间，去随机抽取，看有没有需要删除的key
+- 惰性删除：被使用的时候，如果需要删除则删除
+
+如果内存快满了，则还有兜底策略，就是上面提到的内存配置策略
+
+ volatile-lru ->对所有设置了过期时间的key使用LRu算法进行删除
+ allkeys-lru -> **对所有key使用LRU算法进行删除**（一般生产使用）
+ volatile-lfu -> Evict using approximated LFU, only keys with an expire set.
+ allkeys-lfu -> 对所有key使用LRu算法进行删除
+ volatile-random -> 对所有过期key随机删除
+ allkeys-random -> 对所有key随机删除
+ volatile-ttl -> 对所有设置了过期时间的key随机删除
+ noeviction ->不会驱逐任何key

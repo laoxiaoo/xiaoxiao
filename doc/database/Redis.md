@@ -162,22 +162,6 @@ end
 ```
 
 
-# Redis 缓存过期淘汰策略
-
-- 定期删除： 每隔一段时间，去随机抽取，看有没有需要删除的key
-- 惰性删除：被使用的时候，如果需要删除则删除
-
-如果内存快满了，则还有兜底策略，就是上面提到的内存配置策略
-
- volatile-lru ->对所有设置了过期时间的key使用LRu算法进行删除
- allkeys-lru -> **对所有key使用LRU算法进行删除**（一般生产使用）
- volatile-lfu -> Evict using approximated LFU, only keys with an expire set.
- allkeys-lfu -> 对所有key使用LRu算法进行删除
- volatile-random -> 对所有过期key随机删除
- allkeys-random -> 对所有key随机删除
- volatile-ttl -> 对所有设置了过期时间的key随机删除
- noeviction ->不会驱逐任何key
-
 # 源码解析
 
 - 每个链表都是用adlist.h来表示
@@ -194,3 +178,12 @@ typedef struct listNode {
 ```
 
 
+# Redis Cluster（集群）
+
+Redis的哨兵模式基本已经可以实现高可用，读写分离 ，但是在这种模式下每台redis服务器都存储相同的数据，很浪费内存，因为一个master节点并不能放海量数据，而且单个Redis的实例过大时，会导致rdb文件过大，当执行主从同步时时间过长，所以在redis3.0上加入了cluster模式，实现的redis的分布式存储，也就是说每台redis节点上存储不同的内容。
+
+> Redis-Cluster采用无中心结构,它的特点如下
+
+- 所有的redis节点彼此互联(PING-PONG机制),内部使用二进制协议优化传输速度和带宽。
+- 节点的fail是通过集群中超过半数的节点检测失效时才生效。
+- 客户端与redis节点直连,不需要中间代理层.客户端不需要连接集群所有节点,连接集群中任何一个可用节点即可。

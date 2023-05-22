@@ -142,10 +142,20 @@ private static void alloc() {
 
 ## 引用计数算法
 
-- 对每个对象保存一个整型的引用计数器属性
-- 如果一个对象，被引用了，则+1，如果引用失效，就-1
-- 只要对象计数为0，则可被回收
+- 对于一个对象A，只要有任何一个对象引用了A，则A的引用计数器就加1；当引用失效时，引用计数器就减1。只要对象的引用计数器的值为0，即表示对象A不能在被使用，可进行回收。
 - **java未使用该算法**（因为无法处理循环引用）
+```java
+MyObject myObject1 = new MyObject();
+MyObject myObject2 = new MyObject();
+myObject1.ref = myObject2;
+myObject2.ref = myObject1;
+myObject1 = null;
+myObject2 = null;
+```
+当代码执行完line7时，两个对象的引用计数均为2。此时将myObject1和myObject2分别置为null，以前一个对象为例，它的引用计数将减1。
+若要满足垃圾回收的条件，需要清除myObject2中的ref这个引用，而要清除掉这个引用的前提条件是myObject2引用的对象被回收，
+可是该对象的引用计数也为1，因为myObject1.ref指向了它。
+
 - python使用了引用计数（1.手动解除，2.弱引用）
 
 ## 可达性分析
