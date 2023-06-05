@@ -102,7 +102,7 @@
                 "-g",
                 "${file}",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "${fileDirname}\bin\\${fileBasenameNoExtension}.exe"
             ],
             "options": {
                 "cwd": "${fileDirname}"
@@ -121,6 +121,83 @@
 ```
 
 **如果遇到 正常的#include报错，可能是环境变量没配置**
+
+
+
+### 多文件配置
+
+```json
+{
+    "version": "2.0.0",
+    "tasks": [
+        {
+            "label": "build",
+            "type": "shell",
+            "command": "gcc",
+            "args": [
+                "${file}",
+                "-o",
+                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
+                "-g",
+                "-Wall",
+                "-static-libgcc",
+                "-fexec-charset=GBK",
+                "-std=c11"
+            ],
+            "group": "build",
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": false,
+                "panel": "new"
+            },
+            "problemMatcher": "$gcc"
+        },
+        {
+            "label": "run",
+            "type": "shell",
+            "dependsOn": "build",
+            "command": "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
+            "group": {
+                "kind": "test",
+                "isDefault": true
+            },
+            "presentation": {
+                "echo": true,
+                "reveal": "always",
+                "focus": true,
+                "panel": "new"
+            }
+        },
+        {
+            "type": "cppbuild",
+            "label": "C/C++: g++.exe 生成活动文件",
+            "command": "C:\\mingw64\\bin\\g++.exe",
+            "args": [
+                "*.cpp",
+                "-o",
+                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
+                "-std=c++11",
+                "-g",
+                "-fexec-charset=GBK"
+            ],
+            "options": {
+                "cwd": "${fileDirname}"
+            },
+            "problemMatcher": [
+                "$gcc"
+            ],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            },
+            "detail": "调试器生成的任务。"
+        }
+    ]
+}
+```
+
+
 
 # helloword
 
