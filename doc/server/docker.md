@@ -724,7 +724,7 @@ cluster.initial_master_nodes: ["es-node1","es-node2","es-node3"]
 
 ```
 
-- 建立数据存储目录 data0 data1 data2, 并且授予 777权限
+- 建立数据存储目录 data0 data1 data2, plugins并且授予 777权限
 
 - 修改文件
 
@@ -738,7 +738,7 @@ vm.max_map_count=655360
 
 ```shell
 
- docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9200:9200 -p 9300:9300 -v /home/es/es1.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/data0:/usr/share/elasticsearch/data --name es0 elasticsearch:7.9.2
+ docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9200:9200 -p 9300:9300 -v /home/es/es1.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/plugins:/usr/share/elasticsearch/plugins -v /home/es/data0:/usr/share/elasticsearch/data --name es0 elasticsearch:7.9.2
 
  docker run -e ES_JAVA_OPTS="-Xms256m -Xmx256m" -d -p 9201:9201 -p 9301:9301 -v /home/es/es2.yml:/usr/share/elasticsearch/config/elasticsearch.yml -v /home/es/data1:/usr/share/elasticsearch/data --name es1 elasticsearch:7.9.2
 

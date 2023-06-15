@@ -249,3 +249,96 @@ myes@localhost home]$ ./kibana-7.3.2/bin/kibana
 增加replica share，因为primary share是不能变得， 如：replica=2,
 
 ---
+
+# 安装IK分词
+
+## 安装
+
+进入https://github.com/medcl/elasticsearch-analysis-ik/releases下载对应版本
+
+将下载的压缩包。放入插件文件夹下，建立文件夹ik
+
+```shell
+[root@localhost plugins]# pwd
+/home/elasticsearch-7.3.2/plugins
+[root@localhost plugins]# mkdir ik
+
+## 查看插件
+[root@localhost bin]# ./elasticsearch-plugin list
+ik
+```
+
+安装插件后，启动es时，也能看到集群对应有
+
+[node-1] loaded plugin [analysis-ik]
+
+字样
+
+ik分词器提供了两种分词算法：
+
+ik_smart ：最少切分
+
+ik_max_word：最细粒度切分
+
+## 测试
+```json
+GET /_analyze
+{
+  "analyzer": "ik_smart",
+  "text": "我是帅哥"
+}
+```
+
+```json
+GET /_analyze
+{
+  "analyzer": "ik_max_word",
+  "text": "我是一个帅哥"
+}
+```
+
+
+## IK配置
+
+进入配置
+
+```shell
+[root@localhost ~]# cd /home/elasticsearch-7.3.2/plugins/ik/config/
+[root@localhost config]# vim IKAnalyzer.cfg.xml
+```
+
+ext_dict:同目录下一个xx.dic文件，
+
+```xml
+<properties>
+        <comment>IK Analyzer 扩展配置</comment>
+        <!--用户可以在这里配置自己的扩展字典 -->
+        <entry key="ext_dict"></entry>
+         <!--用户可以在这里配置自己的扩展停止词字典-->
+        <entry key="ext_stopwords"></entry>
+        <!--用户可以在这里配置远程扩展字典 -->
+        <!-- <entry key="remote_ext_dict">words_location</entry> -->
+        <!--用户可以在这里配置远程扩展停止词字典-->
+        <!-- <entry key="remote_ext_stopwords">words_location</entry> -->
+</properties>
+
+```
+
+## 远程分词配置
+
+words_location是指一个 url，比如 `http://yoursite.com/getCustomDict`，该请求只需满足以下两点即可完成分词热更新。
+
+1. 该 http 请求需要返回两个头部(header)，一个是 `Last-Modified`，一个是 `ETag`，这两者都是字符串类型，只要有一个发生变化，该插件就会去抓取新的分词进而更新词库。
+2. 该 http 请求返回的内容格式是一行一个分词，换行符用 `\n` 即可。
+
+## 重新分词后数据进行更新
+
+在IK新增热词后，不会去更新历史数据，即新添加的热词只对后续的数据生效。而实际上我们常常需要对历史数据进行更新。
+
+1. 可以指定多个索引多个type。
+   http://127.0.0.1:9200/index1,index2/type1,type2/_update_by_query?conflicts=proceed
+
+2. 可以使用通配符*，匹配多个索引
+3. 默认批处理的大小是1000，参数设置如下：
+
+POST twitter/_update_by_query?scroll_size=100
