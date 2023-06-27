@@ -437,3 +437,13 @@ patch:
 patch:
   __include: easy_en:/patch_double_pinyin_mspy
 ```
+
+# window查看端口占用
+
+```shell
+netstat -aon|findstr "8081"
+## 查看pid对应的程序
+tasklist|findstr "9088"
+#杀掉进程
+taskkill /T /F /PID 9088 
+```

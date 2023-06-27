@@ -2032,7 +2032,7 @@ public TUser updateUser(TUser tUser){
 
 ## CacheEvict
 
-删除缓存
+删除缓存,**CacheEvict注解的方法，必须是void返回，才能生效**
 
 key：指定要清除的数据
 - allEntries = true：指定清除这个缓存中所有的数据
