@@ -163,3 +163,77 @@ void shutdown();
 */
 List<Runnable> shutdownNow();
 ```
+
+# 线程池的工厂方法
+
+## newFixedThreadPool  
+
+- 核心线程数 == 最大线程数（没有救急线程被创建），因此也无需超时时间
+- 阻塞队列是无界的，可以放任意数量的任务  
+
+` 适用于任务量已知，相对耗时的任务`
+
+```java
+public static ExecutorService newFixedThreadPool(int nThreads) {
+        return new ThreadPoolExecutor(nThreads, nThreads,
+                                      0L, TimeUnit.MILLISECONDS,
+                                      new LinkedBlockingQueue<Runnable>());
+    }
+```
+
+
+## newCachedThreadPool  
+
+- 核心线程数是 0， 最大线程数是 Integer.MAX_VALUE，救急线程的空闲生存时间是 60s，意味着全部都是救急线程（60s 后可以回收）  
+- 队列采用了 SynchronousQueue 实现特点是，它没有容量，没有线程来取是放不进去的（一手交钱、一手交货）  
+
+`适合任务数比较密集，但每个任务执行时间较短的情况  `
+
+```java
+public static ExecutorService newCachedThreadPool() {
+    return new ThreadPoolExecutor(0, Integer.MAX_VALUE,
+                                  60L, TimeUnit.SECONDS,
+                                  new SynchronousQueue<Runnable>());
+}
+```
+
+## newSingleThreadExecutor
+
+`希望多个任务排队执行。线程数固定为 1，任务数多于 1 时，会放入无界队列排队。任务执行完毕，这唯一的线程也不会被释放。  `
+
+```
+public static ExecutorService newSingleThreadExecutor() {
+    return new FinalizableDelegatedExecutorService
+        (new ThreadPoolExecutor(1, 1,
+                                0L, TimeUnit.MILLISECONDS,
+                                new LinkedBlockingQueue<Runnable>()));
+}
+```
+
+
+
+# 线程池提交任务
+
+```java
+// 执行任务
+void execute(Runnable command);
+// 提交任务 task，用返回值 Future 获得任务执行结果
+<T> Future<T> submit(Callable<T> task);
+// 提交 tasks 中所有任务
+<T> List<Future<T>> 
+    invokeAll(Collection<? extends Callable<T>> tasks)
+					throws InterruptedException;
+// 提交 tasks 中所有任务，带超时时间
+<T> List<Future<T>> 
+    invokeAll(Collection<? extends Callable<T>> tasks,
+					long timeout, TimeUnit unit)
+					throws InterruptedException;
+// 提交 tasks 中所有任务，哪个任务先成功执行完毕，返回此任务执行结果，其它任务取消
+<T> T invokeAny(Collection<? extends Callable<T>> tasks)
+			throws InterruptedException, ExecutionException;
+
+// 提交 tasks 中所有任务，哪个任务先成功执行完毕，返回此任务执行结果，其它任务取消，带超时时间
+<T> T invokeAny(Collection<? extends Callable<T>> tasks,
+				long timeout, TimeUnit unit)
+		throws InterruptedException, ExecutionException, TimeoutException;
+```

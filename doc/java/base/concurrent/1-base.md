@@ -8,6 +8,73 @@
 
 虚拟机在进行代码编译时，对于那些改变顺序之后不会对最终结果造大影响的代，虚琅机不一定会按照我们写的代码的顺序来执行，有可能将他们重排序。实际上，对于有些代码行重排序之右，虽然对变量的值没有造成影响，但有可能会出现线程安全问题。
 
+# 主线程和守护线程
+
+- 正常情况下，Java会等待所有线程结束，程序才会结束
+- 特殊情况：守护线程不管有没有结束，主线程结束，都会强制结束
+- 垃圾回收线程就是常见的守护线程
+
+# 线程状态
+
+## 从API层面
+
+```java
+public enum State {
+    /**
+     * 初始状态
+     */
+    NEW,
+
+    /**
+     * 保护运行/可运行/阻塞（操作系统的阻塞，如：io的阻塞accept）状态
+     */
+    RUNNABLE,
+
+    /**
+     * 阻塞状态：被锁住了
+     */
+    BLOCKED,
+
+    /**
+     * 阻塞：调用了wating/join
+     */
+    WAITING,
+
+    /**
+     * 阻塞：调用sleep
+     */
+    TIMED_WAITING,
+
+    /**
+     * Thread state for a terminated thread.
+     * The thread has completed execution.
+     */
+    TERMINATED;
+}
+```
+
+## 从操作系统角度
+
+## 线程状态的转换
+
+> NEW --> RUNNABLE  
+
+1. NEW --> RUNNABLE  
+
+> RUNNABLE <--> WAITING  
+
+1. 调用 obj.wait() 方法时  
+2. 调用 obj.notify() ， obj.notifyAll() ， t.interrupt()  
+3. 当前线程调用 LockSupport.park() 方法会让当前线程从 RUNNABLE --> WAITING  
+
+> RUNNABLE <--> WAITING  
+
+1. 当前线程调用 t.join() 方法时，当前线程从 RUNNABLE --> WAITING  
+
+> RUNNABLE <--> TIMED_WAITING  
+
+1. 当前线程调用 Thread.sleep(long n) ，当前线程从 RUNNABLE --> TIMED_WAITING  
+
 # 线程的实现方式
 
 ## Thread继承
