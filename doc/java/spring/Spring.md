@@ -68,17 +68,7 @@
 |                              |      |                                      |
 
 
-# spring核心模块
 
-spring-core: spring基础api，如资源管理，泛型处理
-
-spring-beans：依赖注入，依赖查找
-
-spring-aop: 动态代理，字节码提升
-
-spring-context:事件驱动，注解驱动，模块驱动
-
-spring-expression:spring表达式语言
 
 
 
@@ -249,96 +239,10 @@ private static void lookUpByAnnotation(BeanFactory beanFactory) {
 
 # Spring Bean
 
-## BeanDefinition
 
-
-
-
-
-> > 定义元信息
-
-```java
-BeanDefinitionBuilder beanDefinitionBuilder = BeanDefinitionBuilder.genericBeanDefinition(Person.class);
-//属性设置 第一种方式
-beanDefinitionBuilder.addPropertyValue("name", "张三").addPropertyValue("age", 12);
-//获取实例  beanDefinition不是bean的最终形态，不是生命周期，可以随时修改
-AbstractBeanDefinition beanDefinition = beanDefinitionBuilder.getBeanDefinition();
-
-//通过abstractBeanDefinition 获取beanDefinition
-GenericBeanDefinition genericBeanDefinition = new GenericBeanDefinition();
-genericBeanDefinition.setBeanClass(Person.class);
-MutablePropertyValues propertyValues = new MutablePropertyValues();
-propertyValues.add("name", "张三").add("age", 12);
-genericBeanDefinition.setPropertyValues(propertyValues);
-```
-
-## 命名SpringBean
-
-- Bean的名称
-  - bean名称在所在的beanFactory或者他的beanDefinition里是唯一的，而不是在应用里唯一
 
 ## 注入容器的方式
 
-> xml方式
-
-<bean name></bean>
-
-> 注解方式
-
-- @Bean
-- @Component
-
-> Java API方式
-
-1. 定义相关类的元信息
-
-2. 将元信息注入进入容器中
-
-- 命名的方式： registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
-- 非命名方式： BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinitionBuilder.getBeanDefinition(), registry);
-
-```java
-public static void main(String[] args) {
-    AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(AnnotationBeanDefinitionDemo.class);
-
-    //命名的方式注册
-    registryBeanDefinition(applicationContext, "my-person");
-    //非命名的方式
-    registryBeanDefinition(applicationContext);
-
-    //获取bean信息
-    System.out.println(applicationContext.getBeansOfType(Person.class));
-    applicationContext.close();
-}
-
-private static void registryBeanDefinition(BeanDefinitionRegistry registry, String name) {
-    //1. 定义相关类的元信息
-    BeanDefinitionBuilder beanDefinitionBuilder 
-        = BeanDefinitionBuilder.genericBeanDefinition(Person.class);
-    beanDefinitionBuilder
-        .addPropertyValue("name", "张三")
-        .addPropertyValue("age", 12);
-    if(StringUtils.isEmpty(name)) {
-        //2.将元信息注入进入容器中
-        BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinitionBuilder.getBeanDefinition(), registry);
-        return;
-    }
-    //2.将元信息注入进入容器中
-    registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
-
-}
-
-private static void registryBeanDefinition(BeanDefinitionRegistry registry) {
-    registryBeanDefinition(registry, null);
-}
-```
-
-- 日志显示
-  - 可以看到，非命名的方式#0，带了序号
-
-```log
-{my-person=Person(name=张三, age=12), com.xiao.pojo.Person#0=Person(name=张三, age=12)}
-```
 
 ## BeanDefinition 合并
 

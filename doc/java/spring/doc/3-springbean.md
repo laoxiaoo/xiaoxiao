@@ -1,3 +1,5 @@
+
+#
 # BeanDefinition
 
 1. 一个定义bean的元信息的接口
@@ -35,6 +37,11 @@ MutablePropertyValues propertyValues = new MutablePropertyValues();
 propertyValues.add("name", "张三").add("age", 12);
 genericBeanDefinition.setPropertyValues(propertyValues);
 ```
+
+
+
+*Bean的名称*
+- bean名称在所在的beanFactory或者他的beanDefinition里是唯一的，而不是在应用里唯一
 
 # Spring 的生命周期
 
