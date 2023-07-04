@@ -85,12 +85,68 @@ class com.xiao.entry.TestBean ...
 # 注入方式
 
 - 手动模式
-  - xml资源模式
+  - xml资源模式  <bean name></bean>
   - java注解模式 @Bean
   - API配置原信息：applicationContext.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+
+```tex
+ 命名的方式： registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+ 非命名方式： BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinitionBuilder.getBeanDefinition(), registry);
+```
+
+
+```java
+public static void main(String[] args) {
+    AnnotationConfigApplicationContext applicationContext = new AnnotationConfigApplicationContext(AnnotationBeanDefinitionDemo.class);
+
+    //命名的方式注册
+    registryBeanDefinition(applicationContext, "my-person");
+    //非命名的方式
+    registryBeanDefinition(applicationContext);
+
+    //获取bean信息
+    System.out.println(applicationContext.getBeansOfType(Person.class));
+    applicationContext.close();
+}
+
+private static void registryBeanDefinition(BeanDefinitionRegistry registry, String name) {
+    //1. 定义相关类的元信息
+    BeanDefinitionBuilder beanDefinitionBuilder 
+        = BeanDefinitionBuilder.genericBeanDefinition(Person.class);
+    beanDefinitionBuilder
+        .addPropertyValue("name", "张三")
+        .addPropertyValue("age", 12);
+    if(StringUtils.isEmpty(name)) {
+        //2.将元信息注入进入容器中
+        BeanDefinitionReaderUtils.registerWithGeneratedName(beanDefinitionBuilder.getBeanDefinition(), registry);
+        return;
+    }
+    //2.将元信息注入进入容器中
+    registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+
+}
+
+private static void registryBeanDefinition(BeanDefinitionRegistry registry) {
+    registryBeanDefinition(registry, null);
+}
+```
+*日志显示*
+可以看到，非命名的方式#0，带了序号
+
+```log
+{my-person=Person(name=张三, age=12), com.xiao.pojo.Person#0=Person(name=张三, age=12)}
+```
+
+
 - 构造器注入 constructor
 - setter注入的缺陷：setter注入是无序的，构造器注入是有序的
 - 字段注入
+
+
+
+
+
+
 
 
 > @Autowired
