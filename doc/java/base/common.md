@@ -423,7 +423,7 @@ public class JacksonConfig {
 ## 集合类转换
 
 ```java
-List<userResource> list = new ObjectNapper ().readValue(userResourcesStr, new TypeReferenceList<UserResource>>(){})
+List<userResource> list = new ObjectNapper ().readValue(userResourcesStr, new TypeReference<List<UserResource>>(){})
 ```
 
 # logback

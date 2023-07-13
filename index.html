@@ -145,8 +145,10 @@
       //侧边栏菜单层级
       subMaxLevel: 2,
       loadNavbar: true,//顶部导航
-      coverpage: true,
-      onlyCover: true,
+      coverpage: {
+        '/': '_coverpage.md'
+      },
+      onlyCover: false,
       search: { paths: 'auto', placeholder: '搜索', noData: '找不到结果', depth: 3, },
       autoHeader: true,
       plugins: [
