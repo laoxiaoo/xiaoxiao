@@ -12,7 +12,12 @@ import lombok.ToString;
  @ToString
  public class {{class_name}} {
      {{#columns}}
+    /**
+     * {{comment}}
+     */
      private {{java_type}} {{name}};
+
+     
      {{/columns}}
  }
  

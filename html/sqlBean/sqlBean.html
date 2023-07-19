@@ -16,13 +16,15 @@
             tableName = inputText.substring(inputText.indexOf('table')+5, inputText.indexOf('('));
             if(!tableName) {
                 alert('表获取异常')
+                return
             }
             tableName = tableName.replaceAll('`', "").trim()
             console.log(tableName)
-            columnText = inputText.substring(inputText.indexOf('(', inputText.indexOf(')')))
             //为了避免注解内容影响解析，暂时去除注解
             var commontReg = new RegExp("(comment )(' ')*(\'){1}([^\'])*(\'){1}", "gm");
             //console.log(commontReg.exec(inputText))
+            var rx = inputText.match(commontReg)
+            //console.log(rx)
             var sql = inputText.replace(commontReg, " ")
             var columnTextArr=cut_start_end_out(sql,"(",")").split(",");
             var column = []
@@ -33,7 +35,7 @@
                     break;
                 }
                 //console.log(get_column(e))
-                column.push(get_column(e))
+                column.push(get_column(e, rx[i]))
             }
             var temp = {};
             temp.class_name = formatToHump(tableName).replace("t", " ").trim();

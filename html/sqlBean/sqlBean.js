@@ -26,7 +26,7 @@ function cut_start_end_out(code,start,end){
     return code.substring(start_p,end_p);
 }
 
-function get_column(e) {
+function get_column(e, comment) {
     e = e.trim()
     let obj={};//字段对象
     //字段名
@@ -48,6 +48,7 @@ function get_column(e) {
     obj.java_type=type_stand.get(obj.type)
 
     obj.name = formatToHump(obj.name)
+    obj.comment = comment.substring(comment.indexOf('\'')+1, comment.lastIndexOf('\''))
     return obj;
 }
 
@@ -78,5 +79,4 @@ function transform(temp) {
 	}
 	xmlhttp.open("GET","./bean.template",true);
 	xmlhttp.send();
-    return value;
 }
