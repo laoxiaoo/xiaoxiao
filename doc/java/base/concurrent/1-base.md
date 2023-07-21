@@ -18,42 +18,29 @@
 
 ## 从API层面
 
-```java
-public enum State {
-    /**
-     * 初始状态
-     */
-    NEW,
+> NEW
 
-    /**
-     * 保护运行/可运行/阻塞（操作系统的阻塞，如：io的阻塞accept）状态
-     */
-    RUNNABLE,
+初始状态
 
-    /**
-     * 阻塞状态：被锁住了
-     */
-    BLOCKED,
+> RUNNABLE
 
-    /**
-     * 阻塞：调用了wating/join
-     */
-    WAITING,
+保护运行/可运行/阻塞（操作系统的阻塞，如：io的阻塞accept）状态
 
-    /**
-     * 阻塞：调用sleep
-     */
-    TIMED_WAITING,
+> BLOCKED
 
-    /**
-     * Thread state for a terminated thread.
-     * The thread has completed execution.
-     */
-    TERMINATED;
-}
-```
+阻塞状态是线程阻塞在进入synchronized关键字修饰的方法或代码块(获取锁)时的状态。
 
-## 从操作系统角度
+> WAITING
+
+`调用了wating/join`, 处于这种状态的线程不会被分配CPU执行时间，它们要等待被显式地唤醒，否则会处于无限期等待的状态, 
+
+> TIMED_WAITING
+
+`调用sleep`, 处于这种状态的线程不会被分配CPU执行时间，不过无须无限期等待被其他线程显示地唤醒，在达到一定时间后它们会自动唤醒
+
+> TERMINATED
+
+终止状态
 
 ## 线程状态的转换
 
