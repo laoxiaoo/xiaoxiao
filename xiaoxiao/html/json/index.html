@@ -38,6 +38,8 @@
             <a href="#" class="tip save" title="保存"  data-placement="bottom"><i class="fa fa-download"></i></a>
             <a href="#" class="tip copy" title="复制" data-clipboard-target="#json-target"  data-placement="bottom"><i class="fa fa-copy"></i></a>
             <a href="#" class="tip compress" title="折叠"  data-placement="bottom"><i class="fa fa-compress"></i></a>
+            <a href="#" class="tip yasuo" title="转义"  data-placement="bottom">转义</a>
+            <a href="#" class="tip compressEscapeJson" title="清除转义"  data-placement="bottom">清除转义</a>
         </div>
         <div id="right-box"  style="width:100%;height: 87vh;min-height:520px;border:solid 1px #f6f6f6;border-radius:0;resize: none;overflow-y:scroll; outline:none;position:relative;font-size:12px;padding-top:40px;">
             <div id="line-num" style="background-color:#fafafa;padding:0px 8px;float:left;border-right:dashed 1px #E5EBEE;display:none;z-index:-1;color:#999;position:absolute;text-align:center;over-flow:hidden;">
@@ -180,6 +182,36 @@ $('.compress').click(function(){
 $('.clear').click(function(){
      $('#json-src').val('');
      $('#json-target').html('');
+});
+
+$('.yasuo').click(function() {
+    var t = current_json_str;
+    (t = t.replace(/\\/g, "\\\\").replace(/\"/g, '\\"')), $('#json-target').html(t);
+});
+
+$('.compressEscapeJson').click(function() {
+    var text = current_json_str;
+    text = text.split("\n").join(" ");
+    var t = [];
+    var inString = false;
+    for (var i = 0, len = text.length; i < len; i++) {
+        var c = text.charAt(i);
+        if (inString && c === inString) {
+            // TODO: \\"
+            if (text.charAt(i - 1) !== '\\') {
+                inString = false;
+            }
+        } else if (!inString && (c === '"' || c === "'")) {
+            inString = c;
+        } else if (!inString && (c === ' ' || c === "\t")) {
+            c = '';
+        }
+        t.push(c);
+    }
+    text = t.join('');
+    text = text.replace(/\\/g,"\\\\").replace(/\"/g,"\\\"");
+    text = text.replace(/[\r\n]/g, "");
+    $('#json-target').html(text);
 });
 
 (function($){
