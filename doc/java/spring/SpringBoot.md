@@ -1710,6 +1710,8 @@ public ConfigurableApplicationContext run(String... args) {
 
 ## 步骤
 
+### 引导类包
+
 - 建立一个空的maven项目
 
   这个项目是用来引导Autoconfigration的项目，一般命名为 自定义启动器名-spring-boot-starter 
@@ -1728,6 +1730,8 @@ public ConfigurableApplicationContext run(String... args) {
       </dependency>
   </dependencies>
   ```
+  
+### 自动装配类包
   
 - 建立自动配置的maven模块，这个模块名就是上面引用的：xiao-spring-boot-starter-autoconfigurer
 ```xml
