@@ -447,3 +447,90 @@ tasklist|findstr "9088"
 #杀掉进程
 taskkill /T /F /PID 9088 
 ```
+
+# SumatraPDF
+
+```
+
+# For documentation, see https://www.sumatrapdfreader.org/settings/settings3-3-1.html
+
+MainWindowBackground = #80fff200
+EscToExit = false
+ReuseInstance = false
+UseSysColors = false
+RestoreSession = true
+TabWidth = 300
+
+FixedPageUI [
+	TextColor = #000000
+	BackgroundColor = #ffffff
+	SelectionColor = #f5fc0c
+	WindowMargin = 2 4 2 4
+	PageSpacing = 4 4
+	HideScrollbars = false
+]
+EbookUI [
+	FontName = 冬青黑体简体中文
+	FontSize = 12.5
+	TextColor = #000000
+	BackgroundColor = #d6e7cb
+	UseFixedPageUI = false
+]
+ComicBookUI [
+	WindowMargin = 0 0 0 0
+	PageSpacing = 4 4
+	CbxMangaMode = false
+]
+ChmUI [
+	UseFixedPageUI = false
+]
+ExternalViewers [
+]
+ShowMenubar = true
+ReloadModifiedDocuments = true
+FullPathInTitle = false
+ZoomLevels = 8.33 12.5 18 25 33.33 50 66.67 75 100 125 150 200 300 400 600 800 1000 1200 1600 2000 2400 3200 4800 6400
+ZoomIncrement = 0
+
+PrinterDefaults [
+	PrintScale = shrink
+]
+ForwardSearch [
+	HighlightOffset = 0
+	HighlightWidth = 15
+	HighlightColor = #6581ff
+	HighlightPermanent = false
+]
+Annotations [
+	HighlightColor = #ffff00
+]
+CustomScreenDPI = 0
+
+RememberStatePerDocument = true
+UiLanguage = cn
+ShowToolbar = true
+ShowFavorites = false
+AssociateSilently = false
+CheckForUpdates = false
+RememberOpenedFiles = true
+EnableTeXEnhancements = false
+DefaultDisplayMode = automatic
+DefaultZoom = fit page
+WindowState = 1
+WindowPos = 605 0 776 1040
+ShowToc = true
+SidebarDx = 186
+TocDy = 0
+TreeFontSize = 0
+ShowStartPage = true
+UseTabs = true
+
+SessionData [
+]
+TimeOfLastUpdateCheck = 0 0
+OpenCountWeek = 657
+
+# Settings after this line have not been recognized by the current version
+
+
+```
