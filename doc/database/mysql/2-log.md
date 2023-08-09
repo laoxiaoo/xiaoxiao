@@ -155,3 +155,23 @@ min_trx id <= trx_id <= max _trx_id:如果trx_id在m_ids中是不可以访问这
 - 间隙锁（mysql默认）
   - 锁的就是两个值之间的空隙。在一行行扫描的过程中，不仅将给行加上了行锁，还给行两边的空隙，也加上了间隙锁
   - 如A去update 某个范围数据，这个范围数据在A没提交时，B去修改这个范围数据是不能成功的
+
+## 快照读和当前读
+
+- 快照读：其实是基于MVCC+undo log实现的，读取的MVCC快照链路中的某个版本，很可能是历史版本，不用加锁。
+- 当前读：读取的是记录的最新版本，并且返回的数据记录会加上锁，保证其他事务不能并发的修改数据记录。
+  - 更新数据都是先读后写的，而这个读，只能读当前的值，称为“当前读”
+
+### 当前读的sql
+
+
+
+1. select ... lock in share mode
+
+2. select ... for update
+
+3. update table ...
+
+4. insert into table
+
+5. delete from table
