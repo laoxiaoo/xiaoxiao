@@ -2,6 +2,7 @@
 * [JAVA](/doc/java/base/)
 	
 * Mybatis
+  * [原生JDBC](/doc/java/mybatis/1-jdbc)
   * [自定义持久层](/doc/java/mybatis/1-custom-persistence)
   * [架构设计](/doc/java/mybatis/2-architecture)
   * [基本应用](/doc/java/mybatis/3-advanced-application)
