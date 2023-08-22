@@ -74,3 +74,21 @@ System.out.println("可写属性:"+Arrays.toString(reflector.getSetablePropertyN
 System.out.println("是否具有默认的构造器:" + reflector.hasDefaultConstructor());
 System.out.println("Reflector对应的Class:" + reflector.getType());
 ```
+
+# 属性解析工具
+
+## PropertyTokenizer
+
+将属性表达式解析为Bean的字段
+
+## PropertyCopier
+
+类似beancopy
+
+## MetaClass
+
+封装的是Class元信息
+
+## objectWrapper
+
+封装的则是对象元信息
