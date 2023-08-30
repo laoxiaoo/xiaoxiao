@@ -75,6 +75,49 @@ System.out.println("是否具有默认的构造器:" + reflector.hasDefaultConst
 System.out.println("Reflector对应的Class:" + reflector.getType());
 ```
 
+# 解析过程
+## 描述
+
+1.获取sessionFactory
+
+2.获取session
+
+3.对namespace+id的xml进行sql操作
+
+4.一个sqlsession代表与数据库交互的一次会话，由它操作数据库，其实他的底层就是connection，它是非线程安全的，用完则关闭
+
+5 mybatis-config.xml是全局配置文件，包含了数据库连接池信息，事务管理器等，它也可以不用配置文件方式，直接用对象的方式进行设置
+
+```java
+@Test
+public void test1() throws Exception{
+    //获取sessionfactory
+    String resource = "mybatis-config.xml";
+    InputStream inputStream = Resources.getResourceAsStream(resource);
+    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
+
+    SqlSession session = sqlSessionFactory.openSession();
+    try {
+        User user = session.selectOne("org.mybatis.example.UserMapper.selectUser", 1);
+        System.out.println(user.toString());
+    } finally {
+        session.close();
+    }
+}
+```
+
+## 源码解析
+
+初始化SqlSessionFactory所做的事
+
+- 获取xml的配置的流
+- 进入build方法 -->XMLConfigBuilder构造方法-->XPathParser方法-->createDocument构造方法
+
+- 采用DocumentBuilderFactory解析xml获取Document
+- 调用org.apache.ibatis.builder.xml.XMLConfigBuilder#parse方法， 从xml中获取配置信息和sql
+- 获取xml中配置的Mapper,将mapper的namespace的class当成是MapperRegistry的里面的map的key
+
+
 # 属性解析工具
 
 ## PropertyTokenizer
@@ -92,3 +135,40 @@ System.out.println("Reflector对应的Class:" + reflector.getType());
 ## objectWrapper
 
 封装的则是对象元信息
+
+# 类型转换
+
+## 配置方式
+
+1、通过 <package> 配置 多个 typeHandler所在的包路径，通过扫包的方式批量设置
+
+2、通过 <typeHandler> 标签，一个一个进行 typeHandler 配置
+
+## TypeHandlerRegistry
+
+`TypeHandlerRegistry` 类型处理器注册表注册了类型转换时需要用到的各种处理器以及与Java类型和Jdbc类型的映射关系。
+
+```java
+private <T> void register(Type javaType, TypeHandler<? extends T> typeHandler) {
+    // 从处理器定义中获取 @MappedJdbcTypes 的标注
+    MappedJdbcTypes mappedJdbcTypes = typeHandler.getClass().getAnnotation(MappedJdbcTypes.class);
+    if (mappedJdbcTypes != null) {
+        // 解析注解中定义的 JdbcType 并注册
+        for (JdbcType handledJdbcType : mappedJdbcTypes.value()) {
+            register(javaType, handledJdbcType, typeHandler);
+        }
+        // 注解中还声明要注册一个 null 的 JdbcType
+        if (mappedJdbcTypes.includeNullJdbcType()) {
+            register(javaType, null, typeHandler);
+        }
+    } else {
+        //没有解析到 JdbcType，直接注册一个 null 的 JdbcType
+        register(javaType, null, typeHandler);
+    }
+}
+```
+
+如果使用包扫描注册用户自定义处理器，需要配合使用注解 `@MappedTypes`、`@MappedJdbcTypes`，分别指定要注册的 Java 类型和 Jdbc 类型。
+
+- 若只用了 `@MappedTypes`，则注册进去的 Java 类型为 null
+- 若只用了 `@MappedJdbcTypes`，则注册进去的 Jdbc 类型为 null
