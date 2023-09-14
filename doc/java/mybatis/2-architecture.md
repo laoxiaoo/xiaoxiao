@@ -172,3 +172,28 @@ private <T> void register(Type javaType, TypeHandler<? extends T> typeHandler) {
 
 - 若只用了 `@MappedTypes`，则注册进去的 Java 类型为 null
 - 若只用了 `@MappedJdbcTypes`，则注册进去的 Jdbc 类型为 null
+
+# 日志模块
+
+## BaseJdbcLogger
+
+
+
+## ResultSetLogger
+
+# 数据源
+
+## DataSource
+
+是java 所有的数据源实现的接口，mybatis的数据源（PooledDataSource/数据库连接池缓存，UnpooledDataSource）也要实现这个接口
+
+两个数据源通过工厂类创建
+
+![image-20230907195649390](image/2-architecture/image-20230907195649390.png)
+
+以后有新的数据源，只需实现mybatis提供的<b id="blue">DataSourceFactory</b>接口即可
+
+## 数据库连接池时几种特殊场景
+
+1. 如果连接池中维护的总连接数达到上限，且所有连接都已经被调用方占用，则后续获取数据库连接的线程将会被阻塞（进入阻塞队列中等待)，直至连接池中出现可用的数据库连接，这个可用的连接是由其他使用方释放得到的
+2. 如果连接池中空闲连接数达到了配置上限，则后续返回到池中的空闲连接不会进入连接池缓存，而是直接关闭释放掉，这主要是为了减少维护空闲数据库连接带来的压力，同时减少数据库的资源开销
