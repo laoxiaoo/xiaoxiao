@@ -197,3 +197,25 @@ private <T> void register(Type javaType, TypeHandler<? extends T> typeHandler) {
 
 1. 如果连接池中维护的总连接数达到上限，且所有连接都已经被调用方占用，则后续获取数据库连接的线程将会被阻塞（进入阻塞队列中等待)，直至连接池中出现可用的数据库连接，这个可用的连接是由其他使用方释放得到的
 2. 如果连接池中空闲连接数达到了配置上限，则后续返回到池中的空闲连接不会进入连接池缓存，而是直接关闭释放掉，这主要是为了减少维护空闲数据库连接带来的压力，同时减少数据库的资源开销
+
+# Mapper
+
+## MapperRegistry
+
+MapperRegistry用于将所有的mapper接口添加到内存中
+
+- MapperRegistry#config
+- MapperRegistry#knownMappers
+  - 维护了所有解析到的Mapper接口以及MapperProxyFactory 工厂对象之间的映射关系
+
+
+
+```
+在调用XXXMapper.xx()方法的时候，
+MyBatis 会先从MapperRegistry中获取XXXMapper接口的代理对象这里就使用到MapperRegistry.getMapper()方法
+
+```
+
+## MapperProxy
+
+一个包装类,本身不做任何事情,它最主要的作用就是维系着<Method,MapperMethod>集合,这样mapper接口就知道即将执行的是哪种SQL语句了,然后委托给Sqlsession进行查询了
