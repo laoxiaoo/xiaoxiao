@@ -149,3 +149,33 @@ canal.mq.topic=canal_test
  ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic canal_test
 ```
 
+
+
+# 顺序问题
+
+摘自官方文档
+
+```
+
+binlog本身是有序的
+
+canal目前选择支持的kafka/rocketmq，本质上都是基于本地文件的方式来支持了分区级的顺序消息的能力，
+也就是binlog写入mq是可以有一些顺序性保障，这个取决于用户的一些参数选择
+canal支持MQ数据的几种路由方式：单topic单分区，单topic多分区、多topic单分区、多topic多分区
+canal.mq.dynamicTopic，主要控制是否是单topic还是多topic，针对命中条件的表可以发到表名对应的topic、
+库名对应的topic、默认topic name
+canal.mq.partitionsNum、canal.mq.partitionHash，主要控制是否多分区以及分区的partition的路由计算，
+针对命中条件的可以做到按表级做分区、pk级做分区等
+canal的消费顺序性，主要取决于描述2中的路由选择，举例说明：
+单topic单分区，可以严格保证和binlog一样的顺序性，缺点就是性能比较慢，
+单分区的性能写入大概在2~3k的TPS
+多topic单分区，可以保证表级别的顺序性，一张表或者一个库的所有数据都写入到一个topic的单分区中，
+可以保证有序性，针对热点表也存在写入分区的性能问题
+单topic、多topic的多分区，如果用户选择的是指定table的方式，那和第二部分一样，
+保障的是表级别的顺序性(存在热点表写入分区的性能问题)，如果用户选择的是指定pk hash的方式，
+那只能保障的是一个pk的多次binlog顺序性 ** pk hash的方式需要业务权衡，这里性能会最好，
+但如果业务上有pk变更或者对多pk数据有顺序性依赖，就会产生业务处理错乱的情况. 如果有pk变更，
+pk变更前和变更后的值会落在不同的分区里，业务消费就会有先后顺序的问题，需要注意
+
+
+```

@@ -19,3 +19,22 @@ jedis.subscribe(new JedisPubSub() {
 }, "__keyspace@0__:*");
 
 ```
+2. 解析键
+
+```java
+private void handleKeySpaceNotification(String channel, String message) {
+    // 解析通知消息
+    String[] parts = message.split(":");
+    String eventType = parts[0];
+    String key = parts[1];
+
+    // 判断事件类型是否为键的修改
+    if ("hset".equals(eventType)) {
+        // 获取键的值
+        String value = jedis.get(key);
+
+        // 处理键的值变化
+        // TODO: 添加处理逻辑
+    }
+}
+```
