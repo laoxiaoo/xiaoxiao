@@ -145,3 +145,17 @@ live template 进行设置模板
 - 查看maven  Show Dependencies...查找对应的包
   - action -> diagram element搜索快捷键
   - ctrl+F
+
+# 遇到项目包后面出现% *classes*,% *lines* *covered*
+
+## 产生原因
+
+运行了这个
+
+![image-20231010163930315](image/idea/image-20231010163930315.png)
+
+# 关闭
+
+ctrl+alt+F6
+
+![image-20231010164040734](image/idea/image-20231010164040734.png)
