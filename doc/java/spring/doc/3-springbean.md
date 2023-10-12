@@ -778,3 +778,10 @@ public TestBean testBean(){
     return testBean;
 }
 ```
+
+
+# Bean 排序
+
+Ordered
+
+ 

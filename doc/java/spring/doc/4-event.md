@@ -182,3 +182,7 @@ public class MyListener {
 
 - 在SimpleApplicationEventMulticaster中有个ErrorHandler属性
 - 需要调用SimpleApplicationEventMulticaster#setErrorHandler方法才会生效
+
+# 内置事件
+## ContextRefreshedEvent
+在ConfigurableApplicationContext的refresh()执行完成时，会发出ContextRefreshedEvent事件

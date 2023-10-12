@@ -13,6 +13,8 @@
     * [基础Api](/doc/java/base/api/1-base)
     * [线程类](/doc/java/base/api/2-thread)
     * [BigDecimal](/doc/java/base/api/3-bigDecimal)
+    * [map](/doc/java/base/api/4-map)
+    * [版本差异](/doc/java/base/api/5-version)
 * 并发编程
     * [基础](/doc/java/base/concurrent/1-base)
     * [CAS](/doc/java/base/concurrent/2-cas)

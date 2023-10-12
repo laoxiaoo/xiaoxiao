@@ -59,46 +59,6 @@ try {
 
 # 入门
 
-## helloword
-
-1.获取sessionFactory
-
-2.获取session
-
-3.对namespace+id的xml进行sql操作
-
-4.一个sqlsession代表与数据库交互的一次会话，由它操作数据库，其实他的底层就是connection，它是非线程安全的，用完则关闭
-
-5 mybatis-config.xml是全局配置文件，包含了数据库连接池信息，事务管理器等，它也可以不用配置文件方式，直接用对象的方式进行设置
-
-```java
-@Test
-public void test1() throws Exception{
-    //获取sessionfactory
-    String resource = "mybatis-config.xml";
-    InputStream inputStream = Resources.getResourceAsStream(resource);
-    SqlSessionFactory sqlSessionFactory = new SqlSessionFactoryBuilder().build(inputStream);
-
-    SqlSession session = sqlSessionFactory.openSession();
-    try {
-        User user = session.selectOne("org.mybatis.example.UserMapper.selectUser", 1);
-        System.out.println(user.toString());
-    } finally {
-        session.close();
-    }
-}
-```
-
-## 原理
-
-初始化SqlSessionFactory所做的事
-
-- 获取xml的配置的流
-- 进入build方法 -->XMLConfigBuilder构造方法-->XPathParser方法-->createDocument构造方法
-
-- 采用DocumentBuilderFactory解析xml获取Document
-- 从xml中获取配置信息和sql
-- 获取xml中配置的Mapper,将mapper的namespace的class当成是MapperRegistry的里面的map的key
 
 
 

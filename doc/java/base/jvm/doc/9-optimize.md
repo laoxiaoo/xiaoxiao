@@ -347,3 +347,117 @@ jmap -histo 3676
 大对象直接进入老年代，而老年代的可用空间不足
 ```
 
+# CPU100%
+
+一般来说，Cpu100%有一下几种情况
+
+1. GC太过频繁，GC时间过长
+2. 某个线程有死循环或者N循环操作
+
+## 服务器排查方式
+
+1. top命令，查询对应cpu100%对应的进程， 获取到pid
+2.  top -Hp 某个pid，查看对应的线程占用cpu
+
+![image-20230822111903067](image/9-optimize/image-20230822111903067.png)
+
+3.  jstack 进程pid >> k.txt 命令输出当前的线程信息
+4. 讲线程的pid转为16进制,进入K文件，进行搜索查询代码快
+
+# 死循环排查示例
+
+```java
+public static void main(String[] args) throws InterruptedException {
+    while (true) {
+
+    }
+}
+```
+
+执行之后，通过jps命令获取当前进程id
+
+![image-20230906135447496](image/9-optimize/image-20230906135447496.png)
+
+通过命令
+
+```shell
+$ jstack 17552 >> test1.txt
+```
+
+排查正在允许的runable代码块，来跟进当前的运行代码
+
+![image-20230906135557920](image/9-optimize/image-20230906135557920.png)
+
+# 死锁
+
+```java
+class TestTask implements Runnable {
+    private Object obj1;
+    private Object obj2;
+    private int order;
+
+    public TestTask(int order, Object obj1, Object obj2) {
+        this.order = order;
+        this.obj1 = obj1;
+        this.obj2 = obj2;
+    }
+
+    public void test1() throws InterruptedException {
+        synchronized (obj1) {
+            //建议线程调取器切换到其它线程运行
+            Thread.yield();
+            synchronized (obj2) {
+                System.out.println("test。。。");
+            }
+
+        }
+    }
+    public void test2() throws InterruptedException {
+        synchronized (obj2) {
+            Thread.yield();
+            synchronized (obj1) {
+                System.out.println("test。。。");
+            }
+
+        }
+    }
+
+    @Override
+    public void run() {
+
+        while (true) {
+            try {
+                if(this.order == 1){
+                    this.test1();
+                }else{
+                    this.test2();
+                }
+                
+            } catch (InterruptedException e) {
+                e.printStackTrace();
+            }
+        }
+
+    }
+}
+
+public class Test2 {
+
+    public static void main(String[] args) throws InterruptedException {
+        Object obj1 = new Object();
+        Object obj2 = new Object();
+
+        ExecutorService ex = Executors.newFixedThreadPool(10);
+        // 起10个线程
+        for (int i = 0; i < 10; i++) {
+            int order = i%2==0 ? 1 : 0;
+            ex.execute(new TestTask(order, obj1, obj2));
+        }
+
+    }
+}
+```
+
+jstack查看死锁代码块
+
+![image-20230906152334646](image/9-optimize/image-20230906152334646.png)

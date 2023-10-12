@@ -1,76 +1,6 @@
-# 功能
 
-- 分布式的搜索引擎
 
-如：百度等
 
-- 全文检索，结构化检索
-  - 文章的关键字检索
-  - 电商的分类查询
-
-# 核心概念
-
-- Document&field
-
-文档，es中的最小数据单元，一个document可以是一条客户数据，一条商品分类数据，一条订单数据，通常用JSON数据结构表示
-
-- type
-
-每个索引都有多个或者一个type，一个type下的document，有着相同的字段
-
-- index:索引
-
-包含一堆有相似结构文档的数据，如：订单索引
-
-| es       | 数据库 |
-| -------- | ------ |
-| document | 行     |
-| type     | 表     |
-| index    | 数据库 |
-
-- share
-
-如果一个index有3t的数据，它把他分为三份，每一个share存1t，这样，查询就增加了速度
-
-share是最小的工作单元
-
-每个share其实就是一个Lucene实例
-
-share分为primary share和replica share，每个document只能存在于某个primary share以及对应的replica share中
-
-- replica share
-
-其实就是share的一个副本
-
-优点：查询的时候，也可以查到replica上面
-
-​			share挂了，可以让replica顶上
-
-**share不能和replica同一个服务器，所以es一般两个服务器以上**
-
-- master
-
-master 选举，将一个node变为master
-
-新master间隔primary share的replica 变为primary
-
-# 特性
-
-- 对复杂的分布式机制的透明隐藏特性
-  - 我们不需要考虑数据怎么进行分片，数据分配到了哪个shard占用，
-  - 集群可以自己发现node
-  - shard复杂均衡
-
-- 垂直扩容和水平扩容，扩容对应用程序透明
-  - 垂直扩容：购置强大的服务器，将新的服务器代替老服务器
-  - 水平扩容：购置服务器，加入老的集群之中
-- 增加或者减少节点，会自动将数据平衡
-- master节点
-  - 创建、删除索引；增加删除节点
-  - 默认自动选择一台节点作为master
-- 节点平等的分布式架构
-  - 每个节点都可以接受所有请求
-  - 可能请求a share，但a可以发给b，让b给数据给a，最后返回
 
 # 安装
 
@@ -254,50 +184,7 @@ GET /order/product/_search
 
 ## 结构化过滤（Filter DSL）  
 
-> term 过滤  
 
-term 主要用于精确匹配哪些值，比如数字，日期，布尔值或 not_analyzed 的字符串（未经分析的文本数据类型），相当于sql age=26  
-
-```json
-{ "term": { "age": 26 }}
-{ "term": { "date": "2014-09-01" }}
-```
-
-> terms 过滤  
-
-terms 允许指定多个匹配条件。如果某个字段指定了多个值，那么文档需要一起去做匹配。相当于sql： age in  
-
-```json
-{"terms": {"age": [26, 27, 28]}}
-```
-
-> range 过滤  
-
-range 过滤允许我们按照指定范围查找一批数据 
-
-```json
-{
-    "range": {
-        "price": {
-            "gte": 2000,
-            "lte": 3000
-            }
-        }
-    }
-}
-```
-
-> exists 和 missing 过滤  
-
-exists 和 missing 过滤可以用于查找文档中是否包含指定字段或没有某个字段  
-
-```json
-{
-	"exists": {
-    	"field": "title"
-    }
-}
-```
 
 > bool 过滤  
 
@@ -374,18 +261,6 @@ GET /_search?timeout=10m
 
 ## query DSL
 
-就是将条件放入body中
-
-- 查询全部
-
-```
-GET /order/product/_search?ignore_unavailable=true
-{
-  "query":{
-    "match_all": {}
-  }
-}
-```
 
 - 带条件查询
 
@@ -416,21 +291,6 @@ GET /order/product/_search
 }
 ```
 
-- 范围查询
-
-```json
-GET /order/_search
-{
-  "query": {
-    "range": {
-      "ooprice": {
-        "gte": 1000,
-        "lte": 2000
-      }
-    }
-  }
-}
-```
 
 ### 分页
 
@@ -1482,161 +1342,7 @@ ext_dict:同目录下一个xx.dic文件，
 
 ```
 
-# 自动补全 
 
-suggest就是一种特殊类型的搜索
-
-分为四种
-
-1. Term suggester ：词条建议器。对给输入的文本进进行分词，为每个分词提供词项建议
-2. Phrase suggester ：短语建议器，在term的基础上，会考量多个term之间的关系
-3. Completion Suggester，它主要针对的应用场景就是"Auto Completion"。
-4. Context Suggester：上下文建议器  
-
- ## Term suggester 
-
-拼写纠错；可以用来：我们搜索为华 然后显示：我们为您显示“华为”相关的商品。仍然搜索：“为华”
-
-1. 建立mapping
-
-```json
-PUT s1
-{
-  "mappings": {
-    "properties": {
-        "title":{
-          "type":"text",
-          "analyzer":"standard"
-        }
-      }
-  }
-}
-```
-
-2. 添加词条
-
-```json
-PUT s1/_doc/1
-{
-  "title": "Lucene is cool"
-}
-```
-
-3. 进行错误的词条搜索
-
-```json
-GET s1/_doc/_search
-{
-  "suggest": {
-    "my_s1": {
-      "text": "lucne",
-      "term": {
-        "field": "title"
-      }
-    }
-  }
-}
-```
-
-4. 返回正确的词条
-
-![image-20211222224602615](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222224602.png)
-
-## Phrase suggester
-
-与Term 不同的是，Phrase是对一连串的短语进行纠错
-
-如:在词库，我们有两个 “Lucene is cool”， “Elasticsearch builds on top of lucene”词语，
-
-如果我们搜索:lucne的单词错误，elasticsear的单词错误
-
-```json
-GET s1/_doc/_search
-{
-  "suggest": {
-    "my_s1": {
-      "text": "lucne and elasticsear rock",
-      "phrase": {
-        "field": "title",
-        "highlight":{
-          "pre_tag":"<em class='xxxx'>",
-          "post_tag":"</em>"
-        }
-      }
-    }
-  }
-}
-```
-
-那么返回的是：，此时我们对options可以取评分最高的短语进行操作
-
-![image-20211222225423921](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222225424.png)
-
-## Completion Suggester
-
-`可以用来做自动补全操作`, 如：京东的搜索，我们搜索，小米，下拉框出来小米10，小米11等下拉选项
-
-1. 使用此类型，首先我们要使用特殊的mapping映射
-   1. 建立一个mapping，其中title使用的类型是自动补全类型
-
-```json
-PUT s2
-{
-  "mappings": {
-    "properties": {
-      "title":{
-          "type":"completion",
-          "analyzer":"ik_smart"
-      }
-    }
-  }
-}
-```
-
-2. 批量的添加一些数据,这些数据，就是我们后面的自动补全 的数据
-
-```json
-POST _bulk/?refresh=true
-{ "index": { "_index": "s2", "_type": "_doc" }}
-{ "title": "项目"}
-{ "index": { "_index": "s2", "_type": "_doc" }}
-{ "title": "项目进度"}
-{ "index": { "_index": "s2", "_type": "_doc" }}
-{ "title": "项目管理"}
-{ "index": { "_index": "s2", "_type": "_doc" }}
-{ "title": "项目进度及调整 汇总.doc_文档"}
-{ "index": { "_index": "s2", "_type": "_doc" }}
-{ "title": "项目3"}
-
-## 我们也可以给参数加入权重，这样查询靠前
-POST s2/_doc
-{
-  "title":{
-    "input": "项目4",
-    "weight": 2
-  }
-}
-```
-
-3. 进行自动补全查询
-
-```json 
-GET s2/_doc/_search
-{
-  "suggest": {
-    "my_s1": {
-      "prefix": "项",
-      "completion": {
-        "field": "title"
-      }
-    }
-  }
-}
-```
-
-4. 获取的结果如图
-
-![image-20211222220206840](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211222220213.png)
 
 # 快照
 
