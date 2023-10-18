@@ -254,3 +254,40 @@ private MappedStatement resolveMappedStatement(Class<?> mapperInterface, String 
 
 
 -  paramNameResolver：通过@Param注解指定一个参数名称，如果没有特别指定，则默认使用参数列表中的变量名称作为其名称
+
+
+
+```java
+  public Object getNamedParams(Object[] args) {
+    final int paramCount = names.size();
+    if (args == null || paramCount == 0) {
+      return null;
+    }
+    if (!hasParamAnnotation && paramCount == 1) {
+      Object value = args[names.firstKey()];
+      return wrapToMapIfCollection(value, useActualParamName ? names.get(names.firstKey()) : null);
+    } else {
+      final Map<String, Object> param = new ParamMap<>();
+      int i = 0;
+      for (Map.Entry<Integer, String> entry : names.entrySet()) {
+        param.put(entry.getValue(), args[entry.getKey()]);
+        // add generic param names (param1, param2, ...)
+        final String genericParamName = GENERIC_NAME_PREFIX + (i + 1);
+        // ensure not to overwrite parameter named with @Param
+        if (!names.containsValue(genericParamName)) {
+          param.put(genericParamName, args[entry.getKey()]);
+        }
+        i++;
+      }
+      return param;
+    }
+  }
+```
+
+# BaseBuilder
+
+
+
+# 解析流程
+
+1. XMLConfigBuilder#parse方法触发了mybatis-config.xml配置文件的解析
