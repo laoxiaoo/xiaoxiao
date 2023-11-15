@@ -8,7 +8,7 @@
 
 ![image-20230522194218283](image/1-base/image-20230522194218283.png)	
 
-# vscode 配置环境
+# Vscode 配置环境
 
 ## 配置MinGW
 
@@ -204,3 +204,41 @@
 ## 创建一个空项目
 
 ![image-20230522191846504](image/1-base/image-20230522191846504.png)
+
+# 编译链接模型
+
+源代码 (source code) →预处理器(preprocessor) → 编译器 (compiler) →目标代码(object code) →链接器(Linker) → 可执行程序(executables)
+
+![image-20231113195038094](image/1-base/image-20231113195038094.png)
+
+## 预处理
+
+将源文件转换为翻译单元的过程
+
+
+
+```shell
+g++ -E test.cpp -o test.i
+```
+
+## 编译
+
+将其转为汇编代码
+
+```bash
+g++ -S test.i -o test.s
+```
+
+## 汇编
+
+```text
+g++ -c test.s -o test.o
+```
+
+## 链接
+
+合并多个目标文件。关联声明与定义
+
+```text
+g++ test.o -o test
+```
