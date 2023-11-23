@@ -26,6 +26,8 @@
 
 ### launch.json
 
+用于运行可执行程序
+
 ```json
 {
     "version": "0.2.0",
@@ -49,6 +51,10 @@
 ```
 
 ### tasks.json
+
+用于编译可执行程序，即build exe
+
+<b id="blue">label</b>需要注意，在`launch.json`中的<b id="blue">preLaunchTask</b>用的到
 
 ```json
 {
@@ -199,9 +205,7 @@
 
 
 
-# helloword
-
-## 创建一个空项目
+# VS创建一个空项目
 
 ![image-20230522191846504](image/1-base/image-20230522191846504.png)
 
@@ -221,6 +225,13 @@
 g++ -E test.cpp -o test.i
 ```
 
+### 防止头文件被循环展开
+
+- #ifdef 解决方案
+  - 有弊端，可能会定义重复的 定义
+- #pragma once解决方案
+  - 推荐使用，保证只会被include一次
+
 ## 编译
 
 将其转为汇编代码
@@ -228,6 +239,8 @@ g++ -E test.cpp -o test.i
 ```bash
 g++ -S test.i -o test.s
 ```
+
+编译优化网站：[Compiler Explorer (godbolt.org)](https://godbolt.org/)
 
 ## 汇编
 
@@ -242,3 +255,50 @@ g++ -c test.s -o test.o
 ```text
 g++ test.o -o test
 ```
+
+#  HelloWord
+
+```c++
+#include <iostream>
+
+//使用命名空间，下面使用可以省略
+using namespace std;
+
+int main()
+{	
+	//输出helloword
+	std::cout << "helloword \n";
+	//定义变量
+	int a = 1;
+	char b = 'b';
+	//endl 表示换行 类似cout << b << "\n";
+	cout << a << endl;
+	cout << b << "\n";
+	//阻塞命令
+	system("pause");
+	return 0;
+}
+```
+
+## 为什么main函数要有返回值
+
+1. 一般来说，我们来通过返回值来判断程序执行是否成功，一般 程序返回0表示成功（约定俗称）
+2. 我们通过错误返回的代码来做一些操作
+
+## 为什么main函数可以没有return
+
+c++标准规定，如果main没有return,则默认返回0
+
+# 系统io
+
+iostream:
+
+标准库所提供的 IO 接口，用于与用户交互
+
+1. 输入流： cin ；输出流： cout / cerr / clog
+2. cout 与cerr的区别： 输出目标； 
+3. cerr和clog的区别：是否立即刷新缓冲区，cerr会立即刷新缓冲区，clog将数据先输出缓冲区，不会立即刷新
+4. 缓冲区与缓冲区刷新： std::flush; std::endl 
+
+# 命名空间
+
