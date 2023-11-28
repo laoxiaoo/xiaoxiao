@@ -302,3 +302,148 @@ iostream:
 
 # 命名空间
 
+1. 可以避免include的多个函数，从而导致的名字冲突
+
+## 调用方式
+
+定义一个命名空间，后面的人使用需要带上命名空间才能访问里面的函数
+
+```c++
+#include <iostream>
+
+using namespace std;
+
+//定义一个命名空间
+namespace n1
+{
+    void fun() 
+    {
+        std::cout << "fun.. \n";
+    }
+}
+
+int main(int argc, char const *argv[])
+{
+    //使用命名空间里的函数
+    n1::fun();
+    return 0;
+}
+
+```
+
+## 全局定义使用某个命名空间
+
+定义了全局之后，后面都可以省略命名空间
+
+但是不建议，因为命名空间的定义本身就是为了解决冲突，这样定义可能产生冲突
+
+```c++
+//定义一个命名空间
+namespace n1
+{
+    void fun() 
+    {
+        std::cout << "fun.. \n";
+    }
+}
+
+using namespace n1;
+
+int main(int argc, char const *argv[])
+{
+    //使用命名空间里的函数
+    fun();
+    return 0;
+}
+```
+
+# 结构体
+
+通过一个结构体，将不同的变量聚合到一起
+
+## 定义结构体
+
+```c++
+struct stuStruct
+{
+    /* 定义一个struct */
+    string name;
+
+    int age;
+    //构造方法
+    stuStruct() {
+        name = "小小";
+        age = 18;
+    }
+	//带参数构造方法
+    stuStruct(string name, int age) {
+        this->age = age;
+        this->name = name;
+    }
+
+    //定义一个方法
+    void toString() {
+        cout << name << endl;
+        cout << age << endl;
+    }
+};
+```
+
+## 调用结构体
+
+```c++
+int main() {
+    //在初始化的时候，就调用了结构体的构造方法
+    stuStruct ss;
+    //调用结构体的方法
+    ss.toString();
+
+    //给结构体属性赋值(这里实际调用的就是他的构造方法)
+    stuStruct ss2 = {"小~", 19};
+    ss2.toString();
+    return 0;
+}
+```
+
+# 类型
+
+1. 类型是一个编译期概念，可执行文件中不存在类型的概念
+
+> 类型描述了
+
+1. 存储所需要的尺寸 (sizeof ，标准并没有严格限制 )
+
+```c++
+//利用sizeof 输出类型存储所需要的大小， 输出 4  4
+int main(int argc, char const *argv[])
+{
+    int x = 10;
+    std::cout << sizeof(x) << '\n';
+    std::cout << sizeof(int) << '\n';
+    std::cout << "end--" << std::endl;
+    return 0;
+}
+```
+
+2. 取值空间 (std::numeric_limits ，超过范围可能产生溢出 )
+
+```c++
+#include <iostream>
+#include <limits>
+
+//输出某个类型的取值范围（最大的存取数值）
+int main(int argc, char const *argv[])
+{
+    std::cout << std::numeric_limits<int>::min() << std::endl;
+    std::cout << std::numeric_limits<int>::max() << std::endl;
+    return 0;
+}
+```
+
+3. 对齐信息（ alignof ）
+   1. 为啥要对齐：简单来说，就是方便计算机去读写数据
+   2. 对齐的地址一般都是 n（n = 2、4、8）的倍数
+   3. 1 个字节的变量，例如 **char** 类型的变量，放在**任意地址**的位置上；
+   4. 2 个字节的变量，例如 **short** 类型的变量，放在 **2 的整数倍**的地址上
+4. 可以执行的操作(这个类型可以执行的操作)
+
