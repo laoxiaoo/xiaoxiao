@@ -8,7 +8,8 @@
     * [gc](/doc/java/base/jvm/doc/7-gc)
     * [类加载器](/doc/java/base/jvm/doc/8-classload)
     * [调优与监控](/doc/java/base/jvm/doc/9-optimize)
-* [通用](/doc/java/base/common)
+* 通用
+    * [jackson](/doc/java/base/common/1-jackson)
 * Api
     * [基础Api](/doc/java/base/api/1-base)
     * [线程类](/doc/java/base/api/2-thread)
