@@ -606,6 +606,6 @@ com.laoxiao.userService2=dubbo://127.0.0.1:20880
 或者，直接添加vm参数
 ```shell
 
---dubbo.consumer.group=lx --dubbo.provider.group=lx 
+-Ddubbo.consumer.group=lx -Ddubbo.provider.group=lx 
 
 ```
