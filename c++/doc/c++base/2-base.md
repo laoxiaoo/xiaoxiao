@@ -407,6 +407,8 @@ int main() {
 
 # 类型
 
+## 类型描述
+
 1. 类型是一个编译期概念，可执行文件中不存在类型的概念
 
 > 类型描述了
@@ -447,3 +449,88 @@ int main(int argc, char const *argv[])
    4. 2 个字节的变量，例如 **short** 类型的变量，放在 **2 的整数倍**的地址上
 4. 可以执行的操作(这个类型可以执行的操作)
 
+## 自定义后缀
+
+```c++
+//输出6， 讲double类型转为整型*2
+int operator ""_dd(long double num) 
+{
+    return (int)num * 2;
+}
+
+int main(int argc, char const *argv[])
+{
+    std::cout << 3.14_dd << std::endl;
+    return 0;
+}
+```
+
+# 指针
+
+一种间接类型， 存储可以“指向”不同的对象的地址
+
+## 相关操作
+
+1. <b id="blue">&</b> – 取地址操作符
+2. <b id="blue">*</b>  – 解引用操作符
+
+```c++
+//定义一个指针类型,int*标识指针类型
+int* p = &val;
+
+int* p = nullptr;
+```
+
+### 定义
+
+```c++
+int* p
+```
+
+如果定义一个指针，但是没有初始化，那么<b id="blue">*p</b>解引用打印出来可能是随机值，因为这块内存是随机的
+
+### 关于 nullptr
+
+1. 
+   一个特殊的对象（类型为 <b id="blue">nullptr_t</b>），表示空指针
+2. 类似于 C 中的 NULL ，但更加安全
+
+```c++
+//输出0
+int* j = nullptr;
+std::cout << j << std::endl;
+```
+
+
+
+## 调用优先级
+
+```c++
+int func(int i)
+{
+    std::cout << "func1" << std::endl;
+}
+
+int func(int* i)
+{
+    std::cout << "func2" << std::endl;
+}
+
+int main(int argc, char const *argv[])
+{
+    //优先调用func1， 因为是整型
+    func(1);
+    //调用func2，因为是指针类型
+    int* i = 0;
+    func(i);
+    return 0;
+}
+```
+
+## 主要操作
+
+解引用;
+
+增加、减少;-----*可以对指针指向的地址进行移动*
+
+判等

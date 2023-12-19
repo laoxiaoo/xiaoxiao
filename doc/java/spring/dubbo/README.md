@@ -598,4 +598,14 @@ com.laoxiao.userService2=dubbo://127.0.0.1:20880
 
 在idea中的parameters添加对应自己的group，这样就不会和开发环境其他开发人员产生调用冲突了
 
+
+
 ![image-20220712151055286](image/README/image-20220712151055286.png)
+
+
+或者，直接添加vm参数
+```shell
+
+--dubbo.consumer.group=lx --dubbo.provider.group=lx 
+
+```
