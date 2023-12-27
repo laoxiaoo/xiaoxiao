@@ -65,13 +65,30 @@
 
 一般是：ctrl+alt+shilft+j
 
-# 代码模板
+# 模板
+
+## 代码模板
 
 live template 进行设置模板
 
 进入action 搜索，live template   
 
 在这里也能看到常用的代码模板
+
+## 注释模板
+
+```java
+/**
+* @author lao xiao
+* @date ${YEAR}-${MONTH}-${DAY} ${HOUR}:${MINUTE}
+*/
+```
+
+
+
+![image-20231212102453173](image/idea/image-20231212102453173.png)
+
+
 
 # postfix
 
@@ -154,7 +171,7 @@ live template 进行设置模板
 
 ![image-20231010163930315](image/idea/image-20231010163930315.png)
 
-# 关闭
+## 关闭
 
 ctrl+alt+F6
 
