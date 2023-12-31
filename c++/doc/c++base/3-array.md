@@ -172,8 +172,18 @@ int main(int argc, char const *argv[])
 ## 输出
 
 ```c++
-    //以下两种方式输出一致
+Courier New    
+//以下两种方式输出一致
     std::cout << a[0] << std::endl;
     std::cout << a.at(0) << std::endl;
 ```
 
+## 遍历
+
+### 通过指针的方式
+
+a.begin() ： vector 开始的地址
+
+a.end() ： vector 结束的地址
+
+![image-20231228201636402](image/3-array/image-20231228201636402.png)
