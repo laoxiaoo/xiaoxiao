@@ -22,7 +22,11 @@
 
 ![image-20230523192744181](image/1-base/image-20230523192744181.png)
 
-## .vscode添加配置文件
+## .VsCode添加配置文件
+
+- **c_cpp_properties.json** ：对C/C++扩展的设置（一些提示啊什么的，貌似现在可以没有）。
+- **tasks.json** ：定义如何生成可执行文件。
+- **launch.json** ：定义如何调试可执行文件
 
 ### launch.json
 
@@ -209,6 +213,40 @@
 
 ![image-20230522191846504](image/1-base/image-20230522191846504.png)
 
+# VSCode 插件
+
+1. C/C++：必选
+2. C/C++ Extension Pack : C/C++扩展包 ；
+3. C/C++ Themes : C/C++图标颜色主题；
+4. Include Autocomplete 自动头文件包含
+5. TabNine ：一款 AI 自动补全插件
+6. CMake/CMake Tools 用于在vscode中支持cmake编译；
+
+# VsCode 配置c++20
+
+[Releases · niXman/mingw-builds-binaries (github.com)](https://github.com/niXman/mingw-builds-binaries/releases)
+
+建议下载红框内的ucrt版本。
+
+![image-20231225201740050](image/2-base/image-20231225201740050.png)
+
+配置文件配置
+
+![image-20231225202232839](image/2-base/image-20231225202232839.png)
+
+tasks.json
+
+```
+ "-std=c++2a"
+```
+
+c_cpp_properties.json （配置了vscode的setting的话，可以删除这个文件）
+
+```json
+"cppStandard": "c++23",
+"cStandard": "c23"
+```
+
 # 编译链接模型
 
 源代码 (source code) →预处理器(preprocessor) → 编译器 (compiler) →目标代码(object code) →链接器(Linker) → 可执行程序(executables)
@@ -288,6 +326,12 @@ int main()
 ## 为什么main函数可以没有return
 
 c++标准规定，如果main没有return,则默认返回0
+
+# 查看c++是如何编译的
+
+[C++ Insights (cppinsights.io)](https://cppinsights.io/)
+
+![image-20231226194655115](image/2-base/image-20231226194655115.png)
 
 # 系统io
 
@@ -533,4 +577,145 @@ int main(int argc, char const *argv[])
 
 增加、减少;-----*可以对指针指向的地址进行移动*
 
-判等
+判等 (**不要拿地址进行大小判断，因为地址在不等的情况，大小是不定的**)
+
+## void* 指针
+
+1. 没有记录对象的尺寸信息，可以保存任意地址
+
+2. 可以用来作为参数，可以传入任何指针类型（指针的尺寸是一样的）
+
+
+
+```c++
+#include <iostream>
+
+void fun(void* param) 
+{
+    char* p = (char*)param;
+    std::cout << *p << std::endl;
+}
+//我们可以用来传入任意的引用，然后在函数内进行转换
+int main(int argc, char const *argv[])
+{
+    int i = 1;
+    char a = 'a';
+    //fun(&i);
+    fun(&a);
+    return 0;
+}
+
+```
+
+3. 判等的操作
+
+## 数组指针
+
+数组就是存储了第一个元素的地址，所以，指针就是存储了他的第一个地址
+
+```c++
+int number[] = {1,2,3,4,5,6};
+int* numberPr = number;
+//输出 1
+cout << *numberPr << endl;
+//输出下一个元素
+numberPr++;
+cout << *numberPr << endl;
+```
+
+## 为什么需要指针
+
+*减少传参的性能*;
+
+当传参的时候，往往会复制一个变量到临时参数上，如果数据量大，则非常消耗性能，如果传递指针，则只需要将地址进行赋值
+
+# 引用
+
+1. int& ref = val;
+2. 是对象的别名，不能绑定字面值
+
+```c++
+int i = 10;
+int& j = i;
+j++;
+//输出的都是11，相当于操作j就相当于操作i
+std::cout<< j << std::endl;
+std::cout << i << std::endl;
+//如果定义 Int& j=10;则不可以，因为不可以直接字面量操作
+return 0;
+```
+
+3. 属于编译期概念，在底层还是通过指针实现
+
+# 常量
+
+1. 使用 const 声明常量对象
+2. 防止非法操作
+
+## 常量指针
+
+const int* p;   指针指向内容可改
+
+int* const p;  指针指向内容不可改
+
+const int* const p; 指针和指向内容都不可改
+
+
+
+## 常量引用
+
+```c++
+const int&
+```
+
+1. 可读但不可写
+2. 主要用于函数形参
+
+```c++
+
+void fun(const int& x) {
+
+}
+// 防止x在函数方法里做修改
+int main(int argc, char const *argv[])
+{
+    int x = 0;
+    fun(x);
+    return 0;
+}
+```
+
+# 别名
+
+typedef int MyInt;
+
+using MyInt = int; （从 C++11 开始）
+
+可以为类型引入别名，从而引入特殊的含义或便于使用
+
+# 类型的自动推导
+
+1. 从 C++11 开始，可以通过初始化表达式自动推导对象类型
+2. 自动推导类型并不意味着弱化类型，对象还是强类型
+
+```c++
+//计算完后，我们不知道x的类型，这时候我们可以交给编译器自动识别
+auto x = 3.5 + 5l;
+std::cout << x << std::endl;
+return 0;
+```
+
+3. auto: 最常用的形式，但会产生类型退化
+
+```c++
+// ief 本来是引用类型，但是， 作为右值使用的时候
+// auto 产生类型退化， ia 成为了int类型
+int i = 10;
+int& ief = i;
+auto ia = ief;
+```
+
+4. auto& : 推导出引用类型，避免类型退化
+
+
+
