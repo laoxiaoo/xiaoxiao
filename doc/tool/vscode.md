@@ -28,3 +28,20 @@ File -> Preferences -> Keyboard Shortcuts
 File -> Preferences -> setting
 
 ![image-20231227200545726](image/vscode/image-20231227200545726.png)
+
+# 插件
+
+## GIT
+
+### Git Graph
+
+显示git分支相关信息
+
+![image-20231231114229889](image/vscode/image-20231231114229889.png)
+
+## Git History
+
+显示历史
+
+![image-20231231114433747](image/vscode/image-20231231114433747.png)
+
