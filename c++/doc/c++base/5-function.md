@@ -28,6 +28,8 @@ void fun1() {
 
 # 参数
 
+## 参数的概念
+
 1. 如果没有形参，则可以用void表示
 
 ```c++
@@ -51,6 +53,57 @@ void fun1(int x, int y){
 }
 void main() {
     fun1(1, 2)
+}
+```
+
+## 传参的方式
+
+### 传值
+
+```c++
+    int op = 1;
+    param1(op);
+    std::cout << op << std::endl;
+```
+
+op的值会改变
+
+```c++
+void param1(int op)
+{
+    ++op;
+}
+```
+
+### 传地址
+
+```c++
+param2(&op);
+std::cout << op << std::endl;
+```
+
+op值改变，因为函数里面修改的是地址指向的内容
+
+```c++
+void param2(int* op)
+{
+    ++(*op);
+}
+```
+
+### 传引用
+
+```c++
+param3(op);
+std::cout << op << std::endl;
+```
+
+op值改变，原理同上
+
+```c++
+void param3(int& op)
+{
+    ++op;
 }
 ```
 
