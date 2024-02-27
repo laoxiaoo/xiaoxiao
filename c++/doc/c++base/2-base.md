@@ -685,6 +685,25 @@ int main(int argc, char const *argv[])
 }
 ```
 
+# 静态变量
+
+生命周期：从执行这一块代码开始，到整个程序结束
+
+```c++
+static int i = 0;
+```
+
+如：x生命周期是从，首次进入<b id="gray">fun</b>函数开始，到程序结束
+
+```c++
+void fun()
+{
+    static int x = 3;
+}
+```
+
+
+
 # 别名
 
 typedef int MyInt;

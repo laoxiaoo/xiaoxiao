@@ -16,6 +16,7 @@
     * [BigDecimal](/doc/java/base/api/3-bigDecimal)
     * [map](/doc/java/base/api/4-map)
     * [版本差异](/doc/java/base/api/5-version)
+    * [stream操作](/doc/java/base/api/6-stream)
 * 并发编程
     * [基础](/doc/java/base/concurrent/1-base)
     * [CAS](/doc/java/base/concurrent/2-cas)

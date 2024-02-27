@@ -216,3 +216,59 @@ void f1(int x=0, y)
 }
 ```
 
+# 返回类型
+
+## 定义
+
+1. 传统类型
+
+```c++
+int fun() 
+{}
+```
+
+2. c++11新增了头部定义
+
+```c++
+auto fun() -> int 
+{}
+```
+
+3. c++14新增了自动推导类型
+
+```c++
+auto fun()
+{
+    return 1+2;
+}
+```
+
+单如果这样就会**报错**, 因为编译器没办法推导函数返回的类型
+
+```c++
+auto fun()
+{
+    if(xx) return 2.0;
+    if(xxx) return 1;
+       
+}
+```
+
+## nodiscard
+
+在调用函数时，如果没有注意到返回值，就会有对应的告警
+
+```c++
+[[nodiscard]] int  fun() 
+{
+    return 1;
+}
+
+int main(int argc, char const *argv[])
+{
+    fun();
+    return 0;
+}
+```
+
+![image-20240204202032509](image/5-function/image-20240204202032509.png)
