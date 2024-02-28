@@ -406,3 +406,22 @@ OpenCountWeek = 657
 
 
 ```
+
+# 搜狗输入法
+
+## 自定义短语
+
+![image-20240228172646260](image/tool/image-20240228172646260.png)
+
+![image-20240228172705295](image/tool/image-20240228172705295.png)
+
+## 短语时间配置
+
+```properties
+bb,1=<b id="blue"></b>
+bg,1=<b id="gray"></b>
+br,1=<b id="red"></b>
+sj,1=#$year$month_mm$day_dd$fullhour$minute$second 
+sj,2=#$year$month_mm$day_dd
+```
+
