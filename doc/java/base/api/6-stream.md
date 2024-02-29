@@ -17,3 +17,19 @@ list.stream().
     ))
 
 ```
+
+# 排序
+## 顺序
+```java
+list.stream.sorted(Comparator.comparing(Student::getSort))
+                    .collect(Collectors.toList());
+
+```
+
+## 倒序
+
+```java
+list.stream.sorted(Comparator.comparing(Student::getSort).reversed())
+                    .collect(Collectors.toList());
+
+```
