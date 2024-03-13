@@ -24,6 +24,15 @@
 
 ## .VsCode添加配置文件
 
+1. setting 里面设置c++相关配置
+
+![image-20231231222823316](image/2-base/image-20231231222823316.png)
+
+
+
+1. 快捷键Ctrl+Shift+P调出命令面板
+2. 选择Edit Configurations(UI)
+
 - **c_cpp_properties.json** ：对C/C++扩展的设置（一些提示啊什么的，貌似现在可以没有）。
 - **tasks.json** ：定义如何生成可执行文件。
 - **launch.json** ：定义如何调试可执行文件
