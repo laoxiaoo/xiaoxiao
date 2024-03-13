@@ -176,3 +176,8 @@ live template 进行设置模板
 ctrl+alt+F6
 
 ![image-20231010164040734](image/idea/image-20231010164040734.png)
+
+
+# 热部署插件
+
+## ArthasHotSwap

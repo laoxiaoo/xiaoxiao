@@ -55,3 +55,5 @@ default V merge(K key, V value, BiFunction<? super V, ? super V, ? extends V> re
 
 - 如果Map中不存在指定的key时，便将传入的value设置为key的值，
 - 如果Map中key存在value时，执行一个方法该方法接收key的旧值oldValue和传入的value，执行自定义的方法
+
+

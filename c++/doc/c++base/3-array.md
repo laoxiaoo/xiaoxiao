@@ -93,7 +93,7 @@ std::cout << std::cend(a) - std::cbegin(a) << std::endl;
 std::cout << std::size(a) << std::endl;
 ```
 
-# 字符串
+# 内建字符串
 
 ## 字符串解析
 
@@ -172,8 +172,44 @@ int main(int argc, char const *argv[])
 ## 输出
 
 ```c++
-    //以下两种方式输出一致
+Courier New    
+//以下两种方式输出一致
     std::cout << a[0] << std::endl;
     std::cout << a.at(0) << std::endl;
 ```
 
+## 遍历
+
+### 通过指针的方式
+
+a.begin() ： vector 开始的地址
+
+a.end() ： vector 结束的地址
+
+![image-20231228201636402](image/3-array/image-20231228201636402.png)
+
+# string
+
+是C++标准库中定义的一个类模板特化别名，用于内建字符串的代替品
+
+与内建字符串相比，更侧重于易用性
+
+## 定义
+
+1. 我们需要include string模块
+2.  a + " world"  ： a是string类型， world 是内建字符串，可以进行拼接
+
+```c++
+#include<string>
+
+int main(int argc, char const *argv[])
+{
+    std::string a ="hello";
+    std::cout<< a + " world" << std::endl;
+    return 0;
+}
+```
+
+3. 如果是  两个内建字符串 <b id="blue">"hello" + " world"</b>这样拼接，则是不可以的
+
+ 
