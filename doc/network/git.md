@@ -920,3 +920,16 @@ type如下：
 例如：
 
  git commit -m 'docs: git'
+
+
+
+# Git右键失效处理
+
+1. 打开注册表
+2. 新建项 Git Bash， 右击修改其值为“{git安装路径}\mingw64\share\git\git-for-windows.ico”，此为菜单图标。
+
+![image-20240313221801459](image/git/image-20240313221801459.png)
+
+3. 右击新建项[command],其值为"{git安装路径}\Git\git-bash.exe" "--cd=%v.""
+
+![image-20240313221905855](image/git/image-20240313221905855.png)
