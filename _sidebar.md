@@ -60,5 +60,6 @@
 	* [Mysql](/doc/database/mysql/)
 * [工具](/doc/tool/)
     
+* [算法](/doc/algorithm/algorith)
 
 <footer id="mb-footer"></footer>
