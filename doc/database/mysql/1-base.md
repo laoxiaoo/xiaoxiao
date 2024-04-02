@@ -354,6 +354,17 @@ Update ignore students set sid=1 where sid=2;
 
 ```
 
+## DUPLICATE KEY UPDATE‘
+
+这种方式，可能会造成行锁等待
+
+```sql
+INSERT INTO table (a,b,c) VALUES (1,2,3) ON DUPLICATE KEY UPDATE c=c+1 AND  
+`value2` = `value2` + 2;
+```
+
+一般我们使用 先update = 0 ,然后再进行插入
+
 ## delete
 
 

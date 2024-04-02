@@ -289,9 +289,9 @@ static class Node<T> {
 
 - 深度优先
 
-![image-20210630210023215](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210630210023.png)
+![image-20210630210023215](./image/20210630210023.png)
 
-![image-20210630210907545](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210630210907.png)
+![image-20210630210907545](./image/20210630210907.png)
 
 1. 先序遍历：先打印根节点，再打印左子树，再打印右子树
 
@@ -321,11 +321,11 @@ public static void inorder(Node<Integer> node) {
 
 1. 后续遍历：先左后右再根
 
-![image-20210630212525421](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210630212525.png)
+![image-20210630212525421](./image/20210630212525.png)
 
 - 广度优先
 
-![image-20210630210928543](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210630210928.png)
+![image-20210630210928543](./image/20210630210928.png)
 
 ## 二叉搜索树
 
@@ -376,7 +376,7 @@ public static void inorder(Node<Integer> node) {
 
 1. 当发生读的时候，将数据放到队尾 
 
-![image-20210630200312887](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210630200320.png)
+![image-20210630200312887](./image/20210630200320.png)
 
 代码[com.xiao.algorithm.lru.LRU]
 
@@ -405,7 +405,7 @@ public static void inorder(Node<Integer> node) {
 
 > 二叉树的编号
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211123210450.png)
+![](./image/20211123210450.png)
 
 当我们用一个数组并且一个个模拟二叉树的时候
 
@@ -415,7 +415,7 @@ public static void inorder(Node<Integer> node) {
 
 > 创建最大堆代码
 
-![image-20211202225858359](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/network/20211202225905.png)
+![image-20211202225858359](./image/20211202225905.png)
 
 
 
