@@ -13,11 +13,14 @@
 
 存储了对象类型的指针：如：String类型， Student的类型
 
-> Mark Word结构
+> Mark Word结构（存储对象的hashcode或者锁信息）
 
 - age: 垃圾回收的年龄
 - biased_lock：是否是偏向锁
 - 最后两位：锁状态
+  - normal
+  - 00:轻量级锁
+  - 10：重量级锁
 
 ![](./image/2-synchronized/20210628153736.png)
 
@@ -26,7 +29,8 @@
 ## 简介
 
 - monitor是操作系统提供的对象
-- 每个Java对象都可以关联一个Monitor对象，如果使用synchronized给对象上锁〈重量级)之后，该对象头的Mark Word 中就被设置指向**Monitor对象的指针**
+- 每个Java对象*都关联一个*Monitor对象，
+- 如果使用synchronized给对象上锁〈重量级)之后，该对象头的Mark Word 中就被设置指向**Monitor对象的指针**
 
 ![image-20210628154124702](image/2-synchronized/20210628154124.png)
 
