@@ -435,6 +435,106 @@ logback.xml：直接就被日志框架识别了；
     </appender>
 ```
 
+## 输出到文件
+
+```xml
+<appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+    <prudent>true</prudent>
+    <bufferSize>4096</bufferSize>
+    <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+        <fileNamePattern>${baseDir}/${appName}.log_%d{yyyy-MM-dd}.log</fileNamePattern>
+        <!--保存天数-->
+        <maxHistory>30</maxHistory>
+    </rollingPolicy>
+    <encoder>
+        <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%p] [%t] [%c:%L] - %m%n</pattern>
+    </encoder>
+</appender>
+```
+
+## 指定日志文件
+
+```xml
+<property name="baseDir" value="/usr/local/yunji/logs/xxx" />
+<property name="appName" value="xxx" />
+```
+
+## HttpClient 日志请求
+
+```xml
+<springProfile name="dev">
+    <logger name="org.elasticsearch.client.RestClient" level="TRACE" >
+        <appender-ref ref="stdout"/>
+        <appender-ref ref="file" />
+    </logger>
+    <logger name="org.apache.http.wire" level="TRACE" >
+        <appender-ref ref="stdout"/>
+        <appender-ref ref="file" />
+    </logger>
+</springProfile>
+```
+
+
+
+## 示例文件
+
+```xml
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE configuration>
+<configuration debug="false" scan="false">
+    <contextName>xxx</contextName>
+    <property name="baseDir" value="/usr/local/yunji/logs/xxx" />
+    <property name="appName" value="xxx" />
+
+    <!--输出到控制台-->
+    <appender name="stdout" class="ch.qos.logback.core.ConsoleAppender">
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%p] [%t] [%c:%L] - %m%n</pattern>
+            <!-- 设置字符集 -->
+            <charset>UTF-8</charset>
+        </encoder>
+    </appender>
+
+
+    <appender name="file" class="ch.qos.logback.core.rolling.RollingFileAppender">
+        <prudent>true</prudent>
+        <bufferSize>4096</bufferSize>
+        <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
+            <fileNamePattern>${baseDir}/${appName}.log_%d{yyyy-MM-dd}.log</fileNamePattern>
+            <!--保存天数-->
+            <maxHistory>30</maxHistory>
+        </rollingPolicy>
+        <encoder>
+            <pattern>[%d{yyyy-MM-dd HH:mm:ss.SSS}] [%p] [%t] [%c:%L] - %m%n</pattern>
+        </encoder>
+    </appender>
+
+
+
+    <springProfile name="dev2">
+        <logger name="org.elasticsearch.client.RestClient" level="TRACE" >
+            <appender-ref ref="stdout"/>
+            <appender-ref ref="file" />
+        </logger>
+        <logger name="org.apache.http.wire" level="TRACE" >
+            <appender-ref ref="stdout"/>
+            <appender-ref ref="file" />
+        </logger>
+        <logger name="org.mybatis" level="DEBUG" additivity="false">
+            <appender-ref ref="stdout" />
+        </logger>
+    </springProfile>
+
+    <root level="info">
+        <appender-ref ref="stdout" />
+        <appender-ref ref="file" />
+    </root>
+
+</configuration>
+
+```
+
+
 
 # 访问静态资源
 
@@ -1732,7 +1832,7 @@ public ConfigurableApplicationContext run(String... args) {
   ```
   
 ### 自动装配类包
-  
+
 - 建立自动配置的maven模块，这个模块名就是上面引用的：xiao-spring-boot-starter-autoconfigurer
 ```xml
 <groupId>com.xiao</groupId>

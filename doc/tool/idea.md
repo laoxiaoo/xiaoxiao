@@ -181,3 +181,44 @@ ctrl+alt+F6
 # 热部署插件
 
 ## ArthasHotSwap
+
+
+# 社群版的一些插件
+
+## Spring Boot Assistant
+
+SpringBoot开发插件。（可以识别springboot主配置文件，以及代码提示）
+
+##  Maven Helper
+
+快速解决Maven依赖关系和版本冲突等问题。
+
+## MyBatisX
+
+MybatisX 是一款基于 IDEA 的快速开发插件，为效率而生，支持Java 与 XML 调回跳转和Mapper 方法自动生成 XML。
+
+## Statistic/WalkTime
+
+Statistic：统计代码行数。
+
+## String Manipulation
+
+字符串处理插件(如 转大驼峰、小驼峰、常量名、生成MD5密串等等)，快捷键：alt+m
+
+## SpotBugs
+
+Java质量分析工具，可以帮我们查找代码中隐藏的bug。
+
+
+
+spotbugs主要包括10大类bug
+1.Bad practice（90余种）不良的实践，违反常识性的或者必要的代码惯例，比如重写了equals却没有重写hashcode。
+2.Correctness （150余种） 此处的代码有可能在运行时导致错误，与预期不符，比如空指针错误。
+3.Experimental（9种）spotbugs在此处不适用，大概是匹配模式不太适用于此处。
+4.Internationalization（2种）原文是：code flaws having to do with internationalization and locale，没有遇到过类似的错误。
+5.Malicious code vulnerability（17种）代码具有被恶意代码攻击的风险。比如返回一个可变类型引用并保存在对象字段中。
+6.Multithreaded correctness（46种）线程安全，比如可能造成死锁的代码。
+7.Bogus random noise（4种）并不是软件中的实际错误。
+8.Performance（37种）性能不好的代码，比如在迭代中使用“+”连接字符串。
+9.Security（11种）使用了不安全的外部输入，可能导致远程控制的漏洞。
+10.Dodgy（87种）导致自身混乱的代码
