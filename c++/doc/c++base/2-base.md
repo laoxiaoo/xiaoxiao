@@ -1,5 +1,9 @@
-# vs修改成英语界面
 
+#
+# VsStudio修改成英语界面
+1. 打开 Visual Studio Installer
+
+2. 按照语言包
 ![image-20230522192431312](image/1-base/image-20230522192431312.png)
 
 ![image-20230522192814837](image/1-base/image-20230522192814837.png)
