@@ -77,7 +77,7 @@ java -jar arthas-boot.jar --telnet-port 9998 --http-port -1
 
 - 监控方法的入参与返回
 
-> 异步任务
+## 异步任务
 
 `只有特定的场景才会有bug ，如何排查bug？`
 
@@ -94,7 +94,7 @@ fg——将暂停的任务拉到前台执行
 
 bg——将暂停的任务放到后台执行
 ```
-
+## 监控结果输出到文件
 *定义一个异步任务*：
 
 ```shell
@@ -108,7 +108,9 @@ E:\git\learning\netty
 kill 6
 ```
 
-*带上表达式，有异常是打印*
+## 条件匹配
+
+*带上表达式，有异常时打印*
 
 ```shell
 watch com.xiao.server.handler.ChatRequestHandler channelRead0 '{params,returnObj,throwExp}' -n 5 -x 3 'throwExp != null'
