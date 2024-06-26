@@ -26,6 +26,12 @@ std::cout << b[0] << std::endl;
 
 
 
+```
+通常，让编译器计算元素个数(int b[] = {1,2,3}这种方式)是种很糟的做法，因为其计数可能与您想象的不一样。例如，您可能不小心在列表中遗漏了一个值。
+```
+
+
+
 # 数组解析
 
 ```C++
@@ -188,6 +194,21 @@ a.end() ： vector 结束的地址
 
 ![image-20231228201636402](image/3-array/image-20231228201636402.png)
 
+# 内建字符串
+
+C-风格字符串具有一种特殊的性质：以空字符（null character）结尾，空字符被写作\0，其ASCII码为0，用来标记字符串的结尾
+
+如：
+
+```c++
+//string
+char c1[4] = {'d', 'o', 'g', '\0'};
+//非string
+char c2[3]= {'d', 'o', 'g'};
+```
+
+
+
 # string
 
 是C++标准库中定义的一个类模板特化别名，用于内建字符串的代替品
@@ -212,4 +233,20 @@ int main(int argc, char const *argv[])
 
 3. 如果是  两个内建字符串 <b id="blue">"hello" + " world"</b>这样拼接，则是不可以的
 
- 
+ ## 转义字符显示（原始（raw）字符串）
+
+C++11新增的另一种类型是原始（raw）字符串
+
+```c++
+std::string s = R"(This is a raw string with a backslash: \n and another.)";
+```
+
+输出<b id="blue">s</b>的时候，直接能够输出\n，而不是换行符号
+
+如果想输出括号
+
+```c++
+//使用  R"*+内容+* 的方式，可以将内容完全输出
+std::string s = R"*+(This is a raw string with a backslash: \n and another.)";
+```
+
