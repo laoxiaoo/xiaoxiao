@@ -38,3 +38,25 @@ struct stuStruct
 stuStruct ss2 = {"小~", 19};
 ```
 
+# 枚举
+
+> C++的enum工具提供了另一种创建符号常量的方式，这种方式可以代替const
+
+1. 定义一个枚举
+
+```c++
+enum spectrum {blue, green, red};
+```
+
+2. 给枚举赋值
+
+```c++
+int main()
+{
+    spectrum se;
+    se = green;
+    std::cout << se << std::endl;
+    return 0;
+}
+```
+
