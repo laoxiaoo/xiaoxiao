@@ -290,3 +290,11 @@ c_cpp_properties.json （配置了vscode的setting的话，可以删除这个文
 
 ![image-20240603200351023](image/2-base/image-20240603200351023.png)
 
+2.2 或者进入文件，点击add execulable,如果没有这个选项，需要安装<b id="blue">C/C+ + Single File Execution</b>插件
+
+![image-20240705215337691](image/2-install/image-20240705215337691.png)
+
+3. 然后刷新项目
+
+![image-20240705215533369](image/2-install/image-20240705215533369.png)
+
