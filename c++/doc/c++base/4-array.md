@@ -99,6 +99,30 @@ std::cout << std::cend(a) - std::cbegin(a) << std::endl;
 std::cout << std::size(a) << std::endl;
 ```
 
+# 数组的动态联编和静态联编
+
+静态联编
+
+```c++
+int a[10]
+```
+
+动态联编
+
+```c++
+int size;
+cin>> size;
+int *p = new int[size];
+
+delete [] p;
+```
+
+即运行时为数组分配内存，使用完后需要delete[] 释放内存
+
+
+
+
+
 # 内建字符串
 
 ## 字符串解析
