@@ -60,3 +60,23 @@ int main()
 }
 ```
 
+
+
+# "."与"->"运算符
+
+> 两者使用的区别
+
+<b id="gray">.</b>用于结构名访问属性
+
+<b id="gray">-></b>用于地址访问属性
+
+如：
+
+```c++
+stuStruct su = {"laoxiao",2}
+su.name;
+stuStruct* pSu = &su;
+pSu->name;
+```
+
+> 如果结构标识符是结构名，则使用句点运算符；如果标识符是指向结构的指针，则使用箭头运算符。 --- <<C++ Primer Plus>> 4.8.3
