@@ -180,12 +180,15 @@ int main(int argc, char const *argv[])
 
 易用性换来的就是性能没那么好
 
+
+
 ```c++
 #include <vector>
 #include <iostream>
 
 int main(int argc, char const *argv[])
 {
+    //大小为3， 初始化3个1
     std::vector<int> a(3, 1);
     // 输出vector的大小
     std::cout << a.size() << std::endl;
@@ -199,13 +202,19 @@ int main(int argc, char const *argv[])
 }
 ```
 
+另一种定义的方式
+
+```c++
+std::vector<int> a = {1, 2, 3};
+```
+
 ## 输出
 
 ```c++
 Courier New    
 //以下两种方式输出一致
-    std::cout << a[0] << std::endl;
-    std::cout << a.at(0) << std::endl;
+std::cout << a[0] << std::endl;
+std::cout << a.at(0) << std::endl;
 ```
 
 ## 遍历
