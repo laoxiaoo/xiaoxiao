@@ -1,264 +1,5 @@
-
 #
-# VsStudio修改成英语界面
-1. 打开 Visual Studio Installer
 
-2. 按照语言包
-![image-20230522192431312](image/1-base/image-20230522192431312.png)
-
-![image-20230522192814837](image/1-base/image-20230522192814837.png)
-
-# 字体设置
-
-![image-20230522194218283](image/1-base/image-20230522194218283.png)	
-
-# Vscode 配置环境
-
-## 配置MinGW
-
-前往：[MinGW-w64 - for 32 and 64 bit Windows - Browse /mingw-w64 at SourceForge.net](https://sourceforge.net/projects/mingw-w64/files/mingw-w64/)下载
-
-![image-20230523192411136](image/1-base/image-20230523192411136.png)
-
-将mingw64复制到无中文的路径，然后配置环境变量
-
-## 安装vscode插件
-
-![image-20230523192744181](image/1-base/image-20230523192744181.png)
-
-## .VsCode添加配置文件
-
-1. setting 里面设置c++相关配置
-
-![image-20231231222823316](image/2-base/image-20231231222823316.png)
-
-
-
-1. 快捷键Ctrl+Shift+P调出命令面板
-2. 选择Edit Configurations(UI)
-
-- **c_cpp_properties.json** ：对C/C++扩展的设置（一些提示啊什么的，貌似现在可以没有）。
-- **tasks.json** ：定义如何生成可执行文件。
-- **launch.json** ：定义如何调试可执行文件
-
-### launch.json
-
-用于运行可执行程序
-
-```json
-{
-    "version": "0.2.0",
-    "configurations": [
-        {//这个大括号里是我们的‘调试(Debug)’配置
-            "name": "Debug", // 配置名称
-            "type": "cppdbg", // 配置类型，cppdbg对应cpptools提供的调试功能；可以认为此处只能是cppdbg
-            "request": "launch", // 请求配置类型，可以为launch（启动）或attach（附加）
-            "program": "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe", // 将要进行调试的程序的路径
-            "args": [], // 程序调试时传递给程序的命令行参数，这里设为空即可
-            "stopAtEntry": false, // 设为true时程序将暂停在程序入口处，相当于在main上打断点
-            "cwd": "${fileDirname}", // 调试程序时的工作目录，此处为源码文件所在目录
-            "environment": [], // 环境变量，这里设为空即可
-            "externalConsole": false, // 为true时使用单独的cmd窗口，跳出小黑框；设为false则是用vscode的内置终端，建议用内置终端
-            "internalConsoleOptions": "neverOpen", // 如果不设为neverOpen，调试时会跳到“调试控制台”选项卡，新手调试用不到
-            "MIMode": "gdb", // 指定连接的调试器，gdb是minGW中的调试程序
-            "miDebuggerPath": "C:\\Program Files\\mingw64\\bin\\gdb.exe", // 指定调试器所在路径，如果你的minGW装在别的地方，则要改成你自己的路径，注意间隔是\\
-            "preLaunchTask": "build" // 调试开始前执行的任务，我们在调试前要编译构建。与tasks.json的label相对应，名字要一样
-    }]
-}
-```
-
-### tasks.json
-
-用于编译可执行程序，即build exe
-
-<b id="blue">label</b>需要注意，在`launch.json`中的<b id="blue">preLaunchTask</b>用的到
-
-```json
-{
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build",
-            "type": "shell",
-            "command": "gcc",
-            "args": [
-                "${file}",
-                "-o",
-                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
-                "-g",
-                "-Wall",
-                "-static-libgcc",
-                "-fexec-charset=GBK",
-                "-std=c11"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "new"
-            },
-            "problemMatcher": "$gcc"
-        },
-        {
-            "label": "run",
-            "type": "shell",
-            "dependsOn": "build",
-            "command": "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new"
-            }
-        },
-        {
-            "type": "cppbuild",
-            "label": "C/C++: g++.exe 生成活动文件",
-            "command": "C:\\mingw64\\bin\\g++.exe",
-            "args": [
-                "-fdiagnostics-color=always",
-                "-g",
-                "${file}",
-                "-o",
-                "${fileDirname}\bin\\${fileBasenameNoExtension}.exe"
-            ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "调试器生成的任务。"
-        }
-    ]
-}
-```
-
-**如果遇到 正常的#include报错，可能是环境变量没配置**
-
-
-
-### 多文件配置
-
-```json
-{
-    "version": "2.0.0",
-    "tasks": [
-        {
-            "label": "build",
-            "type": "shell",
-            "command": "gcc",
-            "args": [
-                "${file}",
-                "-o",
-                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
-                "-g",
-                "-Wall",
-                "-static-libgcc",
-                "-fexec-charset=GBK",
-                "-std=c11"
-            ],
-            "group": "build",
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": false,
-                "panel": "new"
-            },
-            "problemMatcher": "$gcc"
-        },
-        {
-            "label": "run",
-            "type": "shell",
-            "dependsOn": "build",
-            "command": "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
-            "group": {
-                "kind": "test",
-                "isDefault": true
-            },
-            "presentation": {
-                "echo": true,
-                "reveal": "always",
-                "focus": true,
-                "panel": "new"
-            }
-        },
-        {
-            "type": "cppbuild",
-            "label": "C/C++: g++.exe 生成活动文件",
-            "command": "C:\\mingw64\\bin\\g++.exe",
-            "args": [
-                "*.cpp",
-                "-o",
-                "${fileDirname}\\bin\\${fileBasenameNoExtension}.exe",
-                "-std=c++11",
-                "-g",
-                "-fexec-charset=GBK"
-            ],
-            "options": {
-                "cwd": "${fileDirname}"
-            },
-            "problemMatcher": [
-                "$gcc"
-            ],
-            "group": {
-                "kind": "build",
-                "isDefault": true
-            },
-            "detail": "调试器生成的任务。"
-        }
-    ]
-}
-```
-
-
-
-# VS创建一个空项目
-
-![image-20230522191846504](image/1-base/image-20230522191846504.png)
-
-# VSCode 插件
-
-1. C/C++：必选
-2. C/C++ Extension Pack : C/C++扩展包 ；
-3. C/C++ Themes : C/C++图标颜色主题；
-4. Include Autocomplete 自动头文件包含
-5. TabNine ：一款 AI 自动补全插件
-6. CMake/CMake Tools 用于在vscode中支持cmake编译；
-
-# VsCode 配置c++20
-
-[Releases · niXman/mingw-builds-binaries (github.com)](https://github.com/niXman/mingw-builds-binaries/releases)
-
-建议下载红框内的ucrt版本。
-
-![image-20231225201740050](image/2-base/image-20231225201740050.png)
-
-配置文件配置
-
-![image-20231225202232839](image/2-base/image-20231225202232839.png)
-
-tasks.json
-
-```
- "-std=c++2a"
-```
-
-c_cpp_properties.json （配置了vscode的setting的话，可以删除这个文件）
-
-```json
-"cppStandard": "c++23",
-"cStandard": "c23"
-```
 
 # 编译链接模型
 
@@ -331,6 +72,14 @@ int main()
 }
 ```
 
+
+
+## 让窗口一直打开
+
+有些窗口环境在独立的窗口中运行程序，并在程序运行完毕后自动关闭该窗口。要让窗口一直打开，直到您按任何键，可在return语句前添加如下语句：<b id="gray">cin.get</b>
+
+
+
 ## 为什么main函数要有返回值
 
 1. 一般来说，我们来通过返回值来判断程序执行是否成功，一般 程序返回0表示成功（约定俗称）
@@ -340,11 +89,29 @@ int main()
 
 c++标准规定，如果main没有return,则默认返回0
 
+```text
+通常的约定是，退出值为0则意味着程序运行成功，为非零则意味着存在问题。因此，如果C++程序无法打开文件，可以将它设计为返回一个非零值。然后，便可以设计一个外壳脚本或批处理文件在操作系统来运行该程序，如果该程序发出指示失败的消息，则采取其他措施
+
+--摘自 《C++ Primer plus》 2.4.3
+```
+
+
+
 # 查看c++是如何编译的
 
 [C++ Insights (cppinsights.io)](https://cppinsights.io/)
 
 ![image-20231226194655115](image/2-base/image-20231226194655115.png)
+
+# 预处理
+
+```text
+#include编译指令导致iostream文件的内容随源代码文件的内容一起被发送给编译器。实际上，iostream文件的内容将取代程序中的代码行#include <iostream>。原始文件没有被修改，而是将源代码文件和iostream组合成一个复合文件，编译的下一阶段将使用该文件。
+```
+
+--摘自 c++ primer plus 2.1.3
+
+
 
 # 系统io
 
@@ -413,6 +180,19 @@ int main(int argc, char const *argv[])
     return 0;
 }
 ```
+
+# 表达式
+
+- 10是值为10的表达式
+- 28 * 20是值为560的表达式
+- <b id="gray">x=3</b> ：C++将赋值表达式的值定义为左侧成员的值，因此这个表达式的值为3
+- <b id="gray">m=(c=4)+3</b>表达式c= 4的值为4，因此m的值为7
+
+`从表达式到语句的转变很容易，只要加分号即可`
+
+<b id="gray">b=100</b>是表达式
+
+<b id="gray">b=100;</b>是语句
 
 # 结构体
 
@@ -533,13 +313,14 @@ int main(int argc, char const *argv[])
 ## 相关操作
 
 1. <b id="blue">&</b> – 取地址操作符
-2. <b id="blue">*</b>  – 解引用操作符
+
+> 如何找到常规变量的地址?只需对变量应用地址运算符（&），就可以获得它的位置
 
 ```c++
-//定义一个指针类型,int*标识指针类型
-int* p = &val;
-
-int* p = nullptr;
+int i = 10;
+int* pi = &i;
+//输出的是 i的地址，为16进制的数字
+cout << pi << endl;
 ```
 
 ### 定义
@@ -548,7 +329,7 @@ int* p = nullptr;
 int* p
 ```
 
-如果定义一个指针，但是没有初始化，那么<b id="blue">*p</b>解引用打印出来可能是随机值，因为这块内存是随机的
+
 
 ### 关于 nullptr
 
@@ -562,7 +343,24 @@ int* j = nullptr;
 std::cout << j << std::endl;
 ```
 
+### 解引用
 
+<b id="blue">*</b>  – 解引用操作符
+
+> 假设manly是一个指针，则manly表示的是一个地址，而*manly表示存储在该地址处的值
+
+`如果定义一个指针，但是没有初始化，那么<b id="blue">*p</b>解引用打印出来可能是随机值，因为这块内存是随机的`
+
+```c++
+int i = 10;
+int* pi = &i;
+//输出pi指向的地址的内容
+cout << *pi << endl;
+```
+
+### 初始化指针
+
+上序代码，我们初始化的是 pi这个指针，而不是*pi, 也就是将<b id="gray">i</b>的地址赋值给pi
 
 ## 调用优先级
 
@@ -587,6 +385,8 @@ int main(int argc, char const *argv[])
     return 0;
 }
 ```
+
+
 
 ## 主要操作
 
@@ -646,6 +446,32 @@ cout << *numberPr << endl;
 
 当传参的时候，往往会复制一个变量到临时参数上，如果数据量大，则非常消耗性能，如果传递指针，则只需要将地址进行赋值
 
+## 指针的危险
+
+```c++
+int* p;
+*p = 12;
+```
+
+## 释放指针
+
+当需要内存时，可以使用new来请求，delete运算符，它使得在使用完内存后，能够将其归还给内存池
+
+这将释放ps指向的内存，但不会删除指针ps本身。例如，可以将ps重新指向另一个新分配的内存块。一定要配对地使用new和delete；
+
+```c++
+int* ps = new int;
+delete ps;
+```
+
+> **使用new和delete时，应遵守以下规则**
+>
+> - 不要使用delete来释放不是new分配的内存。
+> - 不要使用delete释放同一个内存块两次。
+> - 如果使用new [ ]为数组分配内存，则应使用delete [ ]来释放。
+> - 如果使用new [ ]为一个实体分配内存，则应使用delete（没有方括号）来释放。
+> - 对空指针应用delete是安全的。
+
 # 引用
 
 1. int& ref = val;
@@ -668,6 +494,20 @@ return 0;
 
 1. 使用 const 声明常量对象
 2. 防止非法操作
+
+## 初始化
+
+如果不对函数内部定义的变量进行初始化，该变量的值将是不确定的。这意味着该变量的值将是它被创建之前，相应内存单元保存的值。
+如果知道变量的初始值应该是什么，则应对它进行初始化。
+
+比如 
+
+```c++
+//定义一个变量，如果我们不初始化，则i可能指向一个之前这个内存单元保存的值
+int i;
+```
+
+
 
 ## 常量指针
 
@@ -701,6 +541,41 @@ int main(int argc, char const *argv[])
     return 0;
 }
 ```
+
+## 整型字面值
+
+```
+如果第一位为1～9，则基数为10（十进制）；因此93是以10为基数的。如果第一位是0，第二位为1～7，则基数为8（八进制）；因此042的基数是8，它相当于十进制数34。如果前两位为0x或0X，则基数为16（十六进制）；因此0x42为十六进制数，相当于十进制数66。对于十六进制数，字符a～f和A～F表示了十六进制位，对应于10～15。0xF为15，0xA5为165（10个16加5个1）
+-- 《C++ Primer Plus》 3.1.6
+```
+
+## 浮点型
+
+```
+使用浮点类型可以表示诸如2.5、3.14159和122442.32这样的数字，即带小数部分的数字。计算机将这样的值分成两部分存储。一部分表示值，另一部分用于对值进行放大或缩小。下面打个比方。对于数字34.1245和34124.5，它们除了小数点的位置不同外，其他都是相同的
+
+-- 《C++ Primer Plus》 3.3
+```
+
+### 有效位
+
+对于float,c++只能保证6位有效位
+
+### 整型提升
+
+整型提升指的是在表达式计算过程中，各种整型数据（如char、short等）首先会被提升为int类型。如果int类型无法表示该值，则会进一步被提升为unsigned int类型。
+
+```c++
+int main() {  
+    char a = 5;    // a的二进制表示为：00000101  
+    char b = 126;  // b的二进制表示为：01111110  
+    int c = a + b; // a和b在运算前会进行整型提升，转换为int类型后再进行相加  
+    printf("%d\n", c); // 输出结果为131，因为00000101 + 01111110 = 10000011，转换为十进制为131  
+    return 0;  
+}
+```
+
+
 
 # 静态变量
 

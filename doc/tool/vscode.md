@@ -45,3 +45,12 @@ File -> Preferences -> setting
 
 ![image-20231231114433747](image/vscode/image-20231231114433747.png)
 
+# 折叠代码块
+
+右键进入命令行
+
+![image-20240713163452631](image/vscode/image-20240713163452631.png)
+
+搜索fold
+
+![image-20240713163511683](image/vscode/image-20240713163511683.png)
