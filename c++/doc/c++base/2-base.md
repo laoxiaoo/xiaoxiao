@@ -522,6 +522,10 @@ int main(int argc, char const *argv[])
 }
 ```
 
+
+
+
+
 # 指针
 
 一种间接类型， 存储可以“指向”不同的对象的地址
