@@ -109,9 +109,14 @@ innodb的默认隔离级别是可重复读
 private TransactionTemplate transactionTemplate;
 
 public void execute() {
-    transactionTemplate.execute(status -> {
-        //执行同一个事物的方法
-        return Boolean.TRUE;
+    transactionTemplate.execute(transactionStatus -> {
+        try {
+
+        } catch (Exception e) {
+           // 异常手动设置回滚
+           transactionStatus.setRollbackOnly();
+        }
+        return true;
     });
 }
 ```
