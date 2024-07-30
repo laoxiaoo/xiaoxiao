@@ -581,8 +581,44 @@ public static void printName(Student student)
 - T orElseGet(Supplier<? extends T> other) ：如果有值则将其返回，否则返回由Supplier接口实现提供的对象。
 - T orElseThrow(Supplier<? extends X> exceptionSupplier) ：如果有值则将其返回，否则抛出由Supplier接口实现提供的异常。
 
+## 日期操作
 
+### 时间点
 
+<b id="gray">Instant </b>用于表示时间线上的点，即一个瞬间。它是不可变的，以纳秒为单位精确表示时间，可以用于在不考虑时区的情况下进行时间的计算和比较。
+
+Instant 一般用于以下场景：
+
+1. 计算事件发生的时间戳，无论时区如何。
+2. 进行时间计算，如计算时间差、定时任务等
+
+```java
+Instant start = Instant.now();
+//模拟做一些操作
+Thread.sleep(1000);
+Instant end = Instant.now();
+log.info("use time {}", Duration.between(start, end).toMillis());
+```
+### 时间段
+
+<b id="gray">Period </b>是用于处理日期间隔的类，但是，他有缺限
+
+比如：这里返回的是1，计算的是月与月的间隔
+
+```java
+LocalDate start = LocalDate.of(2023,5, 6);
+LocalDate end = LocalDate.of(2024,6, 6);
+Period between = Period.between(start, end);
+log.info("相隔{}月", between.getMonths());
+```
+如果想要计算返回的天数间隔,则用<b id="gray">ChronoUnit.DAYS.between</b>
+
+```java
+LocalDate start = LocalDate.of(2023,5, 6);
+LocalDate end = LocalDate.of(2024,6, 6);
+long daysBetween = ChronoUnit.DAYS.between(start, end);
+System.out.println("两个日期之间的天数差为: " + daysBetween);
+```
 # JAVA9
 
 ## 新特性

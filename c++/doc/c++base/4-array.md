@@ -283,3 +283,9 @@ std::string s = R"(This is a raw string with a backslash: \n and another.)";
 std::string s = R"*+(This is a raw string with a backslash: \n and another.)";
 ```
 
+# cin读取输入流
+
+## 基本操作
+
+1. 将键盘的输入值赋值
+
