@@ -75,3 +75,32 @@ a.divide(b);
 - toPlainString()：不使用任何科学计数法；
 - toString()：在必要的时候使用科学计数法；
 - toEngineeringString() ：在必要的时候使用工程计数法。类似于科学计数法，只不过指数的幂都是3的倍数，这样方便工程上的应用，因为在很多单位转换的时候都是10^3；
+
+# DecimalFormat 
+
+DecimalFormat 类是NumberFormat 十进制数字格式的具体子类。旨在解析和格式化任何语言环境中的数字
+
+| 符号 | 地点       | 本地化 | 含义                                         |
+| :--- | :--------- | :----- | :------------------------------------------- |
+| 0    | 数         | 是     | 数字，被格式化数值不够的位数补零，若够则不变 |
+| #    | 数         | 是     | 数字，被格式化数值不够的位数忽略，若够则不变 |
+| .    | 数         | 是     | 小数分隔符或货币小数分隔符                   |
+| %    | 字首或字尾 | 是     | 乘以100并显示为百分比                        |
+| ,    | 数         | 是     | 分组分隔符                                   |
+
+## 百分号的格式化
+
+```java
+DecimalFormat d1 = new DecimalFormat();
+d1.applyPattern("#0.00%");
+log.info("百分号格式化 {} ", d1.format(BigDecimal.valueOf(0.2340576).setScale(4, RoundingMode.DOWN)));
+```
+
+## 折扣
+
+```java
+DecimalFormat d2 = new DecimalFormat();
+d2.applyPattern("0.#");
+log.info("折扣格式化 {} ", d2.format(BigDecimal.valueOf(0.2640576).multiply(BigDecimal.valueOf(10)).setScale(1, RoundingMode.DOWN)));
+```
+
