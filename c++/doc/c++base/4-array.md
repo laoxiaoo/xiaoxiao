@@ -289,3 +289,22 @@ std::string s = R"*+(This is a raw string with a backslash: \n and another.)";
 
 1. 将键盘的输入值赋值
 
+```c++
+int main(int argc, char const *argv[])
+{
+    char ch;
+    std::cout << "输入字符，输入#结束" << std::endl;
+    while (ch != '#')
+    {
+        // 输出如如的字符
+        std::cout << ch;
+        //输入字符
+        std::cin >> ch;
+    }
+    std::cout<< ch << std::endl;
+    return 0;
+}
+```
+
+2. 上面的方式输出的时候会忽略
+

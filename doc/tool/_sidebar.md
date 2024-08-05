@@ -3,3 +3,4 @@
 * [Jenkins](/doc/tool/jenkins.md)
 * [canal](/doc/tool/canal)
 * [idea](/doc/tool/idea)
+* [vscode](/doc/tool/vscode)

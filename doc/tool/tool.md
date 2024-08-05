@@ -12,6 +12,12 @@
 
 ![image-20230404105925043](image/image-20230404105925043.png)
 
+## 快捷键设置
+
+![image-20240730212527920](./image/image-20240730212527920.png)
+
+
+
 
 
 # 录屏工具
@@ -30,7 +36,9 @@ https://github.com/ShareX/ShareX
 
 大小不到3M
 
+## OBSStudio
 
+[obsproject.com](https://obsproject.com/)
 
 # Filddler抓包
 

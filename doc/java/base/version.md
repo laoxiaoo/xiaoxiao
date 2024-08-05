@@ -619,6 +619,53 @@ LocalDate end = LocalDate.of(2024,6, 6);
 long daysBetween = ChronoUnit.DAYS.between(start, end);
 System.out.println("两个日期之间的天数差为: " + daysBetween);
 ```
+## CompletableFuture
+
+### 使用场景
+
+```markmap
+# 
+## 创建异步任务
+## 简单异步回调
+## 多任务组合
+```
+
+
+
+### 创建
+
+```markmap
+# 
+
+## supplyAsync支持返回值
+## runAsync没有返回值。
+```
+
+- <b id="gray">runAsync</b> :无返回值 
+-  <b id="gray">supplyAsync</b>: 有返回值，thenRun方法，做完第一个任务后，再做第二个任务**。
+- <b id="gray">thenAccept</b>：不能接受上一个执行的值，但是有返回值
+- <b id="gray">thenApply</b>区别：可以接收上一个任务值，并且有返回值
+
+-  <b id="gray">thenRunAsync</b>：带<b id="blue">Async</b>的表示则第一个任务使用的是你自己传入的线程池，第二个任务使用的是ForkJoin线程池
+
+```java
+CompletableFuture.runAsync(() -> log.info("第一个任务"))
+.thenRun(() -> log.info("第二个任务"))
+.thenRunAsync(() -> log.info("第三个任务"));
+Thread.sleep(1000);
+
+//========================
+CompletableFuture.supplyAsync(() -> {
+log.info("第一个-有返回值");
+return "supplyAsync-1-res";
+}).thenApply(var -> {
+log.info("接收上一个任务，有返回值：{}",var);
+return "thenApply-2-res";
+}).thenAccept(v -> log.info("接收上一个任务的值，没有返回值：{}", v));
+Thread.sleep(10000);
+```
+
+
 # JAVA9
 
 ## 新特性
@@ -690,10 +737,23 @@ hello word! java9
 
 
 
-
 ## 模块化
 
+> 可以简单地将它理解为 `package` 的上一级单位，是多个 `package` 的集合
+
 - 好处：安全、加载更快一点
+
+下图可见：Java 9 中没有`jre`，没有`rt.jar`，没有`tools.jar`，而是多了一个 `jmods`，该文件夹下都是一个一个的模块
+
+Java 9 之前的工程，他们都是单体模式，一个简单的 hello world，都需要引入 `rt.jar`，导致这个简单的 hello world 的 jar 变得很大， Java 9 引入模块后，它只需要引入它所依赖的即可
+
+![image-20240801164548436](image/version/image-20240801164548436.png)
+
+
+
+### 使用方式
+
+> 导出模块
 
 1. 建立一个模块exprot-module，这个模块是用来导出的，在根路径下建立module-info.java文件
 
@@ -714,7 +774,9 @@ public class Person {
 }
 ```
 
-3. 建立引入模块，建立module-info.java文件
+> 引用模块
+
+1. 建立引入模块，建立module-info.java文件
 
 ```java
 module improt.module{
@@ -722,7 +784,7 @@ module improt.module{
 }
 ```
 
-4. test使用
+2. test使用， 我们在这个模块中，只能选择导出模块exports的包下的类，其他的无法
 
 ```java
 public class Test {

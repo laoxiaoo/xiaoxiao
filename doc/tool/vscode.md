@@ -54,3 +54,12 @@ File -> Preferences -> setting
 搜索fold
 
 ![image-20240713163511683](image/vscode/image-20240713163511683.png)
+
+# json处理
+
+> json 树结构处理
+
+安装完后，点击右上角
+
+![image-20240731142445976](image/vscode/image-20240731142445976.png)
+
