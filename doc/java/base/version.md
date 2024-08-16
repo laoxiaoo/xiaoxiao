@@ -918,13 +918,38 @@ public static void main(String[] args) throws IOException, InterruptedException 
 - 它的作用可以看做：定义当一个很长的类名时，我们可以用var来代替
 
 ```shell
-jshell> var a = "hello";
-a ==> "hello"
-jshell> System.out.println(a.getClass());
-class java.lang.String
+public static void main(String[] args) {
+    var list = "var自动推断类型";
+    log.info(list);
+}
 ```
 
-# JDK15
+## FileAPI
+
+>  两个路径是否指向文件系统中的同一个文件，可以用来检查符号链接或文件快捷方式是否指向同一个文件
+
+```java
+Path path1 = Paths.get( Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/1.txt");
+Path path2 = Paths.get(Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/2.txt");
+//两个路径是否指向文件系统中的同一个文件，可以用来检查符号链接或文件快捷方式是否指向同一个文件
+boolean b = Files.isSameFile(path1, path2);
+log.info("FileApi {}", b);
+```
+
+
+
+# JAVA12
+
+> <b id="gray">mismatch</b>用于比较两个文件的内容。它返回两个文件内容第一次不匹配的位置的索引。
+
+```java
+Path path1 = Paths.get( Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/1.txt");
+Path path2 = Paths.get(Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/2.txt");
+long b = Files.mismatch(path1, path2);
+System.out.println(b);
+```
+
+# Java13
 
 ## 文本块
 
@@ -941,7 +966,40 @@ public static void main(String[] args) {
 }
 ```
 
-# JDK17 
+# Java14
+
+##  Instanceof增强
+
+str直接是String类型了，不需要再进行强制转换
+
+```java
+Object a = "不需要显示的强制转换";
+if (a instanceof String str) {
+   
+}
+```
+
+# JAVA15
+
+ZGC 是Java 11引入的新的垃圾收集器，经过了多个实验阶段，在 Java 15 终于成为正式特性。ZGC 是一种可伸缩的低延迟垃圾收集器，旨在为大型应用程序和系统提供高性能的内存管理，同时保持极低的延迟。其主要为了满足如下目标进行设计：
+
+- GC 停顿时间不超过 10ms
+- 即能处理几百 MB 的小堆，也能处理几个 TB 的大堆
+- 应用吞吐能力不会下降超过 15%（与 G1 回收算法相比）
+- 方便在此基础上引入新的 GC 特性和利用 colord
+- 针以及 Load barriers 优化奠定基础
+
+主要特点如下：
+
+1. **低延迟**：ZGC 旨在提供极低的停顿时间，即使是在处理几十到几百 GB 的堆内存时也是如此。这使其非常适合需要低延迟的应用，如实时系统、大型服务端应用等。
+2. **可伸缩性**：ZGC 能够高效地管理从几百 MB 到数 TB 的堆内存，保持一致的低延迟性能，不会随着堆大小的增加而显著增加停顿时间。
+3. **无锁并发算法**：ZGC 使用无锁的数据结构和算法，减少了线程间的竞争，从而提高了效率和吞吐量。
+4. **分代收集**：尽管 ZGC 不是一个传统的分代垃圾收集器，但它在内部使用了类似分代收集的技术来优化性能。
+5. **动态堆内存压缩**：ZGC 能够在运行时动态地压缩堆内存，减少内存占用，并且无需长时间停顿。
+
+通过 JVM 参数 `-XX:+UseZGC` 启用 ZGC。
+
+# Java17 
 
 因为我们引入了`sealed` `class`或`interfaces`，这些class或者interfaces只允许被指定的类或者interface进行扩展和实现。即其他类不允许继承或者实现它
 
