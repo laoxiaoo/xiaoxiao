@@ -1,6 +1,8 @@
 # 
 
-# VsStudio修改成英语界面
+# VsStudio相关安装
+
+## 修改成英语界面
 1. 打开 Visual Studio Installer
 
 2. 按照语言包
@@ -8,9 +10,33 @@
 
 ![image-20230522192814837](image/1-base/image-20230522192814837.png)
 
-# 字体设置
+## 字体设置
 
 ![image-20230522194218283](image/1-base/image-20230522194218283.png)	
+
+## 离线插件入口
+
+[Extensions for Visual Studio family of products | Visual Studio Marketplace](https://marketplace.visualstudio.com/)
+
+## 安装类似idea的主题
+
+1. 安装Darcula_Theme主题[Darcula 主题 - Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=rokoroku.vscode-theme-darcula)  
+2. 完毕进入VS后依次点击按钮 工具>主题>Darcula 即可切换为IntelliJ 的主题样式
+
+## idea 的快捷键
+
+1. Hot Keys - Keyboard Shortcuts 插件[Hot Keys - Keyboard Shortcuts - Visual Studio Marketplace](https://marketplace.visualstudio.com/items?itemName=JustinClareburtMSFT.HotKeys)
+2. 安装完毕后可依次点击 工具 > Keyboard Shortcuts > Load Shortcuts>IntelliJ IDEA > Import Shortcuts
+3. 插件的作者的这个导入之后大部分IDEA的快捷键都过来了,但有少部分几个可能不太满意,需要手动调整
+   1. 依次展开 工具>选项>环境>键盘进行手动修改
+   2. 在显示命令那里搜索 注释 , 找到 切换块注释和切换行注释 修改快捷键的应用范围为全局
+   3. 修改代码补全的快捷键,按上述方法 搜索 列出成员 , 然后将快捷键改为 <b id="gray">alt+/ </b>应用范围为全局
+
+
+
+
+
+
 
 # Vscode 配置环境
 
@@ -222,9 +248,22 @@
 
 
 
-# VS创建一个空项目
+# VS项目相关操作
+
+## 创建一个空项目
 
 ![image-20230522191846504](image/1-base/image-20230522191846504.png)
+
+## 现有的文件夹导入
+
+*取巧的一种方式，用来学习的时候运行单个文件夹*
+
+1. 创建一个空项目
+2. 在原文件处导入新的项
+
+
+
+
 
 # VSCode 插件
 
@@ -259,6 +298,14 @@ c_cpp_properties.json （配置了vscode的setting的话，可以删除这个文
 "cppStandard": "c++23",
 "cStandard": "c23"
 ```
+
+## 快捷键设置
+
+![image-20240730212527920](image/2-install/image-20240730212527920.png)
+
+
+
+
 
 # Clion 环境配置
 

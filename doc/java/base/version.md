@@ -619,6 +619,53 @@ LocalDate end = LocalDate.of(2024,6, 6);
 long daysBetween = ChronoUnit.DAYS.between(start, end);
 System.out.println("两个日期之间的天数差为: " + daysBetween);
 ```
+## CompletableFuture
+
+### 使用场景
+
+```markmap
+# 
+## 创建异步任务
+## 简单异步回调
+## 多任务组合
+```
+
+
+
+### 创建
+
+```markmap
+# 
+
+## supplyAsync支持返回值
+## runAsync没有返回值。
+```
+
+- <b id="gray">runAsync</b> :无返回值 
+-  <b id="gray">supplyAsync</b>: 有返回值，thenRun方法，做完第一个任务后，再做第二个任务**。
+- <b id="gray">thenAccept</b>：不能接受上一个执行的值，但是有返回值
+- <b id="gray">thenApply</b>区别：可以接收上一个任务值，并且有返回值
+
+-  <b id="gray">thenRunAsync</b>：带<b id="blue">Async</b>的表示则第一个任务使用的是你自己传入的线程池，第二个任务使用的是ForkJoin线程池
+
+```java
+CompletableFuture.runAsync(() -> log.info("第一个任务"))
+.thenRun(() -> log.info("第二个任务"))
+.thenRunAsync(() -> log.info("第三个任务"));
+Thread.sleep(1000);
+
+//========================
+CompletableFuture.supplyAsync(() -> {
+log.info("第一个-有返回值");
+return "supplyAsync-1-res";
+}).thenApply(var -> {
+log.info("接收上一个任务，有返回值：{}",var);
+return "thenApply-2-res";
+}).thenAccept(v -> log.info("接收上一个任务的值，没有返回值：{}", v));
+Thread.sleep(10000);
+```
+
+
 # JAVA9
 
 ## 新特性
@@ -690,10 +737,23 @@ hello word! java9
 
 
 
-
 ## 模块化
 
+> 可以简单地将它理解为 `package` 的上一级单位，是多个 `package` 的集合
+
 - 好处：安全、加载更快一点
+
+下图可见：Java 9 中没有`jre`，没有`rt.jar`，没有`tools.jar`，而是多了一个 `jmods`，该文件夹下都是一个一个的模块
+
+Java 9 之前的工程，他们都是单体模式，一个简单的 hello world，都需要引入 `rt.jar`，导致这个简单的 hello world 的 jar 变得很大， Java 9 引入模块后，它只需要引入它所依赖的即可
+
+![image-20240801164548436](image/version/image-20240801164548436.png)
+
+
+
+### 使用方式
+
+> 导出模块
 
 1. 建立一个模块exprot-module，这个模块是用来导出的，在根路径下建立module-info.java文件
 
@@ -714,7 +774,9 @@ public class Person {
 }
 ```
 
-3. 建立引入模块，建立module-info.java文件
+> 引用模块
+
+1. 建立引入模块，建立module-info.java文件
 
 ```java
 module improt.module{
@@ -722,7 +784,7 @@ module improt.module{
 }
 ```
 
-4. test使用
+2. test使用， 我们在这个模块中，只能选择导出模块exports的包下的类，其他的无法
 
 ```java
 public class Test {
@@ -850,17 +912,44 @@ public static void main(String[] args) throws IOException, InterruptedException 
 
 ## 局部变量的类型推断
 
+**java10开始出现**
+
 - var其实就是从右边推断类型，并不是弱类型（比如： 我们右边定义一个String， 左边直接定义一个var，就可以直接推断出这个变量的类型）
 - 它的作用可以看做：定义当一个很长的类名时，我们可以用var来代替
 
 ```shell
-jshell> var a = "hello";
-a ==> "hello"
-jshell> System.out.println(a.getClass());
-class java.lang.String
+public static void main(String[] args) {
+    var list = "var自动推断类型";
+    log.info(list);
+}
 ```
 
-# JDK15
+## FileAPI
+
+>  两个路径是否指向文件系统中的同一个文件，可以用来检查符号链接或文件快捷方式是否指向同一个文件
+
+```java
+Path path1 = Paths.get( Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/1.txt");
+Path path2 = Paths.get(Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/2.txt");
+//两个路径是否指向文件系统中的同一个文件，可以用来检查符号链接或文件快捷方式是否指向同一个文件
+boolean b = Files.isSameFile(path1, path2);
+log.info("FileApi {}", b);
+```
+
+
+
+# JAVA12
+
+> <b id="gray">mismatch</b>用于比较两个文件的内容。它返回两个文件内容第一次不匹配的位置的索引。
+
+```java
+Path path1 = Paths.get( Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/1.txt");
+Path path2 = Paths.get(Paths.get("").toAbsolutePath()+"/src/main/java/com/xiao/f/2.txt");
+long b = Files.mismatch(path1, path2);
+System.out.println(b);
+```
+
+# Java13
 
 ## 文本块
 
@@ -877,7 +966,40 @@ public static void main(String[] args) {
 }
 ```
 
-# JDK17 
+# Java14
+
+##  Instanceof增强
+
+str直接是String类型了，不需要再进行强制转换
+
+```java
+Object a = "不需要显示的强制转换";
+if (a instanceof String str) {
+   
+}
+```
+
+# JAVA15
+
+ZGC 是Java 11引入的新的垃圾收集器，经过了多个实验阶段，在 Java 15 终于成为正式特性。ZGC 是一种可伸缩的低延迟垃圾收集器，旨在为大型应用程序和系统提供高性能的内存管理，同时保持极低的延迟。其主要为了满足如下目标进行设计：
+
+- GC 停顿时间不超过 10ms
+- 即能处理几百 MB 的小堆，也能处理几个 TB 的大堆
+- 应用吞吐能力不会下降超过 15%（与 G1 回收算法相比）
+- 方便在此基础上引入新的 GC 特性和利用 colord
+- 针以及 Load barriers 优化奠定基础
+
+主要特点如下：
+
+1. **低延迟**：ZGC 旨在提供极低的停顿时间，即使是在处理几十到几百 GB 的堆内存时也是如此。这使其非常适合需要低延迟的应用，如实时系统、大型服务端应用等。
+2. **可伸缩性**：ZGC 能够高效地管理从几百 MB 到数 TB 的堆内存，保持一致的低延迟性能，不会随着堆大小的增加而显著增加停顿时间。
+3. **无锁并发算法**：ZGC 使用无锁的数据结构和算法，减少了线程间的竞争，从而提高了效率和吞吐量。
+4. **分代收集**：尽管 ZGC 不是一个传统的分代垃圾收集器，但它在内部使用了类似分代收集的技术来优化性能。
+5. **动态堆内存压缩**：ZGC 能够在运行时动态地压缩堆内存，减少内存占用，并且无需长时间停顿。
+
+通过 JVM 参数 `-XX:+UseZGC` 启用 ZGC。
+
+# Java17 
 
 因为我们引入了`sealed` `class`或`interfaces`，这些class或者interfaces只允许被指定的类或者interface进行扩展和实现。即其他类不允许继承或者实现它
 

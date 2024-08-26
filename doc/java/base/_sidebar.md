@@ -15,7 +15,6 @@
     * [线程类](/doc/java/base/api/2-thread)
     * [BigDecimal](/doc/java/base/api/3-bigDecimal)
     * [map](/doc/java/base/api/4-map)
-    * [版本差异](/doc/java/base/api/5-version)
     * [stream操作](/doc/java/base/api/6-stream)
 * 并发编程
     * [基础](/doc/java/base/concurrent/1-base)
@@ -25,3 +24,4 @@
     * [synchronized](/doc/java/base/concurrent/5-synchronized)
     * [线程通信](/doc/java/base/concurrent/6-signalCommunication)
     * [线程池](/doc/java/base/concurrent/7-threadpool)
+* [版本差异](/doc/java/base/version)
