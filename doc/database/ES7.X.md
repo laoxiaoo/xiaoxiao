@@ -433,7 +433,15 @@ PUT /mytest
   "mappings": {
     "properties": {
       "user" : {
-        "type": "nested"
+        "type": "nested",
+         "properties": {
+             "first": {
+              "type": "text"
+            	},
+             "last": {
+              "type": "text"
+            },
+         }
       }
     }
   }

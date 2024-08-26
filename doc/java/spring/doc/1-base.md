@@ -84,3 +84,7 @@ applicationContext.refresh();
 System.out.println(applicationContext.getBean("person"));
 applicationContext.close();
 ```
+
+> 两个类都继承自AbstractXmlApplicationContext
+
+调用AbstractXmlApplicationContext#loadBeanDefinitions
