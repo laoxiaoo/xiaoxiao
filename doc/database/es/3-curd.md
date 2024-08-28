@@ -475,3 +475,106 @@ GET s2/_doc/_search
 4. 获取的结果如图
 
 ![image-20211222220206840](./image/3-curd/20211222220213.png)
+
+# 嵌套数据
+因此除了基本数据类型之外，ES也支持使用复杂的数据类型，像是数组、内部对象，而要使用内部对象的话，需要使用`nested`来定义索引或者join，使文档内可以包含一个内部对象
+- 为什麽不用object来定义索引的原因是，obejct类型会使得内部对象的关联性丢失
+  - 这是因为Lucene底层其实没有内部对象的概念，所以ES会利用简单的列表储存字段名和值，将object类型的对象层次摊平，再传给Lucene
+  - 假设user类型是object，当插入一笔新的数据时，ES会将他转换为下面的内部文档，其中可以看见alice和white的关联性丢失
+
+```json
+PUT /mytest/doc/1
+{
+    "group": "fans",
+    "user": [
+        { "first": "John", "last": "Smith" },
+        { "first": "Alice", "last": "White" }
+    ]
+}
+```
+
+- 转换后(内部隐式转换)
+  - 所以，在检索John，Smith一起满足时，不会将{ "first": "John", "last": "Smith" }看成一条数据
+- 转换后的数据将是：
+```json
+{
+    "group": "fans",
+    "user.first": [ "alice", "john" ],
+    "user.last": [ "smith", "white" ]
+}
+```
+
+
+## nested
+
+### 定义
+
+> 定义nested索引，定义之后，我们就可以用嵌套查询去查询一条完整的数据
+
+将user类型定义成nested类型，然后再定义其下的字段信息
+
+```json
+PUT /mytest
+{
+  "mappings": {
+    "properties": {
+      "user" : {
+        "type": "nested",
+         "properties": {
+             "first": {
+              "type": "text"
+            	},
+             "last": {
+              "type": "text"
+            },
+         }
+      }
+    }
+  }
+}
+```
+
+### 查询
+
+- 由于嵌套对象被索引在独立的隐藏文档中，因此我们无法直接使用一般的query去查询他，我们必须改使用 "nested查询" 去查询他们
+- nested查询的内部必须要包含一个`path`参数，负责指定要用的是哪个nested类型的字段，且要包含一个`query`，负责进行此嵌套对象内的查询
+
+
+```shell
+GET /mytest/_doc/_search
+{
+    "query": {
+        "nested": {
+            "path": "user",
+            "query": {
+                "bool": {
+                    "must": [
+                        { "match": { "user.first": "Amy" } },
+                        { "match": { "user.last": "White" } }
+                    ]
+                }
+            }
+        }
+    }
+}
+```
+
+### 统计
+
+
+```shell
+"aggs": {
+   "NAME": {
+     "nested": {
+       "path": "user"
+     },
+     "aggs": {
+       "temp": {
+         "match": {
+           "field": "user.first"
+         }
+       }
+     }
+   }
+ }
+```
