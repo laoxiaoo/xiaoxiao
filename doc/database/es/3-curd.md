@@ -476,7 +476,151 @@ GET s2/_doc/_search
 
 ![image-20211222220206840](./image/3-curd/20211222220213.png)
 
+# 聚合查询
+
+**如果是text字段，则需要"fielddata": true才能聚合**
+
+ Aggregation共分为如下几种：
+
+- Metric Aggregations
+  - —些数学运算，可以对文档字段进行统计分析
+- Bucket Aggregations
+  - 一些列满足特定条件的文档的集合
+- Pipeline Aggregations
+  - 对其他的聚合结果进行二次聚合
+- Matrix Aggregations
+  - 支持对多个字段的操作并提供—个结果矩阵
+
+## bucket api 
+
+```shell
+POST /sys_org_company/_search
+{
+  "size": 0, --不查询出数据
+  "aggs": {
+    "new_count": { --定义的分组后返回的值的key
+      "terms": {
+        "field": "faRen", --按照字段分桶查询
+        "size": 10 -- 最多返回10条数据
+      }
+    }
+  }
+}
+```
+
+## Metric api
+
+一些平均值/最大值等一些计算
+
+<b id="gray">avg</b>:  平均值
+
+<b id="gray">max</b>: 最大值
+
+<b id="gray">min</b>:  最小值
+
+```json
+"aggs": {
+    "avg_age": { --自定义返回的key
+        "avg": { --关键字
+            "field": "age"
+        }
+    }
+}
+```
+
+<b id="gray">stats</b>：求和求最小等一起求出来
+
+<b id="blue">aggregations</b>等效<b id="blue">aggs</b>
+
+```json
+-- 对userId进行统计查询
+{
+  "size": 100,
+  "timeout": "1s",
+  "aggregations": {
+    "stats_name": {
+      "stats": {
+        "field": "userId"
+      }
+    }
+  }
+}
+```
+
+查询后的值：
+
+```shell
+"stats_name" : {
+    "count" : 4,
+    "min" : 10.0,
+    "max" : 40.0,
+    "avg" : 20.0,
+    "sum" : 80.0
+}
+```
+
+
+
+<b id="gray">extended_stats</b>： 其他属性，方差等
+
+<b id="gray">cardinality</b>： 获取唯一值，相当于去重
+
+```json
+"aggs": {
+    "stats_name": {
+      "cardinality": {
+        "field": "age"
+      }
+    }
+  }
+```
+
+<b id="gray">value_count</b>:查看当前范围有多有不同的值
+
+```json
+"aggs": {
+    "stats_name": {
+      "value_count": {
+        "field": "name"
+      }
+    }
+  }
+```
+
+## 子聚合
+
+类似sql:select a, max(b) c from A group by a order by c desc
+
+对a聚合，求聚合里的b的最大值，进行排序
+
+```json
+{  
+  "size": 0,
+  "aggs": {  
+    "group_by_a": {  
+      "terms": {  
+        "field": "a.keyword",
+        "size": 10000,  //设置为一个大值以捕获所有可能的a值  
+        "order": {  
+          "max_b": "desc"  // 根据max_b聚合的结果降序排序  
+        }  
+      },  
+      "aggs": {  
+        "max_b": {  
+          "max": {  
+            "field": "b"  
+          }  
+        }  
+      }  
+    }  
+  }  
+}
+```
+
+
+
 # 嵌套数据
+
 因此除了基本数据类型之外，ES也支持使用复杂的数据类型，像是数组、内部对象，而要使用内部对象的话，需要使用`nested`来定义索引或者join，使文档内可以包含一个内部对象
 - 为什麽不用object来定义索引的原因是，obejct类型会使得内部对象的关联性丢失
   - 这是因为Lucene底层其实没有内部对象的概念，所以ES会利用简单的列表储存字段名和值，将object类型的对象层次摊平，再传给Lucene
