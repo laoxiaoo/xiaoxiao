@@ -722,3 +722,110 @@ GET /mytest/_doc/_search
    }
  }
 ```
+
+## join
+
+场景：当索引数据包含一对多的关系，并且其中一个实体的数量远远超过另一个的时候。比如：一个班有 一万个学生
+
+### 定义结构
+
+定义父子结构，定义<b id="gray">class</b>为父结构，<b id="gray">student</b>为子结构
+
+<b id="gray">class_student_field</b>：自定义的父子关联结构的字段名
+
+<b id="blue">relations</b>： 关联结构， <b id="gray">class</b>为父名称，<b id="gray">student</b>为子名称
+
+put /test_join
+
+```json
+{
+	"mappings": {
+		"properties": {
+			"class_student_field": {
+				"type": "join",
+				"relations": {
+					"class": "student"
+				}
+			},
+			"class_id": {
+				"type": "long"
+			},
+			"class_name": {
+				"type": "keyword"
+			},
+			"student_id": {
+				"type": "long"
+			},
+			"student_name": {
+				"type": "keyword"
+			}
+		}
+	}
+}
+```
+
+### 插入父结构数据
+
+插入一条班级记录（父数据），并且，自定义了<b id="blue">_id=c_2</b>， class_student_field的name  = class 表示父结构数据
+
+put /test_join/_doc/c_2
+
+```json
+{
+    "class_id":2,
+    "class_name":"中小2班",
+    "class_student_field": {
+        "name":"class"
+    }
+}
+```
+
+### 插入一条子结构数据
+
+插入学生数据，routing必须指向父文档的_id
+
+<b id="blue">class_student_field</b>：name=student表示子结构，并且parent=父文档的_id
+
+put /test_join/_doc/s_1?routing=c_2
+
+```json
+{
+    "student_id":2,
+    "student_name":"肖1",
+    "class_student_field":{
+        "name":"student",
+        "parent": "c_2"
+    }
+}
+```
+
+### 父查子
+
+```json
+{
+  "query": {
+    "has_parent": {
+      "parent_type": "class",
+      "query": {
+        "match_all": {}
+      }
+    }
+  }
+}
+```
+
+### 子查父
+
+```json
+{
+  "query": {
+    "has_child": {
+      "type": "student",
+      "query": {
+        "match_all": {}
+      }
+    }
+  }
+}
+```
+
