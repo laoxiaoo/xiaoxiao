@@ -351,7 +351,7 @@ protected final boolean tryRelease(int releases) {
 
 1. ReentrantReadWriteLock  
 2. 让读-读并发，其他的互斥  
-
+3. **需要注意的是，readlock里面，在unlock之间，不能嵌套WriteLock**
 ## 使用示例
 ```java
 static class Container {

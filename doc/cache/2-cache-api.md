@@ -1,3 +1,6 @@
+
+#
+
 # GuavaCache
 
 ## 常用方式
@@ -124,4 +127,21 @@ public static void removeAll() {
 public static void put() {
     loadingCache.put("laoxiao", "aaaa");
 }
+```
+
+# Caffeine
+
+## GitHub
+
+[Home zh CN · ben-manes/caffeine Wiki (github.com)](https://github.com/ben-manes/caffeine/wiki/Home-zh-CN)
+
+## Maven 
+
+```java
+<dependency>
+    <groupId>com.github.ben-manes.caffeine</groupId>
+    <artifactId>caffeine</artifactId>
+    <version>2.9.2</version>
+</dependency>
+
 ```
