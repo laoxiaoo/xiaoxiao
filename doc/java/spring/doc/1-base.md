@@ -87,4 +87,4 @@ applicationContext.close();
 
 > 两个类都继承自AbstractXmlApplicationContext
 
-调用AbstractXmlApplicationContext#loadBeanDefinitions
+调用AbstractXmlApplicationContext#loadBeanDefinitions最终调用XmlBeanDefinitionReader#doLoadBeanDefinitions
