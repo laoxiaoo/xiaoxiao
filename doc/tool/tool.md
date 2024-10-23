@@ -2,11 +2,12 @@
 
 ## 插件集合
 
-> code-eol 2019 (Line Endings)
+<b id="gray">code-eol 2019 (Line Endings)</b>：显示字符换行符等
 
-显示字符换行符等
+<b id="gray">JVM Bytecode Viewer</b>
 
-> JVM Bytecode Viewer
+<b id="gray">JetBrains IDEA Icons</b> ：文件显示和idea差不多
+
 
 ## 替换换行符
 

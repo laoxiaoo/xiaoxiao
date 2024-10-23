@@ -59,7 +59,20 @@ File -> Preferences -> setting
 
 > json 树结构处理
 
+<b id="gray">JSON Tree Editor</b>
+
 安装完后，点击右上角
 
 ![image-20240731142445976](image/vscode/image-20240731142445976.png)
 
+<b id="gray">JSON Tools</b>
+
+json格式化/压缩
+
+![image-20241023155630517](image/vscode/image-20241023155630517.png)
+
+## 文件对比
+
+<b id="gray">Compare View</b>
+
+![image-20241023155725031](image/vscode/image-20241023155725031.png)
