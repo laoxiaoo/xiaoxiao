@@ -634,36 +634,66 @@ System.out.println("两个日期之间的天数差为: " + daysBetween);
 
 ### 创建
 
-```markmap
-# 
+---
 
-## supplyAsync支持返回值
-## runAsync没有返回值。
+>  初始创建(有返回值和没返回值)
+
+1. <b id="gray">supplyAsync</b>: 有返回值
+
+```java
+CompletableFuture.supplyAsync(() -> {
+    log.info("第一个-有返回值");
+    return "supplyAsync-1-res";
+})
 ```
 
-- <b id="gray">runAsync</b> :无返回值 
--  <b id="gray">supplyAsync</b>: 有返回值，thenRun方法，做完第一个任务后，再做第二个任务**。
-- <b id="gray">thenAccept</b>：不能接受上一个执行的值，但是有返回值
-- <b id="gray">thenApply</b>区别：可以接收上一个任务值，并且有返回值
 
--  <b id="gray">thenRunAsync</b>：带<b id="blue">Async</b>的表示则第一个任务使用的是你自己传入的线程池，第二个任务使用的是ForkJoin线程池
+
+2. <b id="gray">runAsync</b>没有返回值。
+   1. 如果咱们不关心异步任务的结果，只想执行一个异步操作
 
 ```java
 CompletableFuture.runAsync(() -> log.info("第一个任务"))
-.thenRun(() -> log.info("第二个任务"))
-.thenRunAsync(() -> log.info("第三个任务"));
-Thread.sleep(1000);
+```
 
-//========================
+
+
+---
+
+> 链式调用
+
+- `thenApply`用于处理和转换CompletableFuture的结果。
+- `thenAccept`用于消费CompletableFuture的结果，不返回新的CompletableFuture。
+
+```java
 CompletableFuture.supplyAsync(() -> {
-log.info("第一个-有返回值");
-return "supplyAsync-1-res";
-}).thenApply(var -> {
-log.info("接收上一个任务，有返回值：{}",var);
-return "thenApply-2-res";
-}).thenAccept(v -> log.info("接收上一个任务的值，没有返回值：{}", v));
+        log.info("第一个-有返回值");
+        return "supplyAsync-1-res";
+    }).thenApply(var -> {
+        log.info("接收上一个任务，有返回值：{}",var);
+        return "thenApply-2-res";
+    }).thenAccept(v -> log.info("接收上一个任务的值，没有返回值：{}", v));
 Thread.sleep(10000);
 ```
+
+
+
+- `thenRun`则不关心前一个任务的结果，只是在前一个任务执行完后，执行一些后续操作。
+
+
+
+```java
+CompletableFuture.runAsync(() -> log.info("第一个任务"))
+    .thenRun(() -> log.info("第二个任务"))
+    .thenRunAsync(() -> log.info("第三个任务"));
+Thread.sleep(1000);
+```
+
+
+
+---
+
+
 
 
 # JAVA9
