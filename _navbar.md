@@ -6,5 +6,6 @@
 * 语言项
     * [JAVA](/README)
     * [C++](/c++/README)
+    * [go](/go/README)
 
 * [首页](/)
