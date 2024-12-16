@@ -12,13 +12,13 @@ Go官网下载地址：https://golang.org/dl/
 
 Go官方镜像站（推荐）：https://golang.google.cn/dl/
 
-> 环境变量
+## 环境变量
 
-- 配置GOROOT
+1. 配置GOROOT（不是必须）
 
 GOROOT的变量值即为GO的安装目录
 
-- 配置GOPATH
+2. 配置GOPATH（不是必须）
 
 GOPATH的变量值即为存储Go语言项目的路径
 
@@ -30,17 +30,20 @@ pkg：存放编译后的库文件
 
 src：存放源码文件
 
-- 打开命令行工具，输入命令go env
+3. 打开命令行工具，输入命令go env,看环境配置的相关信息
 
-> vscode安装
+### VsCode安装
 
-在此之前请先设置`GOPROXY`，打开终端执行以下命令：
+在此之前请先设置`GOPROXY`，打开终端执行以下命令（修改代理）：
 
 ```bash
 go env -w GOPROXY=https://goproxy.cn,direct
 ```
 
-Windows平台按下`Ctrl+Shift+P`，Mac平台按`Command+Shift+P`，这个时候VS Code界面会弹出一个输入框，我们在这个输入框中输入`>go:install`，下面会自动搜索相关命令，我们选择`Go:Install/Update Tools`这个命令，按下图选中并会回车执行该命令（或者使用鼠标点击该命令）
+Windows平台按下`Ctrl+Shift+P`，Mac平台按`Command+Shift+P`，这个时候VS Code界面会弹出一个输入框，我们在这个输入框中输入`>go:install`，
+下面会自动搜索相关命令，我们选择`Go:Install/Update Tools`这个命令，按下图选中并会回车执行该命令（或者使用鼠标点击该命令）
+
+![image-20241212113328473](image/go/image-20241212113328473.png)
 
 ## hello word
 

@@ -1,9 +1,8 @@
 #
 # 简介
 
-- CAS的全称compare-and-Swap, 是一条cpu的并发原语（原语的执行必须时连续的，在执行过程不允许被中断，只有等原语操作完成，别人才有机会去获取或执行） 
-- 比较并交换 
-  - 当设置值的时候，expect值与主内存对比，如果不一样，则会返回失败，并设置失败 
+- CAS的全称compare-and-Swap(比较并交换 ), 是一条cpu的并发原语（原语的执行必须时连续的，在执行过程不允许被中断，只有等原语操作完成，别人才有机会去获取或执行） 
+- 当设置值的时候，expect值与主内存对比，如果不一样，则会返回失败，并设置失败 
 
 ```java
 class CASDemo {
@@ -28,7 +27,7 @@ public class AtomicInteger extends Number implements java.io.Serializable {
     private volatile int value;
 ```
 
-- 为什么锁的情况下，反而比synchronized要快 
+- 为什么无锁的情况下，反而比synchronized要快 
   - 无锁情况下，即使重试失败，线程始终在高速运行，没有停歇，而synchronized会让线程在没有获得锁的时候，发生上下文切换，进入阻塞。 
   - 但是无锁需要cpu性能的支持 
 
