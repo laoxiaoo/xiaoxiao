@@ -55,6 +55,16 @@ File -> Preferences -> setting
 
 ![image-20240713163511683](image/vscode/image-20240713163511683.png)
 
+## Idea 快捷键
+
+搜索 `IntelliJ IDEA Keybindings`。进行安装
+
+## idea 主题
+
+<b id="gray">IntelliJ IDEA Darcula Theme</b> 插件
+
+
+
 # json处理
 
 > json 树结构处理
