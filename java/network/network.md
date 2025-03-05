@@ -1,6 +1,6 @@
 # TCP
 
-相关连接：[TCP滑动窗口](/doc/socket/3-netty-advanc?id=tcp滑动窗口)
+相关连接：[TCP滑动窗口](/java/socket/3-netty-advanc?id=tcp滑动窗口)
 
 ```mermaid
 sequenceDiagram

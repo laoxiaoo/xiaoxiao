@@ -3,11 +3,11 @@
 ### 导航
 
 ```markmap
-- [arthas](/#/doc/tool/arthas)
-- [工具插件](/#/doc/tool/tool)
-- [Jenkins](/#/doc/tool/jenkins.md)
-- [canal](/#/doc/tool/canal)
-- [idea](/#/doc/tool/idea)
+- [arthas](/#/java/tool/arthas)
+- [工具插件](/#/java/tool/tool)
+- [Jenkins](/#/java/tool/jenkins.md)
+- [canal](/#/java/tool/canal)
+- [idea](/#/java/tool/idea)
 
 
 ``` 

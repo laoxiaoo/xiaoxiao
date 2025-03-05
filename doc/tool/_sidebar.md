@@ -1,6 +1,0 @@
-* [arthas](/doc/tool/arthas)
-* [工具插件](/doc/tool/tool)
-* [Jenkins](/doc/tool/jenkins.md)
-* [canal](/doc/tool/canal)
-* [idea](/doc/tool/idea)
-* [vscode](/doc/tool/vscode)

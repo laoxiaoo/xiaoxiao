@@ -627,7 +627,7 @@ POST /sys_org_company/_search
   - 假设user类型是object，当插入一笔新的数据时，ES会将他转换为下面的内部文档，其中可以看见alice和white的关联性丢失
 
 ```json
-PUT /mytest/doc/1
+PUT /mytest/java/1
 {
     "group": "fans",
     "user": [

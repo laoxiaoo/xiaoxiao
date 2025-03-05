@@ -2,7 +2,7 @@
 
 1. 通过发送命令，让Redis服务器返回监控其运行状态，包括主服务器和从服务器
 2. 当哨兵监测到**master宕机，会自动将slave切换成master**，然后通过**发布订阅模式**通知其他的从服务器，修改配置文件，让它们切换主机
-3. 哨兵模式基于[主从复制](/doc/database/redis/5-replication)进行补充
+3. 哨兵模式基于[主从复制](/java/database/redis/5-replication)进行补充
 
 ![image-20230509201807731](image/6-sentinel/image-20230509201807731.png)
 

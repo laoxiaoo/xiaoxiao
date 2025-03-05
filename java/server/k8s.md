@@ -130,8 +130,8 @@ baseurl=http://mirrors.aliyun.com/kubernetes/yum/repos/kubernetes-el7-x86_64
 enabled=1
 gpgcheck=0
 repo_gpgcheck=0
-gpgkey=http://mirrors.aliyun.com/kubernetes/yum/doc/yum-key.gpg
-       http://mirrors.aliyun.com/kubernetes/yum/doc/rpm-package-key.gpg
+gpgkey=http://mirrors.aliyun.com/kubernetes/yum/java/yum-key.gpg
+       http://mirrors.aliyun.com/kubernetes/yum/java/rpm-package-key.gpg
 EOF
 ```
 

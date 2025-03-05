@@ -89,7 +89,7 @@ public Object getBean(String name) throws BeansException {
 }
 ```
 
-doGetBean先尝试获取单实例bean, 此处可以参考[springbean对象创建流程](/doc/java/spring/doc/3-springbean?id=bean对象创建流程)
+doGetBean先尝试获取单实例bean, 此处可以参考[springbean对象创建流程](/java/java/spring/java/3-springbean?id=bean对象创建流程)
 
 ```java
 if (mbd.isSingleton()) {
