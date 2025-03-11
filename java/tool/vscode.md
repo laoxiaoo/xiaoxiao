@@ -86,3 +86,26 @@ json格式化/压缩
 <b id="gray">Compare View</b>
 
 ![image-20241023155725031](image/vscode/image-20241023155725031.png)
+
+
+
+# 配置终端为Git
+
+1. 在设置中搜索：profiles.windows
+
+2. 在json中配置
+```json
+   "terminal.integrated.profiles.windows": {
+       "PowerShell -NoProfile": {
+         "source": "PowerShell",
+         "args": [
+           "-NoProfile"
+         ]
+       },
+       "Git-Bash": {
+         "path": "D:\\softinstall\\Git\\bin\\bash.exe",
+         "args": []
+       }
+     },
+   "terminal.integrated.defaultProfile.windows": "Git-Bash",
+```
