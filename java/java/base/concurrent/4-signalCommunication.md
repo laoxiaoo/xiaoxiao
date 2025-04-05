@@ -75,7 +75,7 @@ synchronized (LOCK) {
 }
 ```
 
-- notify 唤醒一个线程，notifyall唤醒所有的线程
+- notify()仅唤醒一个等待该对象锁的线程，而notifyAll()会唤醒所有等待该对象锁的线程
 
 > sleep和wait区别
 
