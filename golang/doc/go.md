@@ -1743,6 +1743,7 @@ type DataWriter interface {
 2. 实现接口
    1. 定义一个接口体
    2. 结构体的方法必须**实现接口的方法**
+   3. 如下：我们说File接口体的<b id="red">指针</b>实现了DataWriter接口，但是他的值类型是没有实现的
 
 ```go
 type File struct {

@@ -109,3 +109,32 @@ json格式化/压缩
      },
    "terminal.integrated.defaultProfile.windows": "Git-Bash",
 ```
+
+# 配置代码模板
+
+快捷键 ctrl+shift+p
+
+搜索configureSnippets
+
+选择go.json,配置如下：
+
+```json
+{
+	"Main model": {
+    "prefix": "main(",
+    "body": [
+      "package main",
+      "",
+      "",
+      "func main() {",
+      "",
+      "}"
+    ],
+    "description": "Generate a Hello World template"
+  }
+}
+```
+
+则会出现如下快捷
+
+![image-20250313223550375](image/vscode/image-20250313223550375.png)

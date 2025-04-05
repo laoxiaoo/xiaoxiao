@@ -41,3 +41,6 @@ go env -w GOPROXY=https://goproxy.cn,direct
 
 ![image-20250303205237718](image/go-vscode/image-20250303205237718.png)
 
+# go快捷生成变量的方法
+
+![image-20250313223731530](image/go-vscode/image-20250313223731530.png)

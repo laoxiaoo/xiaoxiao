@@ -782,7 +782,15 @@ require github.com/Shopify/sarama v1.19.0
 $ go mod download
 ```
 
+## 依赖校验
 
+```shell
+go mod tidy
+```
+
+1. 移除未使用的依赖项
+2. 添加缺失的依赖项
+3. 更新校验和文件
 
 # context
 
