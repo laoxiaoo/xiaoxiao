@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+  <meta charset="UTF-8">
+  <title>老萧的笔记</title>
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+  <meta name="description" content="Description">
+  <meta name="viewport"
+    content="width=device-width, user-scalable=no, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0">
+  <link rel="stylesheet" href="./js/vue.css">
+  <script>
+    window.markmap = {
+      autoLoader: { manual: true },
+    };
+  </script>
+  <script src="./js/markmap/markmap-autoloader.js"></script>
+  <script type="module">
+    import mermaid from './js/mermaid/mermaid.esm.min.mjs';
+    mermaid.initialize({ startOnLoad: false });
+    window.mermaid = mermaid
+  </script>
+  <style>
+    .markdown-section blockquote {
+      background-color: rgba(66, 185, 131, .1);
+    }
+
+    .markdown-section blockquote p {
+      padding-top: 10px;
+      padding-bottom: 10px;
+    }
+
+    .markdown-section em {
+      color: #42b983;
+      font-size: 15px;
+    }
+
+    .markdown-section strong {
+      color: #d44a0a;
+      font-size: 17px;
+    }
+
+    .markdown-section h2 {
+      font-size: 1.75rem;
+      margin: 15px 0 0.8rem;
+    }
+
+    b[id="blue"] {
+      background-color: #02aaf4;
+      margin-left: .2rem;
+    }
+
+    b[id="gray"] {
+      background-color: #4c4c4c;
+      margin-left: .2rem;
+    }
+
+    b[id="red"] {
+      background-color: red;
+      margin-left: .2rem;
+    }
+
+    b {
+      display: inline;
+      padding: .2em .6em;
+      font-size: 90%;
+      font-weight: 400;
+      line-height: 1;
+      color: #fff;
+      text-align: center;
+      white-space: nowrap;
+      vertical-align: baseline;
+      border-radius: .1rem;
+      border-radius: 6px;
+    }
+
+    .markdown-section h1 {
+      font-size: 1.5rem;
+      margin: 0 0 1rem;
+    }
+
+    .markdown-section h2 {
+      font-size: 1.35rem;
+      margin: 15px 0 0.8rem;
+    }
+
+    .markdown-section h2 a span {
+      color: #FF8000;
+    }
+
+    .markdown-section h3 a span {
+      color: #F2BD00;
+    }
+  </style>
+  <!-- Theme: Simple Dark -->
+  <!-- <link rel="stylesheet" 
+  href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple-dark.css"> -->
+  <!--<link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/docsify-themeable@0/dist/css/theme-simple.css">-->
+
+<body>
+  <div id="app">
+
+  </div>
+  <script>
+
+    function loadScript(url, callback) {
+      var head = document.head || document.getElementsByTagName("head")[0] || document.documentElement,
+        script,
+        options
+
+      if (typeof url === "object") {
+        options = url;
+        url = undefined;
+      }
+      s = options || {};
+      url = url || s.url;
+      callback = callback || s.success;
+      script = document.createElement("script");
+      script.async = s.async || false;
+      script.type = "text/javascript";
+      if (s.charset) {
+        script.charset = s.charset;
+      }
+      if (s.cache === false) {
+        url = url + (/\?/.test(url) ? "&" : "?") + "_=" + (new Date()).getTime();
+      }
+      script.src = url;
+      head.insertBefore(script, head.firstChild);
+      if (callback) {
+        document.addEventListener ? script.addEventListener("load", callback, false) : script.onreadystatechange = function () {
+          if (/loaded|complete/.test(script.readyState)) {
+            script.onreadystatechange = null
+            callback()
+          }
+        }
+      }
+    }
+
+    window.$docsify = {
+      name: '',
+      repo: '',
+      loadSidebar: true,
+      alias: {
+        //配置后所有页面都会访问根目录的sidebar
+        //'/.*/_sidebar.md': './_sidebar.md'
+        '/.*/_navbar.md': '/_navbar.md'
+      },
+      //侧边栏菜单层级
+      subMaxLevel: 2,
+      loadNavbar: true,//顶部导航
+      coverpage: {
+        '/': '_coverpage.md'
+      },
+      onlyCover: false,
+      search: { paths: 'auto', placeholder: '搜索', noData: '找不到结果', depth: 3, },
+      autoHeader: true,
+      plugins: [
+        function (hook) {
+          hook.ready(function () {
+          });
+          hook.mounted(function () {
+
+          });
+          hook.beforeEach(function (content) {
+            // 每次开始解析 Markdown 内容时调用
+            // ...
+            return content;
+          });
+          hook.doneEach(function () {
+            window.mermaid.run();
+            markmap.autoLoader.renderAll();
+            loadScript('//busuanzi.ibruce.info/busuanzi/2.3/busuanzi.pure.mini.js')
+          });
+          hook.afterEach(function (html, next) {
+
+            next(html);
+          });
+        }
+      ],
+      markdown: {
+        renderer: {
+          code: function (code, lang) {
+            if (lang === "mermaid") {
+              return (
+                '<div class="mermaid">' + code + "</div>"
+              );
+            } else if (lang === 'markmap') {
+              return (
+                '<div class="markmap" style="text-align: center;"> ' + code + "</div>"
+              );
+            }
+            return this.origin.code.apply(this, arguments);
+          }
+
+        }
+      }
+    }
+  </script>
+
+  <script src="./js/docsify.js"></script>
+  <!-- <script src="//cdn.jsdelivr.net/npm/docsify/lib/plugins/emoji.min.js"></script> -->
+  <!-- 全局搜索-->
+  <script src="./js/search.js"></script>
+  <!--java高亮-->
+  <script src="./js/prism-java.min.js"></script>
+  <!--<script src="./js/docsify-sidebarFooter.min.js"></script>-->
+  <!--侧边栏收缩-->
+  <script src="./js/docsify-sidebar-collapse.min.js"></script>
+</body>
+
+</html>

@@ -1,0 +1,66 @@
+<!DOCTYPE html>
+<html lang="ch-zn">
+
+<head>
+    <script src="./sqlBean.js" ></script>
+    <script src="./4.2.0_mustache.js" ></script>
+</head>
+
+<body>
+
+    <script type="text/javascript">
+        function multiTransefer(inputText) {
+            inputText = inputText.toLowerCase();
+            //console.log(inputText);
+            document.getElementById('logAfterId').value = '';
+            tableName = inputText.substring(inputText.indexOf('table')+5, inputText.indexOf('('));
+            if(!tableName) {
+                alert('表获取异常')
+                return
+            }
+            tableName = tableName.replaceAll('`', "").trim()
+            console.log(tableName)
+            //为了避免注解内容影响解析，暂时去除注解
+            var commontReg = new RegExp("(comment )(' ')*(\'){1}([^\'])*(\'){1}", "gm");
+            //console.log(commontReg.exec(inputText))
+            var rx = inputText.match(commontReg)
+            //console.log(rx)
+            var sql = inputText.replace(commontReg, " ")
+            var columnTextArr=cut_start_end_out(sql,"(",")").split(",");
+            var column = []
+            console.log(columnTextArr)
+            for(var i=0; i<columnTextArr.length; i++) {
+                var e = columnTextArr[i]
+                if(e.indexOf('primary')>-1) {
+                    break;
+                }
+                //console.log(get_column(e))
+                column.push(get_column(e, rx[i]))
+            }
+            var temp = {};
+            temp.class_name = formatToHump(tableName).replace("t", " ").trim();
+            temp.columns = column
+            console.log(temp)
+            transform(temp)
+        }
+    </script>
+
+    <div>
+        <textarea style="width:100%;" name="logBefore" id="logBeforeId" rows="10" placeholder="sql"></textarea>
+    </div>
+    <div class="btn-parent">
+        <div class="btn-child">
+            <button type="button" onclick="multiTransefer(document.getElementById('logBeforeId').value)"
+                class="btn btn-success">转换</button>
+            <button type="button" onclick="clearContent()" class="btn btn-danger">清除</button>
+        </div>
+    </div>
+    <div>
+        <textarea style="width:100%;" name="logAfter" id="logAfterId" rows="50" placeholder="转换后的Bean"></textarea>
+    </div>
+
+
+
+</body>
+
+</html>

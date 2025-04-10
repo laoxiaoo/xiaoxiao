@@ -1,0 +1,23 @@
+
+import lombok.Getter;
+import lombok.Setter;
+import lombok.ToString;
+
+/**
+ * @author
+ * @date 2023-07-18 16:16
+ */
+ @Getter
+ @Setter
+ @ToString
+ public class {{class_name}} {
+     {{#columns}}
+    /**
+     * {{comment}}
+     */
+     private {{java_type}} {{name}};
+
+     
+     {{/columns}}
+ }
+ 
