@@ -17,6 +17,8 @@
 
 **类在JVM中的生命周期为：加载，连接，初始化，使用，卸载**
 
+可以参考：[加载过程](/java/java-base/jvm/doc/2-jvm?id=加载过程)
+
 # JRE JDK关系
 
 - JDK包含了JRE,JDK有编译器等（java开发工具）
@@ -46,14 +48,14 @@ JRE(Java Runtime Enviroment)是Java的运行环境。面向Java程序的使用�
 # JVM结构
 
 - class 文件通过class loader加载到内存中
-- 内存中
-  - 多线程之间，方法区和堆是共享的
-  - 每个线程独有一份计数器和栈
-  - java的指令是基于栈实现的（**主要考虑夸平台性**）
+- 在内存中
+  1. 多线程之间，方法区和堆是共享的
+  2. 每个线程独有一份计数器和栈
+  3. java的指令是基于栈实现的（**主要考虑夸平台性**）
 
 # 类加载过程
 
-[类加载大致过程](/java/java/base/jvm/java/2-jvm?id=加载过程)
+[类加载大致过程](/java/java-base/jvm/doc/2-jvm?id=加载过程)
 
 
 
@@ -74,3 +76,5 @@ JRE(Java Runtime Enviroment)是Java的运行环境。面向Java程序的使用�
   - 虚拟机线程
   - 周期任务线程
   - GC线程（后台线程/守护线程）
+
+

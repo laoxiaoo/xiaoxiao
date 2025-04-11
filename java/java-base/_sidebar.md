@@ -1,9 +1,9 @@
 * jvm
-    * [jvm基础](/java/java/base/jvm/doc/1-jvm)
-    * [类加载子系统](/java/java/base/jvm/doc/2-jvm)
-    * [运行时数据区](/java/java/base/jvm/doc/3-rundata)
+    * [jvm基础](/java/java-base/jvm/doc/1-jvm)
+    * [类加载子系统](/java/java-base/jvm/doc/2-jvm)
+    * [运行时数据区](/java/java-base/jvm/doc/3-rundata)
     * [对象](/java/java/base/jvm/doc/4-object)
-    * [String Table](/java/java/base/jvm/doc/5-jvm)
+    * [String Table](/java/java/jvm/doc/5-jvm)
     * [字节码文件](/java/java/base/jvm/doc/6-classfile)
     * [gc](/java/java/base/jvm/doc/7-gc)
     * [类加载器](/java/java/base/jvm/doc/8-classload)

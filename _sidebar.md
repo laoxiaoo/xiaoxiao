@@ -2,13 +2,7 @@
 * [JAVA基础](/java/java-base/)
 
 * [JAVA IO](/java/java-io/)
-* Mybatis
-  * [原生JDBC](/java/java/mybatis/1-jdbc)
-  * [自定义持久层](/java/java/mybatis/1-custom-persistence)
-  * [架构设计](/java/java/mybatis/2-architecture)
-  * [基本应用](/java/java/mybatis/3-advanced-application)
-  * [插件](/java/java/mybatis/4-plugin)
-  * [高级应用](/java/java/mybatis/5-cache)
+* [Mybatis](/java/java-mybatis/)
 * Spring
     * [Spring](/java/java/spring/java/)
     * [SpringBoot](/java/java/spring/SpringBoot.md)

@@ -341,6 +341,11 @@ ChannelHandler一般分为两种，
 > handler的顺序问题
 
 - 此处打印的日志  h1  h2  h4  h3，由此可见队列的顺序为  `head -> h1 -> h2 -> tail -> h4 -> h3 `
+
+代码：com.xiao.netty.sort.SortHandlerServer
+
+![image-20250410140855662](image/2-netty-base/image-20250410140855662.png)
+
 - <b id="gray">pipeline</b>的链表是一个双向链表，*Inbound*从*head*往后面执行<b id="blue">channelRead</b>方法，而 *Outbound*则从*tail*往前面执行<b id="blue">write</b>方法
 
 ![image-20220503220555603](image/2-netty/image-20220503220555603.png)
@@ -447,24 +452,32 @@ ch.pipeline().addLast("I2",new SimpleChannelInboundHandler<Student>() {
 });
 ```
 
+# 测试调用
+
+可以运用：<b id="blue">EmbeddedChannel </b>来进行handle的模拟调用
+
+代码示例：com.xiao.netty.channel.TestEmbeddedChannel
+
 # ByteBuf
+
+Netty的`ByteBuf`是其核心数据容器，专为高效网络通信设计，相较于Java NIO的`ByteBuffer`，它在功能、性能及灵活性上均有显著提升。以下是其核心特性及使用要点：
 
 ## 创建
 
-> 创建
->
-> **ByteBuf的容量是可以动态扩容的**
+### 创建方式
+
+ByteBuf的容量是可以动态扩容的
 
 ```java
 //创建初始容量为10
 ByteBuf buffer = ByteBufAllocator.DEFAULT.buffer(10);
 ```
 
-> 直接内存 vs 堆内存
->
-> **堆内存易分配读写慢**
->
-> **直接内存创建和销毁的代价昂贵，但读写性能高**
+### 直接内存 vs 堆内存
+
+堆内存易分配读写慢
+
+直接内存创建和销毁的代价昂贵，但读写性能高
 
 ```java
 ByteBuf buffer = ByteBufAllocator.DEFAULT.heapBuffer(10);

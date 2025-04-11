@@ -837,6 +837,8 @@ public class ThreadServer {
 
 ![20210615203422](image/1-nio/20210615203422.png)
 
+![image-20250410151336132](image/1-nio/image-20250410151336132.png)
+
 > NIO优化
 >
 > `ByteBuffer.allocateDirect(10) DirectByteBuffer使用的是操作系统内存`
