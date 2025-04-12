@@ -1,13 +1,12 @@
-﻿* [首页](/)
+﻿
 * [JAVA基础](/java/java-base/)
 
 * [JAVA IO](/java/java-io/)
 * [Mybatis](/java/java-mybatis/)
-* Spring
-    * [Spring](/java/java/spring/java/)
-    * [SpringBoot](/java/java/spring/SpringBoot.md)
-	* [AOP](/java/java/spring/aop/)
-    * [SpringMvc](/java/java/spring/SpringMvc.md)
+* [Spring](/java/spring/)
+* [SpringBoot](/java/java/spring/SpringBoot.md)
+* [AOP](/java/java/spring/aop/)
+* [SpringMvc](/java/java/spring/SpringMvc.md)
 * 微服务
   * [dubbo](/java/java/spring/dubbo/)
 * Spring Cloud

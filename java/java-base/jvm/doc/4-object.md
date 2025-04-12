@@ -3,13 +3,15 @@
 
 ## 对象创建方式
 
-- new 
-  - 变形1：xxx的静态方法
-  - 变性2：xxxbuilder/xxxfactory
-- Class的newInstance()(反射的方式，只能调用空参的构造器，权限必须是public)
-- Constructor的newInstance()
-  - 可以调用空参和带参的构造器
-  - 权限没有要求
+1. new 
+   1. 变形1：xxx的静态方法
+   2. 变性2：xxxbuilder/xxxfactory
+
+2. Class的newInstance()(反射的方式，只能调用空参的构造器，权限必须是public)
+3. Constructor的newInstance()
+   1. 可以调用空参和带参的构造器
+   2. 权限没有要求
+
 
 ```java
 //调用有参的构造方法生成类实例
@@ -179,7 +181,7 @@ Object o1 = weakReference.get();
 
 - 相关类：WeakHashMap
 
-### 虚引用
+## 虚引用
 
 虚引用(PhantomReference) :一个对象是否有虚引用的存在，完全不会对其生存时间构成影响，也无法通过虚引用来获得一个对象的实例。**为一个对象设置虚引用关联的唯一目的就是能在这个对象被收集器回收时收到一个系统通知。**（用来对象回收跟踪）
 
@@ -190,7 +192,6 @@ PhantomReference<Object> reference = new PhantomReference<>(o, referenceQueue);
 //一旦将Object对象回收，就会将虚引用存放到ReferenceQueue队列
 o = null;
 ```
-
 
 
 

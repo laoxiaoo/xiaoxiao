@@ -1,7 +1,8 @@
 # String基本特性
 
-1. Jdk8 char数组存储， Jdk9 byte数组存储
-   1. 因为大部分的String存储的是拉丁文，占一个字节
+1. Jdk8的底层采用char数组存储， Jdk9 byte数组存储
+   1. 原因：因为大部分的String存储的是拉丁文，占一个字节
+
 2. `字符串常量池不会存储相同的字符串`
    1. String Pool底层是一个固定大小的**HashTable**(StringTable:链表+数组的方式存储)
    2. jvm更改StringTable的大小：-XX:StringTableSize

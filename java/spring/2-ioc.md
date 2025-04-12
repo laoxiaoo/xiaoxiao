@@ -8,8 +8,17 @@
 
 # IOC和DI的区别
 
-- IOC是站在对象的角度，对象实例化及其管理的权利交给了（反转)给了容器
-- 容器会把对象依赖的其他对象注入(送进去)，比如A对象实例化过程中因为声明了一个B类型的属性，那么就需要容器把B对象注入给A
+IOC（控制反转）和 DI（依赖注入）是 Spring 框架中两个核心概念
+
+- IOC:
+  - 定义:一种**设计思想**，将对象的创建、依赖关系管理及生命周期的控制权从程序代码转移到外部容器（如 Spring 容器）
+  - **本质**：通过“反转控制权”实现解耦，开发者不再需要手动管理对象之间的依赖关系，而是由容器统一调度
+  - 示例：传统编码中，类 A 直接创建类 B 的实例，而 IOC 模式下，类 A 仅声明需要类 B，由容器负责提供 B 的实例
+
+- DI：
+  - 定义：一种**具体技术手段**，用于在运行时动态将依赖对象注入到目标对象中（如通过构造函数、Setter 方法等）
+  - **本质**：通过外部注入的方式解决对象间的依赖关系，是 IOC 思想的具体实现形式之一
+  - **示例**：若类 A 依赖类 B，容器会在创建 A 实例时自动将 B 实例注入到 A 中（如通过 `@Autowired` 注解）
 
 # IOC依赖来源
 
@@ -87,7 +96,8 @@ class com.xiao.entry.TestBean ...
 - 手动模式
   - xml资源模式  <bean name></bean>
   - java注解模式 @Bean
-  - API配置原信息：applicationContext.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+  - API配置元信息：applicationContext.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
+- API配置元信息的方式
 
 ```tex
  命名的方式： registry.registerBeanDefinition(name, beanDefinitionBuilder.getBeanDefinition());
@@ -371,7 +381,7 @@ public class App2
 > singleton
 
 1. 主要是由BeanDefinition#isSingleton来进行元信息的判断
-2. singleton 查找和注入都是同一个同一个对象
+2. singleton 查找和注入都是同一个对象
 3. prototype 查找和注入 都是新生成的对象
 4. singleton 有init和destroy  
 5. prototype只有init

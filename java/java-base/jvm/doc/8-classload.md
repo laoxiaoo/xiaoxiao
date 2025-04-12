@@ -1,5 +1,7 @@
 #
 
+相关代码；[stu-java-base/stu-java8/src/main/java/com/xiao/jvm/classLoader · 小肖/learning - 码云 - 开源中国](https://gitee.com/xiaojihao/learning/tree/master/stu-java-base/stu-java8/src/main/java/com/xiao/jvm/classLoader)
+
 # 类生命周期
 ![](./image/202162220201.png)
 
@@ -286,23 +288,37 @@ Stream.of(urLs).forEach(url -> System.out.println(url.toExternalForm()));
 
 ## 破坏双亲委派
 
-> 重写loadClass方法
+1. 重写loadClass方法
 
 - 自定义类加载器重写loadClass可以破坏loadClass
   - 不过我们尽量重写findClass，不要破坏
 
-> JAVA SPI 方式
+```java
+public class MyClassLoader extends ClassLoader {
+    @Override
+    public Class<?> loadClass(String name) throws ClassNotFoundException {
+        // 跳过父类委派，直接加载指定类
+        if (name.startsWith("com.example")) {
+            return findClass(name);
+        }
+        return super.loadClass(name);
+    }
+}
+```
 
-Serverloader.load里优先使用当前线程的类加载器而不是自身使用的类加载器来加载类，优先使用当前线程的类加载器而不是自身使用的类加载器来加载
 
 
-> 双亲委派模型的第三次“被破坏”是由于用户对程序动态性的追求而导致的。如:代码热替换(Hot Swap〉、模块热部署（Hot Deployment）等
+2. JAVA SPI 方式
+
+- Serverloader.load里优先使用当前线程的类加载器而不是自身使用的类加载器来加载类
+
+3. 双亲委派模型的第三次“被破坏”是由于用户对程序动态性的追求而导致的。如:代码热替换(Hot Swap〉、模块热部署（Hot Deployment）等
 
 - 热替换：修改程序文件立即生效（如：js）
 - 热部署
 
 ## 相关面试题
 
-在java.lang包下建立一个自定义String类，直接去new，能使用么？
+1. 在java.lang包下建立一个自定义String类，直接去new，能使用么？
 
 答：不能，因为java.lang.String是由引导类加载的，此时，自定义类的不会被加载（父类加载器能被加载，子类加载器就不会再加载了）
