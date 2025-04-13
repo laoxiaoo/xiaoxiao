@@ -1,16 +1,39 @@
+
+
+# Servlet3.0
+
+[servlet](/java/spring/8-servlet)
+
 # 请求流程
+
+中心类：DispatcherServlet
 
 - 初始化时，将controller和requestmapping的注解以map形式存入handler中
 - 查找适配器：处理不同方式注册的controller，找到对应的controller后，调用对应的方法，返回对应的modeandview
 - 通过viewresolver来解析视图
 
-![](./springmvc/20190720131039.png)
+如下：
+
+第2步：
+
+- 返回的handler是一个<b id="blue">HandlerExecutionChain</b>
+  - 包括：HandlerInterceptor(拦截器)集合和handler（映射方法）
+
+ModelAndView:请求域的数据和视图
+
+![image-20250413150004250](image/SpringMvc/image-20250413150004250.png)
+
+
+
+
+
+
 
 # DispatcherServlet
 
 
 
-![](../image/springmvc/20190720132419.png)
+![](./springmvc/20190720132419.png)
 
 我们发现，FrameworkServlet都实现了doget方法，最终走processRequest这个方法
 

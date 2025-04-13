@@ -1,5 +1,9 @@
 #
 
+# aop原理
+
+
+
 >  EnableAspectJAutoProxy
 
 1. Spring的Aop起源于@EnableAspectJAutoProxy注解
@@ -28,7 +32,7 @@ public @interface EnableAspectJAutoProxy
 
  JdkDynamicAopProxy/CglibAopProxy将每一个通知方法又被包装为方法拦截器，形成一条责任链调用
 
-# aop原理
+
 
 
 

@@ -4,8 +4,8 @@
 * [JAVA IO](/java/java-io/)
 * [Mybatis](/java/java-mybatis/)
 * [Spring](/java/spring/)
+* [AOP](/java/spring-aop/)
 * [SpringBoot](/java/java/spring/SpringBoot.md)
-* [AOP](/java/java/spring/aop/)
 * [SpringMvc](/java/java/spring/SpringMvc.md)
 * 微服务
   * [dubbo](/java/java/spring/dubbo/)

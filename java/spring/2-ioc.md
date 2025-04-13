@@ -477,3 +477,19 @@ public class ThreadLocalScopeDemo {
 }
 ```
 
+> 自定义作用域的作用：
+
+1. 路由作用域（Route Scope）
+
+   每个路由请求（如 HTTP 路径）创建独立的 Bean 实例，适用于多租户或动态路由场景
+
+2. 线程作用域（Thread Scope）
+
+   每个线程拥有独立的 Bean 实例，适用于多线程环境（如并发任务处理）
+
+3. 页面作用域（Page Scope）
+
+   每个 Web 页面请求创建新的 Bean 实例，用于管理页面级状态
+
+4. 继承线程作用域（Inherited Thread Scope）
+   在父线程与子线程间传递 Bean 实例，适用于异步任务链

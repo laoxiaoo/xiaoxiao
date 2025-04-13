@@ -80,7 +80,7 @@ protected final void refreshBeanFactory() throws BeansException {
       beanFactory.setSerializationId(getId());
       //是否允许beandefinition重复定义和是否允许循环依赖的属性设置
       customizeBeanFactory(beanFactory);
-      //从xml中加载eandefinition的信息
+      //从xml中加载beandefinition的信息
       loadBeanDefinitions(beanFactory);
       synchronized (this.beanFactoryMonitor) {
          this.beanFactory = beanFactory;
@@ -112,7 +112,7 @@ beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 
 *AbstractApplicationContext#invokeBeanFactoryPostProcessors*:
 
-- 这一步会调用 beanFactory 后置处理器（beanFactory 后置处理器，充当 beanFactory 的扩展点，可以用来补充或修改 BeanDefinition）
+- 这一步会调用 beanFactory 后置处理器（beanFactory 后置处理器，充当 beanFactory 的扩展点，`可以用来补充或修改 BeanDefinition`）(spring的注解模式基于此)
 
 - 执行BeanDefinitionRegistryPostProcessor#postProcessBeanDefinitionRegistry
 - 然后再执行BeanFactoryPostProcessor#postProcessBeanFactory
@@ -224,7 +224,7 @@ processImports(configClass, sourceClass, getImports(sourceClass), filter, true);
 
 ```
 
-## Bean对象创建流程
+## Bean实例化流程
 
 入口方法：org.springframework.context.support.AbstractApplicationContext#finishBeanFactoryInitialization
 
@@ -239,9 +239,8 @@ protected void finishBeanFactoryInitialization(ConfigurableListableBeanFactory b
 
 2. 调用org.springframework.beans.factory.support.DefaultListableBeanFactory#preInstantiateSingletons方法
 
-   - 遍历获取容器中所有的Bean，依次创建对象getBean(beanName);
-
-   - getBean->doGetBean()->getSingleton()->
+   1. 遍历获取容器中所有的Bean，依次创建对象getBean(beanName);
+2. 在所有bean实例化后，遍历所有beanName：触发所有SmartInitializingSingleton实例化后后置处理器方法afterSingletonsInstantiated();
 
 ```java
 public void preInstantiateSingletons() throws BeansException {
@@ -264,7 +263,16 @@ public void preInstantiateSingletons() throws BeansException {
 }
 ```
 
-3. 从getBean进来，调用org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean
+3. getBean->doGetBean()->getSingleton()->
+
+   1. 从getBean进来，调用org.springframework.beans.factory.support.AbstractBeanFactory#doGetBean
+
+   <b id="blue">doGetBean</b>主要做的事情：
+
+   1. 尝试从缓存中获取bean
+   2. 循环依赖判断
+   3. 递归去父容器获取bean实例
+   4. 从当前容器获取beandefinition实例
 
 ```java
 protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredType,
@@ -275,8 +283,12 @@ protected <T> T doGetBean(final String name, @Nullable final Class<T> requiredTy
    Object bean;
 
    // 单纯理解尝试从缓存中获取bean
+   // Spring创建bean的原则是不等bean创建完成就会将创建bean的ObjectFactory提早曝光
+   //如果存在循环依赖, 那么缓存中存在, 存在的对象是2种情况: 1)未属性注入的普通bean 2)经过AOP的代理对象
    Object sharedInstance = getSingleton(beanName);
    if (sharedInstance != null && args == null) {
+      // 如果beanName的实例存在于缓存中,且Bean还在创建中，则说明是循环引用
+      //如果是普通bean，直接返回，如果是FactoryBean，则返回它的getObject
       bean = getObjectForBeanInstance(sharedInstance, name, beanName, null);
    }
 
@@ -435,13 +447,15 @@ private final Map<String, ObjectFactory<?>> singletonFactories = new HashMap<>(1
 private final Map<String, Object> earlySingletonObjects = new HashMap<>(16);
 ```
 
+三级缓存的value 是一个ObjectFactory， 从缓存中取出（getSingleton）时，会调用ObjectFactory.getObject方法，得到对象，这种设计的作用，是为了有AOP的情况下，可以返回代理对象
+
 > 实现过程：
 
 A对象依赖B对象， B对象依赖A对象
 
-1. A对象实例化后立马将自己放入三级缓存中（`提前暴露自己`）,然后去实例化B
+1. A对象实例化后立马将自己包装成ObjectFactory，放入三级缓存中（`提前暴露自己`）,`在属性设置的时候`发现需要B， 然后去实例化B
 
-2.  B实例化后，`在属性设置的时候`发现需要A，于是B先查一级缓存，没有，再查二级缓存，还是没有，再查三级缓存，找到了A然后把三级缓存里面的这个A放到二级缓存里面，并删除三级缓存里面的A
+2.  B实例化后，同样将自己放入三级缓存中，`在属性设置的时候`发现需要A，于是B先查一级缓存，没有，再查二级缓存，还是没有，再查三级缓存，找到了A的包装ObjectFactory，调用AObjectFactory的方法获取A放到二级缓存里面，并删除三级缓存里面的A
 3. B顺利初始化完毕，将自己放到一级缓存里面（此时B里面的A依然是创建中状态,然后回来接着创建A，此时B已经创建结束，直接从一级缓存里面拿到B，然后完成创建，并将A自己放到一级缓存里面。
 
 > 源码解析
@@ -459,6 +473,8 @@ if (mbd.isSingleton()) {
 ```
 
 2. 进入org.springframework.beans.factory.support.AbstractAutowireCapableBeanFactory#createBean方法，实例化bean
+   1. 从三级缓存调用，调用getObject方法获取bean，实际调用的AbstractAutowireCapableBeanFactory#getEarlyBeanReference方法
+
 
 ```java
 protected Object doCreateBean(final String beanName, final RootBeanDefinition mbd, final @Nullable Object[] args)

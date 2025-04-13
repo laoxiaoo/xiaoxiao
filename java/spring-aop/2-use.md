@@ -1,4 +1,50 @@
-# Spring 对Aspectj的支持，是它的注解的支持，不是对它的编译器和语法的支持
+
+# 
+
+Spring 对Aspectj的支持，是它的注解的支持，不是对它的编译器和语法的支持
+
+# 注解方式的使用
+
+```java
+@Component
+@Aspect
+@Slf4j
+public class AnnotationAspect {
+
+    @Pointcut("execution(public void com.xiao.aop.service.AopService.*(..)) ")
+    public void pointCut(){
+    }
+
+    @Before("pointCut()")
+    public void before(JoinPoint joinPoint) {
+        log.debug("==> before....");
+    }
+
+    @After("pointCut()")
+    public void after(JoinPoint joinPoint) {
+        log.debug("==> after....");
+    }
+
+    @AfterReturning(pointcut = "pointCut()", returning = "ret")
+    public void returning(JoinPoint joinPoint, Object ret){
+        log.debug("==> retuning");
+    }
+
+    @Around("pointCut()")
+    public void around(ProceedingJoinPoint joinPoint) throws Throwable {
+        log.debug("=> around");
+        Object proceed = joinPoint.proceed();
+        
+    }
+
+    @AfterThrowing(value = "pointCut()", throwing = "exception")
+    public void throwing(JoinPoint joinPoint, Exception exception) {
+        log.debug("==> throwing");
+    }
+}
+```
+
+
 
 # Aop Api整体设计
 
@@ -349,5 +395,4 @@ org.springframework.aop.framework.AopContext
 -  isCglibProxy： 是否为CGLIB代理对象
 -  getTargetClass： 从对象中获取目标类型
 -  invokeJoinpointUsingReflection：使用Java反射调用Joinpoint(目标方法)
-
 

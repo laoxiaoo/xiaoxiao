@@ -88,3 +88,12 @@ applicationContext.close();
 > 两个类都继承自AbstractXmlApplicationContext
 
 调用AbstractXmlApplicationContext#loadBeanDefinitions最终调用XmlBeanDefinitionReader#doLoadBeanDefinitions
+
+> 可以参考
+
+[Beanfactory创建阶段](/java/spring/3-springbean?id=refresh过程)
+
+
+
+# 从注解中加载Bean信息
+
