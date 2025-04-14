@@ -102,7 +102,7 @@ protected void launch(String[] args) throws Exception {
 
 # 自动装配
 
-## 启动类源码解析
+## 源码解析
 
 主程序入口，进入@SpringBootApplication注解源码
 
@@ -172,7 +172,7 @@ public @interface AutoConfigurationPackage
 
 - Registrar的父接口ImportBeanDefinitionRegistrar
   - 只能通过其他类@Import的方式来加载，通常是启动类或配置类
-  - 使用@Import，如果括号中的类是ImportBeanDefinitionRegistrar的实现类，则会调用接口方法，将其中要注册的类注册成bean
+  - 使用@Import，如果括号中的类是ImportBeanDefinitionRegistrar([参考资料](/java/spring/3-springbean?id=importbeandefinitionregistrar))的实现类，则会调用接口方法，将其中要注册的类注册成bean
   - 实现该接口的类拥有注册bean的能力
 
 new PackageImport(metadata).getPackageName()，它其实返回了当前主程序类的 *同级以及子级* 的包组件

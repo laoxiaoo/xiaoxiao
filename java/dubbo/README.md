@@ -136,9 +136,13 @@ private UserService userService;
 
 ## 本地存根
 
-在consumer端调用provide端的service时，先经过consumer层的service，判断是否符合条件，再调用provide端的service
+本地存根（Stub）是Dubbo中的一个功能，允许在客户端执行部分逻辑。比如参数校验、缓存或者容错处理。看起来它类似于AOP的环绕通知，在调用远程服务前后添加自定义逻辑
+
+比如：在consumer端调用provide端的service时，先经过consumer层的service，判断是否符合条件，再调用provide端的service
 
 代码（consumer）:
+
+stub：指向consumer自定义逻辑的实现类
 
 ```java
 @Reference(stub = "com.xiao.service.impl.UserServiceImp")
@@ -195,7 +199,7 @@ Dubbo 服务在尝试调用一次之后，如出现非业务异常(服务突然�
 
 # 服务降级
 
-``当服务器压力剧增的情况下根据实际业务情况及流量，对士些服务和页面有策略的不处理或换和简单的方式处理,从而释放服务器资源以保证核心交易正常运作或高效运作。``
+`当服务器压力剧增的情况下根据实际业务情况及流量，对这些服务和页面有策略的不处理或换成简单的方式处理,从而释放服务器资源以保证核心交易正常运作或高效运作。`
 
 需要在admin的控制台配置
 
@@ -215,24 +219,50 @@ mock=force:return+null表示消费方对该服务的方法调用都直接返回n
 
 # dubbo原理
 
+## RPC的过程
+
+![image-20250414162805970](image/README/image-20250414162805970.png)
+
+1. *Client 客户端* 通过调用本地服务的方式调用需要消费的服务
+2. *Client Stub 代理* 接收到调用请求后负责将方法，入参等信息序列化(组装)成能够进行网络传输的消息体
+3. *Client Stub 代理* 找到远程的服务地址，并且将消息通过网络发送给服务端
+4. *Server Stub 服务端骨架* 收到消息后进行解码(反序列化操作)
+5. *Server Stub 服务端骨架* 根据解码结果调用本地的服务进行相关处理
+6. *Server 服务端* 执行具体业务逻辑并将处理结果返回给 *Server Stub 服务端骨架*
+7. *Server Stub 服务端骨架* 将返回结果重新打包成消息(序列化)并通过网络发送至消费方
+8. *Client Stub 存根* 接收到消息，并进行解码(反序列化);
+9. *Client Stub 存根*  将解码后的结果返回给 *Client 客户端*
+
+
 ## 整体设计
 
 ![image-20220712145350375](image/README/image-20220712145350375.png)
 
-1. service ： 暴露给用户调用的一层，通过接口，调用远程的方法
+1. service：暴露给用户调用的一层，通过接口，调用远程的方法
 2. config: 配置层，配置层收集配置信息
 3. proxy: 代理层，通过代理的方式，生成客户端的代理对象
 4. registry：注册中心层，生产者服务注册进入注册中心，消费者从注册中心发现注册服务
 5. cluster:路由层，调用者通过路由的算法负载均衡的方式调用消费者
-6. monitor:监控层，每一次调用都能在监控中心看到
+6. monitor:监控层，每一次调用都能在监控中心看到，监控层可以以监控数据的方式提供界面查阅
 7. protoco: 远程调用层，封装整个RPC调用
 8. exchange：通信层，架起NIO的通信管道
 9. transport： 传输层，通过transporter传输
 10. serialize: 序列化层
 
+
+
 ## 初始化流程
 
-> @EnableDubbo,会import DubboConfigConfigurationRegistrar的bean，这个bean有个bind的注解
+### Spring Boot 版本
+
+1. @EnableDubbo impot <b id="blue">DubboConfigConfigurationRegistrar</b>bean
+2.  DubboConfigConfigurationRegistra注入DubboConfigConfiguration
+
+```java
+registerBeans(registry, DubboConfigConfiguration.Single.class);
+```
+
+
 
 ```java
 @EnableConfigurationBeanBindings({
@@ -250,16 +280,48 @@ mock=force:return+null表示消费方对该服务的方法调用都直接返回n
 })
 ```
 
-EnableConfigurationBeanBinding会import这些注解上的bean,然后将配置信息封装到这些属性里面
+EnableConfigurationBeanBinding解析：例如第一条：将dubbo.application下的所有属性值都映射到`ApplicationConfig`这个类里面
 
-> @DubboComponentScan注解import了DubboComponentScanRegistrar
+那么，上面的代码含义就是，将相关的属性配置映射到实体类中
 
-1. 这个注解注入了ServiceAnnotationBeanPostProcessor、ReferenceAnnotationBeanPostProcessor等BeanDefinitionRegistryPostProcessor的实现类
-2. 可以在bean定义结束后，再新增一些bean的定义
+3. @EnableDubbo同时是@DubboComponentScan子注解，@DubboComponentScan注解import了DubboComponentScanRegistrar
+   1.  DubboComponentScanRegistrar实现了ImportBeanDefinitionRegistrar（[importbeandefinitionregistrar](/java/spring/3-springbean?id=importbeandefinitionregistrar)），可以编程的方式注入beandefinition
+   1.  这个注解注入了一些BeanPostProcessor后置处理器，如：ServiceAnnotationBeanPostProcessor、ReferenceAnnotationBeanPostProcessor等
+   1.  可以在bean定义结束后，再新增一些bean的定义
 
-> >  BeanDefinitionRegistryPostProcessor
+<b id="blue">ServiceAnnotationBeanPostProcessor</b>：这个bean其实跟`@ComponentScan`注解的处理类逻辑是差不多的，扫描`@Service`等注解，除了这些之外，这个bean还添加了处理Dubbo的`com.alibaba.dubbo.config.annotation.Service`注解
 
-这个processor将包路径下的dubboservice相关注解，和ServiceBean/DubboBootstrapApplicationListener的bean
+<b id="blue">ReferenceAnnotationBeanPostProcessor</b>：这个bean是用来给`@Reference`注解标注的属性中注入值的
+
+
+
+ServiceAnnotationBeanPostProcessor：
+
+老版本：
+
+1. 主要将 @DubboService 标注的服务创建BeanDefinitionHolder，用于后续生成 ServiceBean 定义。
+
+```java
+Set<BeanDefinitionHolder> beanDefinitionHolders =
+        findServiceBeanDefinitionHolders(scanner, packageToScan, registry, beanNameGenerator);
+```
+
+2. 注册 ServiceBean 定义并做属性绑定。ServiceBean 主要作用Spring启动后的服务暴露，每一个服务都会对应一个ServiceBean，主要封装的服务的一些标签属性如 interfaceClass、methods、retries等。（老版本）
+
+```java
+for (BeanDefinitionHolder beanDefinitionHolder : beanDefinitionHolders) {
+    registerServiceBean(beanDefinitionHolder, registry, scanner);
+}
+```
+
+新版本：
+
+注入了DubboBootstrapApplicationListener
+
+```java
+// @since 2.7.5
+registerInfrastructureBean(registry, DubboBootstrapApplicationListener.BEAN_NAME, DubboBootstrapApplicationListener.class);
+```
 
 ## 服务暴露流程
 
@@ -273,11 +335,41 @@ EnableConfigurationBeanBinding会import这些注解上的bean,然后将配置信
 
 上面的是老版本
 
-> DubboBootstrapApplicationListener
+<b id="blue">DubboBootstrapApplicationListener</b>
 
 它实现了ApplicationListener，发布事件onApplicationEvent调用DubboBootstrap#start
 
-1. 在ServiceConfig#doExportUrls中获取暴露的协议，进行循环暴露
+1. 如果是ApplicationContextEvent事件，则进行调用
+
+```java
+public final void onApplicationEvent(ApplicationEvent event) {
+    if (isOriginalEventSource(event) && event instanceof ApplicationContextEvent) {
+        onApplicationContextEvent((ApplicationContextEvent) event);
+    }
+}
+```
+
+调用：容器刷新或者容器调用触发对应方法
+
+```java
+public void onApplicationContextEvent(ApplicationContextEvent event) {
+    if (event instanceof ContextRefreshedEvent) {
+        onContextRefreshedEvent((ContextRefreshedEvent) event);
+    } else if (event instanceof ContextClosedEvent) {
+        onContextClosedEvent((ContextClosedEvent) event);
+    }
+}
+```
+
+2. 在onContextRefreshedEvent中，调用DubboBootstrap#start
+
+```java
+private void onContextRefreshedEvent(ContextRefreshedEvent event) {
+    dubboBootstrap.start();
+}
+```
+
+1. 在start方法中调用exportServices，然后exportServices中调用ServiceConfig#export，然后在ServiceConfig#doExportUrls中获取暴露的协议，进行循环暴露
 
 ```java
 for (ProtocolConfig protocolConfig : protocols) {

@@ -7,8 +7,8 @@
 * [AOP](/java/spring-aop/)
 * [SpringBoot](/java/java/spring/SpringBoot.md)
 * [SpringMvc](/java/java/spring/SpringMvc.md)
-* 微服务
-  * [dubbo](/java/java/spring/dubbo/)
+* [Dubbo](/java/dubbo/)
+
 * Spring Cloud
     * [SpringCloud2018](/java/java/spring/SpringCloud.md)
     * [注册中心](/java/java/springcloud/register.md)

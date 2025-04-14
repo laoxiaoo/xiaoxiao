@@ -759,3 +759,44 @@ public TestBean testBean(){
 Ordered
 
  
+
+# ImportBeanDefinitionRegistrar
+
+允许开发人员以编程方式注册额外的Bean定义，使得应用上下文在启动时能够动态地加载和管理Bean。
+
+## 核心方法
+
+- `AnnotationMetadata metadata`：包含有关当前正在处理的注解类的元数据信息，如注解的属性值、类名等。
+- `BeanDefinitionRegistry registry`：允许将新的Bean定义注册到Spring[容器](https://cloud.tencent.com/product/tke?from_column=20065&from=20065)中。
+
+```java
+void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry);
+```
+
+## 举例
+
+```java
+
+public class Registrar implements ImportBeanDefinitionRegistrar {
+
+    @Override
+    public void registerBeanDefinitions(AnnotationMetadata metadata, BeanDefinitionRegistry registry) {
+        // 在此处编写动态注册Bean的逻辑
+        // 例如根据条件注册不同的Bean
+    }
+}
+```
+
+## 使用
+
+要使用ImportBeanDefinitionRegistrar，可以将实现了该接口的类注入到`@Import`注解中，通常是通过@Configuration类来实现
+
+```java
+
+@Configuration
+@Import(Registrar.class)
+public class AppConfig {
+    // 其他配置或Bean定义
+}
+```
+
