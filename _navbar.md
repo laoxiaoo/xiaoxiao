@@ -1,11 +1,12 @@
 
-* 语言项
+* Language
     * [JAVA](/README)
     * [C++](/c++/README)
     * [GO语言](/golang/README)
 
-* [Mysql](/database/mysql/)
-
+* 数据库
+    * [Mysql](/database/mysql/)
+    * [Redis](/database/redis/)
 * 工具
     * [Mybatis日志转换](/xiaoxiao/html/sql.html ':ignore')
     * [JSON编辑](/xiaoxiao/html/json/index.html ':ignore')

@@ -6,7 +6,7 @@
 
 原子性的体现在于回滚，innodb操作会产生undo log 文件，记录sql的数据信息
 
-1. 一效性 （ consistency)  
+1. 一致性 （ consistency)  
    1. 是数据库追求的最终目标，也就是说数据操作后的状态要是合法的
 2. 隔离性（ isolation)  
    1. 写-写：锁方式

@@ -387,6 +387,29 @@ for (ProtocolConfig protocolConfig : protocols) {
 
 ## 服务引用流程
 
+1. ReferenceAnnotationBeanPostProcessor 实现了
+    InstantiationAwareBeanPostProcessor 接口，所以在 Spring 的 Bean 中初始化前会触发 postProcessPropertyValues 方法， 该方法允许我们做进一步处理，比如增加属性和属性值修改等
+
+```java
+public PropertyValues postProcessPropertyValues(
+        PropertyValues pvs, PropertyDescriptor[] pds, Object bean, String beanName) throws BeanCreationException {
+	//触发字段或反射方法值的注入， 字段处理会调用 findFieldAnnotationMetadata方法
+    InjectionMetadata metadata = findInjectionMetadata(beanName, bean.getClass(), pvs);
+    try {
+        //调用AnnotatedFieldElement#inject，创建代理类进行注入
+        metadata.inject(bean, beanName, pvs);
+    } catch (BeanCreationException ex) {
+        throw ex;
+    } catch (Throwable ex) {
+        throw new BeanCreationException(beanName, "Injection of @" + getAnnotationType().getSimpleName()
+                + " dependencies is failed", ex);
+    }
+    return pvs;
+}
+```
+
+> 调用inject方法，会调用，org.apache.dubbo.config.ReferenceConfig#get进行代理类的生成
+>
 > 服务引用先看ReferenceBean
 
 1. 他是FactoryBean的实现这，在注入bean的时候会调用FactoryBean#getObject方法

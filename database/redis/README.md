@@ -260,10 +260,17 @@ requirepass 123456
 如果内存快满了，则还有兜底策略，就是上面提到的内存配置策略
 
  volatile-lru ->对所有设置了过期时间的key使用LRu算法进行删除
+
  allkeys-lru -> **对所有key使用LRU算法进行删除**（一般生产使用）
+
  volatile-lfu -> Evict using approximated LFU, only keys with an expire set.
+
  allkeys-lfu -> 对所有key使用LRu算法进行删除
+
  volatile-random -> 对所有过期key随机删除
+
  allkeys-random -> 对所有key随机删除
+
  volatile-ttl -> 对所有设置了过期时间的key随机删除
+ 
  noeviction ->不会驱逐任何key

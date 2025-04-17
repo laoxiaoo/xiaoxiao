@@ -1,7 +1,0 @@
-﻿* [redis基础](/java/database/redis/1-redis-base)
-* [redis数据结构](/java/database/redis/2-redis-datastructure)
-* [redis实际应用](/java/database/redis/3-redis-sample)
-* [持久化](/java/database/redis/4-persistence)
-* [主从复制](/java/database/redis/5-replication)
-* [哨兵模式](/java/database/redis/6-sentinel)
-* [客户端Api](/java/database/redis/8-api)
