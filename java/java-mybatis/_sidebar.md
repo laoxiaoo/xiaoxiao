@@ -4,3 +4,4 @@
 * [基本应用](/java/java-mybatis/3-advanced-application)
 * [插件](/java/java-mybatis/4-plugin)
 * [高级应用](/java/java-mybatis/5-cache)
+* [MybatisPlus](/java/java-mybatis/MybatisPlus.md)

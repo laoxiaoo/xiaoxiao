@@ -12,8 +12,8 @@
     * [jackson](/java/java-base/common/1-jackson)
 * Api
     * [基础Api](/java/java-base/api/1-base)
-    * [ThreadLocal](/java-java/base/api/2-thread)
-    * [BigDecimal](/java-java/base/api/3-bigDecimal)
+    * [ThreadLocal](/java/java-base/api/2-thread)
+    * [BigDecimal](/java/java-base/api/3-bigDecimal)
     * [map](/java/java-base/api/4-map)
     * [stream操作](/java/java-base/api/6-stream)
 * 并发编程
@@ -23,6 +23,6 @@
     * [线程通信](/java/java-base/concurrent/4-signalCommunication)
     * [juc锁](/java/java-base/concurrent/4-juc-lock)
     * [juc集合](/java/java-base/concurrent/5-juc-con)
-    * [synchronized](/java-java/base/concurrent/5-synchronized)  
+    * [synchronized](/java/java-base/concurrent/5-synchronized)  
     * [线程池](/java/java-base/concurrent/7-threadpool)
 * [版本差异](/java/java-base/version)

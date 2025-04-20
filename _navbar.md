@@ -7,6 +7,7 @@
 * 数据库
     * [Mysql](/database/mysql/)
     * [Redis](/database/redis/)
+    * [Elasticsearch](/database/es/)
 * 工具
     * [Mybatis日志转换](/xiaoxiao/html/sql.html ':ignore')
     * [JSON编辑](/xiaoxiao/html/json/index.html ':ignore')

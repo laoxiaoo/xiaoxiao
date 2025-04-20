@@ -205,115 +205,24 @@ public void test2() throws Exception {
 
 ## 简单工厂模式
 
+需要生产两种颜色的car
+
+1. 定义一个Car接口，实现两种颜色的Car
+2. 通过Factory生产不用颜色的car
+
+![image-20250419153828955](image/gof/image-20250419153828955.png)
+
+## 工厂模式
+
+工厂分两种，通过不同的工厂，生产不同的颜色car
+
+![image-20250419154902910](image/gof/image-20250419154902910.png)
+
 ## 抽象工厂模式
 
- 针对的是产品族（如 轮胎，发动机等是一个产品族），如果只想增加一个产品，使用简单工厂模式
+在工厂方法中添加方法，生成同颜色类型1和类型2,两种不同的car
 
-1 建立引擎两个类族
-
-```java
-package com.xiao.abstraFactory;
-
-/**
- *
- * 引擎接口（发动机）
- * Created by root on 2019/5/20.
- */
-public interface Engine {
-    void run();
-    void start();
-}
-
-/**
- * 种类A的引擎
- */
-class TypeAEngine implements  Engine {
-    @Override
-    public void run() {
-        System.out.println("跑的快");
-    }
-
-    @Override
-    public void start() {
-        System.out.println("启动快");
-    }
-}
-
-/**
- * 种类B的引擎
- */
-class TypeBEngine implements  Engine {
-    @Override
-    public void run() {
-        System.out.println("跑的慢");
-    }
-
-    @Override
-    public void start() {
-        System.out.println("启动慢");
-    }
-}
-```
-
-2 建立座位的两个类族
-
-```java
-package com.xiao.abstraFactory;
-
-/**
- * 座椅接口
- * Created by root on 2019/5/21.
- */
-public interface Seat {
-    void massage();
-}
-
-class LuxurySeat implements Seat {
-
-    @Override
-    public void massage() {
-        System.out.println("可以自动按摩！");
-    }
-
-}
-class LowSeat implements Seat {
-
-    @Override
-    public void massage() {
-        System.out.println("不能按摩！");
-    }
-
-}
-```
-
-我们把TypeAEngine和LuxurySeat归为一个类族，建立其工厂类，同时暴露造a类引擎和座位的方法
-
-```java
-public class AcarFactory implements CarFactory {
-    @Override
-    public Engine createEngine() {
-        return new TypeAEngine();
-    }
-
-    @Override
-    public Seat createSeat() {
-        return new LuxurySeat();
-    }
-}
-```
-
-客户端
-
-```java
-public static void main(String[] args) {
-    //创建类型A类族的工厂
-    CarFactory carFactory = new AcarFactory();
-    Engine an = carFactory.createEngine();//创建a的引擎
-    Seat as = carFactory.createSeat(); //创建a的座位
-    an.start();
-    as.massage();
-}
-```
+ ![image-20250419155227436](image/gof/image-20250419155227436.png)
 
 # 建造者模式
 
