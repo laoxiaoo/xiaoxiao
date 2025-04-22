@@ -36,7 +36,7 @@ public @interface EnableAspectJAutoProxy
 
 
 
-## 总体概括
+## 初始化阶段
 @EnableAspectJAutoProxy注解给容器创建和注册AnnotationAwareAspectJAutoProxyCreator的bean（后置处理器，意味着以后任何组件创建时，都要执行这个后置处理器方法）
 
 在@EnableAspectJAutoProxy注解中，有一个@Import(AspectJAutoProxyRegistrar.class)注解
@@ -187,7 +187,7 @@ protected Object initializeBean(final String beanName, final Object bean, RootBe
 ## 代理类初始化过程：
 
 ### Bean实例化一阶段
-在finishBeanFactoryInitialization（初始化剩下的一些单实例Bean）方法中
+bean refresh阶段，在finishBeanFactoryInitialization（初始化剩下的一些单实例Bean）方法中
 进入org.springframework.beans.factory.support.DefaultListableBeanFactory#preInstantiateSingletons方法
 
 ```java
@@ -242,14 +242,16 @@ if (specificInterceptors != DO_NOT_PROXY) {
 }
 ```
 
+生成了代理类之后，和前置通知等方法一起封装成拦截器链路
+
 ## 代理类执行过程
 
 容器中保存了组件的代理对象（cglib增强后的对象），这个对象里面保存了详细信息（比如增强器，目标对象，xxx）；
 1. 进入到org.springframework.aop.framework.JdkDynamicAopProxy#invoke方法(JDK代理对象的执行方法)
+
 ```java
 //获取该代理类的所有拦截器链的所有信息（创建bean的时候的后置处理器保存的）
 List<Object> chain = this.advised.getInterceptorsAndDynamicInterceptionAdvice(method, targetClass);
-
 else {
     MethodInvocation invocation =
         new ReflectiveMethodInvocation(proxy, target, method, args, targetClass, chain);
@@ -258,14 +260,11 @@ else {
 }
 ```
 
-> 如何获取拦截器链
-
-org.springframework.aop.framework.AdvisedSupport#getInterceptorsAndDynamicInterceptionAdvice
+> 如何获取拦截器链:org.springframework.aop.framework.AdvisedSupport#getInterceptorsAndDynamicInterceptionAdvice
 
 
 
 
-* 
 * 如何获取拦截器链
      * 1）.List<Object> interceptorList保存所有拦截器 5
           * 一个默认的ExposeInvocationInterceptor 和 4个增强器；
@@ -281,11 +280,13 @@ org.springframework.aop.framework.AdvisedSupport#getInterceptorsAndDynamicInterc
       * 拦截器链等信息传入创建一个 CglibMethodInvocation 对象，
       * 并调用 Object retVal =  mi.proceed();
 
-*5）.拦截器链的触发过程（CglibMethodInvocation.proceed()方法过程 ）
+* 5）.拦截器链的触发过程（CglibMethodInvocation.proceed()方法过程 ）
      * 1).如果没有拦截器执行执行目标方法，或者拦截器的索引和拦截器数组-1大小一样（指定到了最后一个拦截器）执行目标方法；
           *2).链式获取每一个拦截器，拦截器执行invoke方法，每一个拦截器等待下一个拦截器执行完成返回以后再来执行；
           *拦截器链的机制，保证通知方法与目标方法的执行顺序；
-拦截器链时拍好续的，递归调用invoke方法，最后一个调用invoke，执行方法前的拦截器链，执行后返回，执行方法执行后的拦截器链，如果没抛出异常，返回后执行returning拦截器链
+          拦截器链时拍好续的，递归调用invoke方法，最后一个调用invoke，执行方法前的拦截器链，执行后返回，执行方法执行后的拦截器链，如果没抛出异常，返回后执行returning拦截器链
+
+
 
 # 总结
 
