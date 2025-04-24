@@ -37,7 +37,7 @@ IOC（控制反转）和 DI（依赖注入）是 Spring 框架中两个核心概
 - 查看源码可以得知，application有个getBeanFactory的方法
 - 他将BeanFactory组合进来了，所以，applicationContext虽然实现了BeanFactory,但他们是两个东西，一般我们需要beanfactory时，通常用ApplicationContext.getBeanFactory()
 
-## BeanFactory与FactoryBean
+# BeanFactory与FactoryBean
 
 - BeanFactory是IOC最基本的**容器**，负责管理bean，它为其他具体的IOC容器提供了最基本的规范
   - 如<b id="blue">ApplicationContext</b>都是BeanFactory的子接口

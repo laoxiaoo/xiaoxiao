@@ -800,3 +800,58 @@ public class AppConfig {
 }
 ```
 
+# Bean 初始化顺序
+
+
+- 注解方式
+
+```java
+@PostConstruct
+public void postInit() {
+    System.out.println("==> PostConstruct init");
+}
+```
+
+- bean方式
+
+使用initMethod指定初始化方法
+
+```java
+@Bean(initMethod = "initMethod")
+public Person person() {
+    return new Person();
+}
+```
+
+```java
+public class Person{
+    public void initMethod() {
+        System.out.println("==> init method");
+    }
+}
+```
+
+- 实现InitializingBean方式
+
+```java
+public class Person implements InitializingBean {
+    @Override
+    public void afterPropertiesSet() throws Exception {
+        System.out.println("==> afterPropertiesSet init");
+    }
+}
+```
+
+> 打印顺序
+
+PostConstruct---->afterPropertiesSet----->initMethod
+
+
+
+# Autowire注入过程
+
+注意AutowiredAnnotationBeanPostProcessor#postProcessProperties
+
+和MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition进行元信息操作
+
+**注入在postProcessProperties 方法执行，早于setter注入， 也早于@PostConstruct**

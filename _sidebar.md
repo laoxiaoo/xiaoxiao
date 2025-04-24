@@ -9,10 +9,7 @@
 * [SpringMvc](/java/java/spring/SpringMvc.md)
 * [Dubbo](/java/dubbo/)
 
-* Spring Cloud
-    * [SpringCloud2018](/java/java/spring/SpringCloud.md)
-    * [注册中心](/java/java/springcloud/register.md)
-    * [流量容错](/java/springcloud//trafficFault-tolerant)
+* [Spring Cloud](/java/springcloud/)
 * [设计模式](/java/java-gof/gof.md)
 * 缓存
     * [缓存基础理论](/java/cache/1-cache-base)

@@ -666,3 +666,31 @@ myDefBean
 `@Resource`  
 1. @Resource默认按名称装配，当找不到与名称匹配的bean时才按照类型进行装配。名称可以通过name属性指定，如果没有指定name属性，当注解写在字段上时，默认取字段名，当注解写在setter方法上时，默认取属性名进行装配。   
 2. 他是jdk层面定义的注解   
+
+
+# 统一异常处理
+
+```java
+
+@RestControllerAdvice
+@Slf4j
+public class GlobalExceptionHandler {
+    @ExceptionHandler(SystemException.class)
+    public ResponseResult systemExceptionHandler(SystemException e) {
+        log.error("出现了异常! {}", e);
+        return ResponseResult.errorResult(e.getCode(), e.getMsg());
+    }
+    @ExceptionHandler(Exception.class)
+    public ResponseResult exceptionHandler(Exception e) {
+        log.error("出现了异常! {}", e);
+        return ResponseResult.errorResult(AppHttpCodeEnum.SYSTEM_ERROR.getCode(), e.getMessage());
+    }
+    /* 添加校验参数异常处理 */
+    @ExceptionHandler(BindException.class)
+    public ResponseResult bindExceptionHandler(BindException e) {
+        log.error("出现了异常! {}", e);
+        return ResponseResult.errorResult(AppHttpCodeEnum.SYSTEM_ERROR, e.getBindingResult().getAllErrors().get(0).getDefaultMessage());
+    }
+}
+
+```
