@@ -250,7 +250,7 @@ public String paymentCircuitBreaker_fallback(@PathVariable("id") Integer id) {
 - 功能：流量控制、熔断降级、系统负载保护
 - Hystrix的升级版
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704154543.png)
+![](./image/20210704154543.png)
 
 ## 安装
 
@@ -296,7 +296,7 @@ start;
 
 **sentinel是懒加载的**
 
-![image-20210704170325027](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704170325.png)
+![image-20210704170325027](./image/20210704170325.png)
 
  ## 流控
 
@@ -304,7 +304,7 @@ start;
 
 > 名词解释
 
-![image-20210704172344012](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704172344.png)
+![image-20210704172344012](./image/20210704172344.png)
 
 - 资源名：唯一名称，默认是请求路径
 
@@ -313,7 +313,7 @@ start;
 
 为了方便测试，建立两个接口
 
-![image-20210704172312208](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704172312.png)
+![image-20210704172312208](./image/20210704172312.png)
 
 > 测试QPS限制
 
@@ -327,7 +327,7 @@ start;
 
 我们对流控做关联调整
 
-![image-20210704172832212](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704172832.png)
+![20210704172832212](./image/20210704172832.png)
 
 - a接口关联b接口，B达到阈值，则限流A（**qps的配置还是配置A这里**）
 
@@ -340,10 +340,6 @@ start;
 - 排队等待：阈值必须是QPS,一个个匀速排队执行（对应算法：漏桶算法）
 
 ## 降级
-
-
-
-![image-20210704175421667](C:\Users\lonelyxiao\AppData\Roaming\Typora\typora-user-images\image-20210704175421667.png)
 
 > RT(平均响应时间、毫秒级)
 
@@ -392,7 +388,7 @@ public String blockHandler(String p1, String p2, BlockException exception) {
 2. 前往界面配置规则
    1. 标识value这个规则，第0个参数，即p1qps达到1以上后，触发兜底方法
 
-![image-20210704205944501](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704205944.png)
+![image-20210704205944501](./image/20210704205944.png)
 
 > 兜底方法不在同一个类
 
@@ -421,7 +417,7 @@ public String hotKey(String p1, String p2) {
 
 当我们设置了热点key，但是我们还想key在某个特殊值的时候能达到200的阈值，这时，我们可以配置高级选项
 
-![image-20210704210734138](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210704210734.png)
+![image-20210704210734138](./image/20210704210734.png)
 
 
 
@@ -524,7 +520,7 @@ sentinel:
 3. 前往nacos配置相关配置
    1. 注意data-id一定要一致
 
-![image-20210705001425585](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210705001425.png)
+![image-20210705001425585](./image/20210705001425.png)
 
 resource:资源名称;
 
@@ -558,4 +554,4 @@ clusterMode:是否集群。
 
 4. 启动服务后，刷新接口，能够在sentinel看到配置好的配置
 
-![image-20210705001801653](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210705001801.png)
+![image-20210705001801653](./image/20210705001801.png)
