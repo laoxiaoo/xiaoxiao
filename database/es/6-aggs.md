@@ -1,6 +1,6 @@
 # 
 
- ES的聚合操作
+# ES的聚合操作
 
 
 
@@ -49,15 +49,25 @@ order by time desc limit 10
 ```
 
 size: 设置为0，因为我们只关心聚合结果，不关心具体文档。
+
 query: 使用match_all查询来匹配索引中的所有文档。
+
 aggs: 定义聚合操作。
-user_actions: 聚合名称。
+
+user_actions: 聚合名称。(自定义一个聚合的名称)
+
 terms: 使用terms聚合按user_id字段分组。
+
 field: 指定分组的字段。
+
 size: 限制返回的聚合桶的数量，这里为10。
+
 order: 定义聚合桶的排序方式，这里按max_action_time降序排序。
+
 aggs: 内部聚合，用于计算每个user_id组的action_time的最大值。
+
 max_action_time: 内部聚合名称。
+
 max: 使用max聚合计算action_time字段的最大值。
 
 

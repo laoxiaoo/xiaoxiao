@@ -3,3 +3,4 @@
 * [CURD](/database/es/3-curd)
 * [映射](/database/es/4-mapping)
 * [Java Api](/database/es/5-java-api)
+* [聚合操作](/database/es/6-aggs)
