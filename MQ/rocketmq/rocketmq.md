@@ -13,7 +13,7 @@ NameServer通常也是以集群的方式部署，不过，NameServer是无状态
 
 如图:将broker注册到每一个nameserver中
 
-![image-20210727221803424](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210727221803.png)
+![image-20210727221803424](./image/20210727221803.png)
 
 > > 路由剔除  
 
