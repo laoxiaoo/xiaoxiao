@@ -21,7 +21,7 @@ MYISAM
 - 全文索引（FULL TEXT）
   - 全文索引类型为FULLTEXT，在定义索引的列上支持值的全文查找，允许在这些索引列中插入重复值和空值。全文索引可以在CHAR、VARCHAR,TEXT上创建
 
-## 创建
+## 创建索引方式
 
 - 查看一个表的索引
 
@@ -78,6 +78,7 @@ create table t_user (id int primary key, name varchar(50), unique(name));
 - 非叶子节点只存储键值信息。
 - 所有叶子节点之间都有一个链指针。
 - 数据记录都存放在叶子节点中。
+**适用场景：**B树适合进行随机读写操作，因为每个节点都包含了数据；而B+树适合进行范围查询和顺序访问，因为数据都存储在叶子节点上，并且叶子节点之间使用链表连接，有利于顺序遍历。
 
 ### 聚簇索引与非聚簇索引
 
@@ -139,54 +140,6 @@ MYISAM中:
 2. 利用hash存储的话需要将所有的数据文件添加到内存，比较耗费内存空间
 3. hash更加适合等值计算
 
-## 索引下推
-
-执行下列sql
-
-```sql
-SELECT * from user where  name like '陈%' and age=20
-```
-
-> 没有索引下推：
-
-会忽略age这个字段，直接通过name进行查询，然后拿着取到的id值一次次的回表查询
-
-> 有索引下推：
-
-InnoDB并没有忽略age这个字段，而是在索引内部就判断了age是否等于20，对于不等于20的记录直接跳过，因此在(name,age)这棵索引树中只匹配到了一个记录，此时拿着这个id去主键索引树中回表查询全部数据，这个过程只需要回表一次。
-
-## MRR
-
-- 全称「Multi-Range Read Optimization」
-- MRR 通过把「随机磁盘读」，转化为「顺序磁盘读」，从而提高了索引查询的性能
-
-> 使用MRR
-
-```sql
-mysql > set optimizer_switch='mrr=on';
-Query OK, 0 rows affected (0.06 sec)
-
-mysql > explain select * from stu where age between 10 and 20;
-+----+-------------+-------+-------+------+---------+------+------+----------------+
-| id | select_type | table | type  | key  | key_len | ref  | rows | Extra          |
-+----+-------------+-------+-------+------+---------+------+------+----------------+
-|  1 | SIMPLE      | tbl   | range | age  |    5    | NULL |  960 | ...; Using MRR |
-+----+-------------+-------+-------+------+---------+------+------+----------------+
-```
-
-- 我们开启了 MRR，重新执行 sql 语句，发现 Extra 里多了一个「Using MRR」
-
-**对于 Myisam，在去磁盘获取完整数据之前，会先按照 rowid 排好序，再去顺序的读取磁盘。**
-
-**对于 Innodb，则会按照聚簇索引键值排好序，再顺序的读取聚簇索引。**
-
-> 顺序读带来了几个好处
-
-1. 磁盘和磁头不再需要来回做机械运动；
-2. 可以充分利用磁盘预读
-
-btree索引的存储是有序的，所以访问索引是顺序io，而通过索引访问数据时确实是随机的
-
 
 # InnoDb和MyIsam区别
 
@@ -245,3 +198,111 @@ ref:列与索引的比较
 rows:扫描出的行数(估算的行数)
 filtered:按表条件过滤的行百分比
 Extra:执行情况的描述和说明
+
+
+# CHAR 和 VARCHAR 的区别
+
+1. **存储方式：**CHAR是固定长度的字符类型，而VARCHAR是可变长度的字符类型。
+2. **占用空间：**CHAR会以固定的长度存储数据，不论实际存储的字符数目，而VARCHAR则根据实际需要的空间动态分配存储。
+3. **尾随空格：**CHAR在存储时会用空格填充到指定长度，并在检索时需要删除尾随空格，而VARCHAR没有这个问题。
+4. **长度限制：**CHAR的长度范围为1到255个字符，而VARCHAR的长度范围也是255个字符，但可以根据需求设定更长的长度。
+5. **访问效率：**由于CHAR是固定长度的，它在某些情况下可能会比VARCHAR稍微快一些。
+
+
+
+# MySQL 8的索引跳跃扫描
+
+假设有一个包含以下数据结构的表`employees`：
+
+| **ID** | **Department** | **Position** |
+| ------------------------------------------------------ | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| 1      | Sales        | Manager      |
+| 2      | Sales        | Executive    |
+| 3      | HR           | Manager      |
+| 4      | HR           | Executive    |
+| 5      | IT           | Manager      |
+| 6      | IT           | Executive    |
+
+并且在表上有一个复合索引 `(Department, Position)`。
+
+### 查询场景
+
+假设我们希望查找所有`Manager`职位的员工：
+
+```sql
+SELECT * FROM employees WHERE Position = 'Manager';
+```
+
+### 传统索引处理
+
+如果正常按索引`(Department, Position)`的顺序使用，理想情况下需要首先给出`Department`条件，以充分利用索引优势，但本查询并没有提供对`Department`的条件。
+
+### 跳跃扫描的优化实现（概念性）
+
+通过类似Skip Scan的逻辑，MySQL优化器可能会：
+
+1. **分区扫描**：
+   - 将索引按`Department`的唯一值进行分割。每个分区相当于不同的部门，比如`Sales`、`HR`、`IT`。
+2. **应用条件**：
+   - 对每个`Department`分区中的`Position`行进行扫描，即跳跃扫描中仅搜索`Position = 'Manager'`的员工。
+3. **跳过无关分区**：
+   - 由于`Position = 'Manager'`限定，我们只在每个`Department`的分区中寻找匹配的`Position`，而不是对整个表进行扫描。
+
+跳跃扫描并不是真正的“跳过了”第一个字段，而是优化器为你重构了SQL，比如上述这条SQL则会重构成如下情况
+
+```sql
+SELECT * FROM employees WHERE Department='Sales' and Position = 'Manager';
+SELECT * FROM employees WHERE Department='HR' and Position = 'Manager';
+SELECT * FROM employees WHERE Department='IT' and Position = 'Manager';
+```
+
+但是跳跃扫描机制也有很多限制，比如多表联查时无法触发、SQL条件中有分组操作也无法触发、SQL中用了DISTINCT去重也无法触发
+
+# MRR(Multi-Range Read)机制
+
+MRR 通过把「随机磁盘读」，转化为「顺序磁盘读」，从而提高了索引查询的性能。
+
+开启了 MRR，重新执行 sql 语句，发现 Extra 里多了一个「Using MRR」
+
+**对于 Myisam，在去磁盘获取完整数据之前，会先按照 rowid 排好序，再去顺序的读取磁盘。**
+
+**对于 Innodb，则会按照聚簇索引键值排好序，再顺序的读取聚簇索引。**
+
+顺序读带来了几个好处：
+1、磁盘和磁头不再需要来回做机械运动；
+
+2、可以充分利用磁盘预读
+
+
+
+如果没有开启MRR，查询模式：
+
+![image-20250430122109359](image/3-index/image-20250430122109359.png)
+
+开启MRR模式：
+
+![image-20250430122444257](image/3-index/image-20250430122444257.png)
+
+
+
+# 索引下推
+
+索引下推(Index Condition Pushdown，简称ICP)，是MySQL5.6版本的新特性，它能减少回表查询次数，提高查询效率。
+
+比如，我们有Sql
+
+```sql
+SELECT * from user where  name like '陈%' and age=10
+```
+
+> 没有索引下推：
+
+会忽略age这个字段，直接通过name进行查询，然后拿着取到的id值一次次的回表查询
+
+![image-20250430123609328](image/3-index/image-20250430123609328.png)
+
+> 有索引下推：
+
+InnoDB并没有忽略age这个字段，而是在索引内部就判断了age是否等于20，对于不等于20的记录直接跳过，因此在(name,age)这棵索引树中只匹配到了一个记录，此时拿着这个id去主键索引树中回表查询全部数据，这个过程只需要回表一次。
+
+![image-20250430123635690](image/3-index/image-20250430123635690.png)
