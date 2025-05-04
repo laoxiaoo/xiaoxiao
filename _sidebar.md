@@ -21,11 +21,6 @@
 	* [Vue](/java/frontend/vue)
 	* [nodejs](/java/frontend/nodejs)
 	* [小程序](/java/frontend/wechatSmall)
-* 消息队列
-	* [ActiveMq](/java/message/activeMq)
-	* [Kafka](/java/message/kafka)
-	* [RabbitMq](/java/message/RabbitMq)
-	* [RocketMq](/java/message/rocketmq)
 * 网络
 	* [Git](/java/network/git)
 	* [Nginx](/java/network/nginx)

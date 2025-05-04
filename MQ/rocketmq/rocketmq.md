@@ -1,3 +1,32 @@
+#
+
+# RocketMq 是什么
+
+- RocketMQ是一个队列模型的消息中间件，具有高性能、高可靠、高实时、分布式特点。
+- Producer、Consumer、队列都可以分布式。
+- Producer 向一些队列轮流发送消息，队列集合称为 Topic，Consumer 如果做广播消费，则一个 consumer 实例消费这个 Topic 对应的所有队列，如果做集群消费，则多个 Consumer 实例平均消费这个 topic 对应的队列集合。
+- 能够保证严格的消息顺序
+
+![image-20250504111608916](image/rocketmq/image-20250504111608916.png)
+
+# 核心组件
+
+<b id="blue">NameServer</b>
+
+NameServer主要负责Topic和路由信息的管理，类似zookeeper。
+
+<b id="blue">Broker</b>
+
+消息中转角色，负责存储消息，转发消息。
+
+<b id="blue">Consumer</b>
+
+消息消费者，负责消息消费，一般是后台系统负责异步消费。
+
+<b id="blue">Producer</b>
+
+消息生产者，负责产生消息，一般由业务系统负责产生消息。
+
 ## Name Server  
 
 NameServer是一个Broker与Topic路由的注册中心，支持Broker的动态注册与发现  
@@ -7,7 +36,7 @@ NameServer是一个Broker与Topic路由的注册中心，支持Broker的动态�
 - Broker管理：接受Broker集群的注册信息并且保存下来作为路由信息的基本数据；提供心跳检测机制，检查Broker是否还存活。
 - 路由信息管理：每个NameServer中都保存着Broker集群的整个路由信息和用于客户端查询的队列信息。Producer和Conumser通过NameServer可以获取整个Broker集群的路由信息，从而进行消息的投递和消费。
 
-> > 路由注册 
+### 路由注册 
 
 NameServer通常也是以集群的方式部署，不过，NameServer是无状态的，即NameServer集群中的各个节点间是无差异的，各节点间**相互不进行信息通讯**。那各节点中的数据是如何进行数据同步的呢？**在Broker节点启动时，轮询NameServer列表，与每个NameServer节点建立长连接**，发起注册请求。在NameServer内部维护着⼀个Broker列表，用来动态存储Broker的信息  
 
@@ -15,7 +44,7 @@ NameServer通常也是以集群的方式部署，不过，NameServer是无状态
 
 ![image-20210727221803424](./image/20210727221803.png)
 
-> > 路由剔除  
+### 路由剔除  
 
 由于Broker关机、宕机或网络抖动等原因，NameServer没有收到Broker的心跳，NameServer可能会将其从Broker列表中剔除  
 
@@ -25,7 +54,7 @@ OP需要将Broker的**读写权限禁掉**。一旦client(Consumer或Producer)�
 
 当OP观察到这个Broker没有流量后，再关闭它，实现Broker从NameServer的移除 
 
-> > 路由发现  
+### 路由发现  
 
 RocketMQ的路由发现采用的是Pull模型。当Topic路由信息出现变化时，NameServer不会主动推送给客户端，而是客户端定时拉取主题最新的路由。默认客户端每30秒会拉取一次最新的路由。  
 
@@ -36,7 +65,7 @@ RocketMQ的路由发现采用的是Pull模型。当Topic路由信息出现变化
 2. Pull模型：拉取模型。存在的问题是，实时性较差  
 3. Long Polling模型：长轮询模型。其是对Push与Pull模型的整合，充分利用了这两种模型的优势，屏蔽了它们的劣势。  
 
-> > 客户端NameServer选择策略  
+### 客户端NameServer选择策略  
 
 客户端(Producer与Consumer)在配置时必须要写上NameServer集群的地址，那么客户端到底连接的是哪个NameServer节点呢？
 
@@ -50,21 +79,20 @@ Broker充当着消息中转角色，负责存储消息、转发消息。Broker�
 
 > 结构
 
-![](https://gitee.com/apache/rocketmq/raw/master/docs/cn/image/rocketmq_architecture_2.png)
+![](./image/rocketmq_architecture_2.png)
 
 - Remoting Module：整个Broker的实体，负责处理来自clients端的请求。而这个Broker实体则由以下模块构成  
-- Client Manager：客户端管理器。负责接收、解析客户端(Producer/Consumer)请求，管理客户端。例如，维护Consumer的Topic订阅信息  
-- Store Service：存储服务。提供方便简单的API接口，处理消息存储到物理硬盘和消息查询功能。  
-- HA Service：高可用服务，提供Master Broker 和 Slave Broker之间的数据同步功能。  
-- Index Service：索引服务。根据特定的Message key（用户指定的Key），对投递到Broker的消息进行索引服务，同时也提供根据Message Key对消息进行快速查询的功能。  
+  - Client Manager：客户端管理器。负责接收、解析客户端(Producer/Consumer)请求，管理客户端。例如，维护Consumer的Topic订阅信息  
+  - Store Service：存储服务。提供方便简单的API接口，处理消息存储到物理硬盘和消息查询功能。  
+  - HA Service：高可用服务，提供Master Broker 和 Slave Broker之间的数据同步功能。  
+  - Index Service：索引服务。根据特定的Message key（用户指定的Key），对投递到Broker的消息进行索引服务，同时也提供根据Message Key对消息进行快速查询的功能。  
 
-## 工作流程
+
+# 工作流程
 
 1. 启动NameServer，NameServer启动后开始监听端口，等待Broker、Producer、Consumer连接。  
-2. 启动NameServer，NameServer启动后开始监听端口，等待Broker、Producer、Consumer连接。
-3. 发送消息前，可以先创建Topic，创建Topic时需要指定**该Topic要存储在哪些Broker上**，当然，在创建Topic时也会将Topic与Broker的关系写入到NameServer中。不过，这步是可选的，也可以在发送消息时自动创建Topic。  
-
-4. Producer发送消息，启动时先跟NameServer集群中的其中一台建立长连接，并从NameServer中获取路由信息，即当前发送的Topic消息的Queue与Broker的地址（IP+Port）的映射关系。然后根据算法策略从队选择一个Queue，与队列所在的Broker建立长连接从而向Broker发消息。当然，在获取到路由信息后，Producer会首先将**路由信息缓存到本地**，再每30秒从NameServer更新一次路由信息。  
+2. 发送消息前，可以先创建Topic，创建Topic时需要指定**该Topic要存储在哪些Broker上**，当然，*在创建Topic时也会将Topic与Broker的关系写入到NameServer中*。不过，这步是可选的，也可以在发送消息时自动创建Topic。  （我们可以选择手动创建topic或者发送消息时候创建，不过一般我们都是手动创建）
+3. Producer发送消息，启动时先跟NameServer集群中的其中一台建立长连接，并从NameServer中获取路由信息，即当前发送的Topic消息的Queue与Broker的地址（IP+Port）的映射关系。然后根据算法策略从队选择一个Queue，与队列所在的Broker建立长连接从而向Broker发消息。当然，在获取到路由信息后，Producer会首先将**路由信息缓存到本地**，再每30秒从NameServer更新一次路由信息。  
 5. Consumer跟Producer类似，跟其中一台NameServer建立长连接，获取其所订阅Topic的路由信息，
    然后根据算法策略从路由信息中获取到其所要消费的Queue，然后直接跟Broker建立长连接，开始消费其中的消息。Consumer在获取到路由信息后，同样也会每30秒从NameServer更新一次路由信息。不过不同于Producer的是，**Consumer还会向Broker发送心跳**，以确保Broker的存活状态  
 
@@ -82,7 +110,10 @@ Broker充当着消息中转角色，负责存储消息、转发消息。Broker�
 从物理上来讲，读/写队列是同一个队列。所以，不存在读/写队列数据同步问题。读/写队列是逻辑上进行区分的概念。一般情况下，读/写队列数量是相同的。  
 
 ```tex
-例如，创建Topic时设置的写队列数量为8，读队列数量为4，此时系统会创建8个Queue，分别是0 1 2 3 4 5 6 7。Producer会将消息写入到这8个队列，但Consumer只会消费0 1 2 3这4个队列中的消息，4 5 6 7中的消息是不会被消费到的。
+例如，创建Topic时设置的写队列数量为8，读队列数量为4，
+此时系统会创建8个Queue，分别是0 1 2 3 4 5 6 7。
+Producer会将消息写入到这8个队列，但Consumer只会消费0 1 2 3这4个队列中的消息，
+4 5 6 7中的消息是不会被消费到的。
 ```
 
 perm用于设置对当前创建Topic的操作权限：2表示只写，4表示只读，6表示读写。  
@@ -172,7 +203,7 @@ Send shutdown request to mqnamesrv(36664) OK
 
 1. 修改端口和namesrv
 
-![image-20210728210758131](C:\Users\lonelyxiao\AppData\Roaming\Typora\typora-user-images\image-20210728210758131.png)
+
 
 2. 添加依赖
 
@@ -208,7 +239,6 @@ Send shutdown request to mqnamesrv(36664) OK
    1. 路由表 ：实际是一个Map，key为**Topic名称**，value是一个QueueData实例列表。QueueData并不是一个Queue对应一个QueueData，而是一个Broker中该Topic的所有Queue对应一个QueueData  
    2. Broker列表 ：其实际也是一个Map。key为brokerName，value为BrokerData。一套brokerName名称相同的Master-Slave小集群对应一个BrokerData  BrokerData中包含brokerName及一个map。该map的key为brokerId，value为该broker对应的地址。brokerId为0表示该broker为Master，非0表示Slave。 
    3. Producer根据代码中指定的Queue选择策略，从Queue列表中选出一个队列，用于后续存储消息 
-   4. Producer根据代码中指定的Queue选择策略，从Queue列表中选出一个队列，用于后续存储消息 
    5. Producer向选择出的Queue所在的Broker发出RPC请求，将消息发送到选择出的Queue  
 
 ## Queue选择算法 
@@ -289,7 +319,7 @@ drwxr-xr-x. 6 root root 42 7月  28 08:44 TopicTest
 
 每个consumequeue文件可以包含30w个索引条目，每个索引条目包含了三个消息重要属性：消息在mappedFile文件中的偏移量CommitLog Offset、消息长度、消息Tag的hashcode值  
 
-![image-20210729082512743](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210729082519.png)
+![image-20210729082512743](./image/20210729082519.png)
 
 > > 消息写入
 
@@ -328,13 +358,13 @@ drwxr-xr-x. 6 root root 42 7月  28 08:44 TopicTest
 2. 每个indexFile文件由三部分构成：indexHeader，slots槽位，indexes索引数据 
 3. 每个indexFile文件中包含500w个slot槽。而每个slot槽又可能会挂载很多的index索引单元。  
 
-![image-20210729232349132](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210729232349.png)
+![image-20210729232349132](./image/20210729232349.png)
 
 > > index索引单元 
 
 默写20个字节，其中存放着以下四个属性  
 
-![image-20210730082107106](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210730082114.png)
+![image-20210730082107106](./image/20210730082114.png)
 
 # 消息消费
 
@@ -398,7 +428,7 @@ Rebalance机制的本意是为了提升消息的并行消费能力。例如，�
 
 如图：错误的示例：
 
-![image-20210731105516120](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210731105516.png)
+![image-20210731105516120](./image/20210731105516.png)
 
 ## offset管理
 
@@ -531,7 +561,7 @@ messageDelayLevel = 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h 1
 
 > 实现原理
 
-![image-20210801101041611](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210801101048.png)
+![image-20210801101041611](./image/20210801101048.png)
 
 Producer将消息发送到Broker后，Broker会首先将消息写入到commitlog文件，然后需要将其分发到相应的consumequeue。不过，在分发之前，系统会先判断消息中是否带有延时等级。若没有，则直接正常分发；若有则需要经历一个复杂的过程
 
@@ -563,7 +593,7 @@ producer.shutdown();
 
 我们可以使用同步消息来处理该需求场景 ：
 
-![image-20210801113618455](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210801113618.png)
+![image-20210801113618455](./image/20210801113618.png)
 
 > 问题
 
