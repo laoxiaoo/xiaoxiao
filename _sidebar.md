@@ -14,8 +14,6 @@
 * 缓存
     * [缓存基础理论](/java/cache/1-cache-base)
     * [缓存常用框架](/java/cache/2-cache-api)
-	
-    
 * 前端
 	* [Angular](/java/frontend/angular)
 	* [Vue](/java/frontend/vue)
