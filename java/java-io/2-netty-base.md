@@ -620,3 +620,39 @@ CompositeByteBuf buf3 = ByteBufAllocator.DEFAULT.compositeBuffer();
 buf3.addComponents(true, buf1, buf2);
 ```
 
+# Netty 的 ByteBuf 与 ByteBuffer 相比的优势
+
+1.  JDK 标准库中 `ByteBuffer` ，它在读写模式切换时需要调用 `flip` 方法，若忘记调用可能会导致程序出现问题。而 `ByteBuf` 则将读写指针分离，有 `read index` 和 `write index` 两个指针。在进行读写切换时无需显式转换，更加方便。
+
+```java
+// ByteBuffer 示例
+ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+byteBuffer.put((byte) 1);
+// 从写模式切换到读模式需要调用 flip 方法
+byteBuffer.flip();
+byte readByte = byteBuffer.get();
+ 
+// ByteBuf 示例
+ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer();
+byteBuf.writeByte((byte) 2);
+// 读取数据无需显式切换模式
+byte readByteFromByteBuf = byteBuf.readByte();
+```
+
+2. `ByteBuffer` 的容量是固定的，当超过其容量时，需要手动创建新的缓冲区并进行数据迁移。而 `ByteBuf` 可以自动扩容
+
+```java
+// ByteBuffer 示例
+ByteBuffer byteBuffer = ByteBuffer.allocate(10);
+for (int i = 0; i < 15; i++) {
+    // 超过容量时会报错，需要手动处理扩容
+}
+ 
+// ByteBuf 示例
+ByteBuf byteBuf = ByteBufAllocator.DEFAULT.buffer(256);
+for (int i = 0; i < 512; i++) {
+    // 可以自动扩容，无需额外处理
+    byteBuf.writeByte((byte) i);
+}
+```
+

@@ -196,7 +196,7 @@ public void consumerHandler(String msg , KafkaConsumer consumer) {
 
 在消息发送的过程中，涉及到了两个线程——main线程和Sender线程，以及一个线程共享变量RecordAccumulator。main线程将消息发送给RecordAccumulator，Sender线程会根据指定的条件，不断从RecordAccumulator中拉取消息发送到Kafka broker
 
-![image-20220103103409345](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/message/20220103103413.png)
+![image-20220103103409345](./image/20220103103413.png)
 
 
 

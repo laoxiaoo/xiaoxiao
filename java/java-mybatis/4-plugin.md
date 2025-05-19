@@ -24,6 +24,10 @@
 >
 > `结果集处理器ResultSetHandler (handleResultSets、handleOutputParameters等方法)`
 
+# 执行过程
+
+![image-20250516194249689](image/4-plugin/image-20250516194249689.png)
+
 # 原理
 
 在四大对象创建的时候：
@@ -32,7 +36,27 @@
 - 获取到所有的Interceptor（拦截器）（插件需要实现的接口）调用interceptor.plugin(target);返回target包装后的对象
 - 插件机制，我们可以使用插件为目标对象创建一个代理对象；AOP（面向切面），我们的插件可以为四大对象创建出代理对象；代理对象就可以拦截到四大对象的每一个执行；
 
+
+
+# 拦截的类型
+
+```text
+1.Executor：拦截执行器的方法。
+2.ParameterHandler：拦截参数的处理。
+3.ResultHandler：拦截结果集的处理。
+4.StatementHandler：拦截Sql语法构建的处理。
+```
+
 # 插件示例
+
+@Signature注解的参数：
+type	四种类型接口中的某一个接口，如Executor.class。
+method	对应接口中的某一个方法名，比如Executor的query方法。
+args	对应接口中的某一个方法的参数，比如Executor中query方法因为重载原因，有多个，args就是指明参数类型，从而确定是具体哪一个方法。
+
+
+
+以下的示例：拦截org.apache.ibatis.executor.statement.StatementHandler#parameterize	
 
 1. *创建插件类*
 
@@ -104,6 +128,7 @@ public class MyFirstPlugin implements Interceptor {
 ```
 
 2. *配置插件类*
+   1. <b id="blue">setProperties</b>可以获取到username,和password的属性
 
 ```xml
 <plugins>
@@ -114,5 +139,34 @@ public class MyFirstPlugin implements Interceptor {
 </plugins>
 ```
 
+# Executor拦截示例
 
+```java
+@Slf4j
+@Intercepts({@Signature(type = Executor.class, method = "query",
+        args = {MappedStatement.class, Object.class, RowBounds.class, ResultHandler.class})})
+public class ExecutorTestPlugin implements Interceptor {
+    @Override
+    public Object intercept(Invocation invocation) throws Throwable {
+        // 获取被拦截的对象
+        Object target = invocation.getTarget();
+        // 获取被拦截的方法
+        Method method = invocation.getMethod();
+        // 获取被拦截的方法的参数
+        Object[] args = invocation.getArgs();
+
+        // 执行被拦截的方法前，做一些事情
+        log.info(target.toString());
+        log.info(method.toString());
+        log.info(args.toString());
+        // 执行被拦截的方法
+        Object result = invocation.proceed();
+
+        // 执行被拦截的方法后，做一些事情
+        log.info(result.toString());
+        // 返回执行结果
+        return result;
+    }
+}
+```
 
