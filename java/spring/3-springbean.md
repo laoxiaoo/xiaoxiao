@@ -855,3 +855,51 @@ PostConstruct---->afterPropertiesSet----->initMethod
 和MergedBeanDefinitionPostProcessor#postProcessMergedBeanDefinition进行元信息操作
 
 **注入在postProcessProperties 方法执行，早于setter注入， 也早于@PostConstruct**
+
+
+# 自定义注入
+
+- 定义一与Autowired注解类似的注解
+
+```java
+@Target({ElementType.CONSTRUCTOR, ElementType.METHOD, ElementType.PARAMETER, ElementType.FIELD, ElementType.ANNOTATION_TYPE})
+@Retention(RetentionPolicy.RUNTIME)
+@Documented
+public @interface InjectPerson {
+}
+```
+
+- 注入内容
+
+```java
+@InjectPerson
+private Person injectPerson;
+```
+
+- 生成注解处理post
+  - AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME：在AnnotationConfigUtils定义了这个名字，如果这个名称已经产生，则不再重新注入AutowiredAnnotationBeanPostProcessor
+  - static：如果是非静态的一个方法，当前bean产生依赖当前所在的类，定义为static能让这个bean独立于所在类
+
+```java
+@Bean(name = AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME)
+public static AutowiredAnnotationBeanPostProcessor beanPostProcessor() {
+    AutowiredAnnotationBeanPostProcessor beanPostProcessor = new AutowiredAnnotationBeanPostProcessor();
+    beanPostProcessor.setAutowiredAnnotationType(InjectPerson.class);
+    return beanPostProcessor;
+}
+```
+
+- 我们发现这样的注入方式，只能处理inject注解，不能处理autowired注解
+- 因为AnnotationConfigUtils的缘故，所以我们重新生产bean，并且，加入order，让其晚于AUTOWIRED_ANNOTATION_PROCESSOR_BEAN_NAME生成
+
+```java
+@Bean
+@Order(Ordered.LOWEST_PRECEDENCE - 3)
+public static AutowiredAnnotationBeanPostProcessor beanPostProcessor() {
+    AutowiredAnnotationBeanPostProcessor beanPostProcessor = new AutowiredAnnotationBeanPostProcessor();
+    beanPostProcessor.setAutowiredAnnotationType(InjectPerson.class);
+    return beanPostProcessor;
+}
+```
+
+如此，InjectPerson就能注入进去对应的bean了
