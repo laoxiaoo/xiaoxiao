@@ -5,3 +5,4 @@
 * [主从复制](/database/redis/5-replication)
 * [哨兵模式](/database/redis/6-sentinel)
 * [客户端Api](/database/redis/8-api)
+* [事务](/database/redis/9-transation)

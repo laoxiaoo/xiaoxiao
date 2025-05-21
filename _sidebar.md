@@ -33,6 +33,6 @@
 	* [k8s](/java/server/k8s)	
 * [工具](/java/tool/)
     
-* [算法](/java/algorithm/algorith)
+
 
 <footer id="mb-footer"></footer>

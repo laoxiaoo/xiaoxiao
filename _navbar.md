@@ -18,3 +18,4 @@
     * [JSON编辑](/xiaoxiao/html/json/index.html ':ignore')
     * [sqlBean](/xiaoxiao/html/sqlBean/sqlBean.html ':ignore')
 
+* [算法](/algorithm/)
