@@ -151,6 +151,12 @@ lengthAdjustment：
 
 
 
+## TCP四层模型与网络七层模型对比
+
+![image-20250522171839016](image/1-tcp/image-20250522171839016.png)
+
+
+
 # 网络编程安全
 
 ## https安全协议

@@ -121,7 +121,7 @@ MYISAM中:
 
 右边的只有在a相等的情况下，b才有序的
 
-![image-20210708102059747](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210708102059.png)
+![image-20210708102059747](./image/20210708102059.png)
 
 - 查询语句只有OR关键字时，如果OR前后的两个条件的列都是索引，那么查询中将使用索引。**如果OR前后有一个条件的列不是索引，那么查询中将不使用索引**。
 - 多列索引，左边使用了范围查询 如：   where  name=''  and age>10 and sex=0  (age索引在sex索引左边)

@@ -286,16 +286,16 @@ EnableConfigurationBeanBinding解析：例如第一条：将dubbo.application下
 
 3. @EnableDubbo同时是@DubboComponentScan子注解，@DubboComponentScan注解import了DubboComponentScanRegistrar
    1.  DubboComponentScanRegistrar实现了ImportBeanDefinitionRegistrar（[importbeandefinitionregistrar](/java/spring/3-springbean?id=importbeandefinitionregistrar)），可以编程的方式注入beandefinition
-   1.  这个注解注入了一些BeanPostProcessor后置处理器，如：ServiceAnnotationBeanPostProcessor、ReferenceAnnotationBeanPostProcessor等
+   1.  这个注解注入了一些后置处理器，如：ServiceAnnotationBeanPostProcessor、ReferenceAnnotationBeanPostProcessor等
    1.  可以在bean定义结束后，再新增一些bean的定义
 
 <b id="blue">ServiceAnnotationBeanPostProcessor</b>：这个bean其实跟`@ComponentScan`注解的处理类逻辑是差不多的，扫描`@Service`等注解，除了这些之外，这个bean还添加了处理Dubbo的`com.alibaba.dubbo.config.annotation.Service`注解
 
 <b id="blue">ReferenceAnnotationBeanPostProcessor</b>：这个bean是用来给`@Reference`注解标注的属性中注入值的
 
+## 服务暴露流程
 
-
-ServiceAnnotationBeanPostProcessor：
+ServiceAnnotationBeanPostProcessor（2.7.7版本又有一个ServiceClassPostProcessor，反正都是后置处理器）：一个BeanFactory后置处理器，实现BeanFactory后置处理器，能够对BeanDefinition进行补充，注入自定义的Bean
 
 老版本：
 
@@ -314,7 +314,7 @@ for (BeanDefinitionHolder beanDefinitionHolder : beanDefinitionHolders) {
 }
 ```
 
-新版本：
+**新版本**：
 
 注入了DubboBootstrapApplicationListener
 
@@ -323,7 +323,6 @@ for (BeanDefinitionHolder beanDefinitionHolder : beanDefinitionHolders) {
 registerInfrastructureBean(registry, DubboBootstrapApplicationListener.BEAN_NAME, DubboBootstrapApplicationListener.class);
 ```
 
-## 服务暴露流程
 
 > ~~ServiceBean是服务标签的核心类~~
 
@@ -369,7 +368,7 @@ private void onContextRefreshedEvent(ContextRefreshedEvent event) {
 }
 ```
 
-1. 在start方法中调用exportServices，然后exportServices中调用ServiceConfig#export，然后在ServiceConfig#doExportUrls中获取暴露的协议，进行循环暴露
+3. 在start方法中调用exportServices，然后exportServices中调用ServiceConfig#export，然后在ServiceConfig#doExportUrls中获取暴露的协议，进行循环暴露
 
 ```java
 for (ProtocolConfig protocolConfig : protocols) {
@@ -387,7 +386,7 @@ for (ProtocolConfig protocolConfig : protocols) {
 
 ## 服务引用流程
 
-1. ReferenceAnnotationBeanPostProcessor 实现了
+1. ReferenceAnnotationBeanPostProcessor: 一个beanpostprocessor后置处理器， 实现了
     InstantiationAwareBeanPostProcessor 接口，所以在 Spring 的 Bean 中初始化前会触发 postProcessPropertyValues 方法， 该方法允许我们做进一步处理，比如增加属性和属性值修改等
 
 ```java

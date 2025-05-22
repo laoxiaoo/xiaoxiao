@@ -95,7 +95,7 @@ consumer.start();
 
 *集群模式*
 
-集群消费模式下，相同Consumer Group的每个Consumer实例平均分摊同一个Topic的消息。即每条消息只会被发送到Consumer Group中的某个Consumer。  
+集群消费模式下，相同Consumer Group的每个Consumer实例平均分摊同一个Topic的消息。即每条消息只会被发送到Consumer Group中的某个Consumer。  不同的Group则，都会收到topic的消息
 
 # 顺序消息
 
