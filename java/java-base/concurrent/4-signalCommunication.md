@@ -388,3 +388,53 @@ class Message {
     private String message;
 }
 ```
+
+
+
+# Condition
+
+condition对象是依赖于lock对象的，意思就是说condition对象需要通过lock对象进行创建出来(调用Lock对象的newCondition()方法)
+
+```java
+class TaskQueue {
+    private final Lock lock = new ReentrantLock();
+    private final Condition condition = lock.newCondition();
+    private Queue<String> queue = new LinkedList<>();
+
+    public void addTask(String s) {
+        lock.lock();
+        try {
+            queue.add(s);
+            condition.signalAll();
+        } finally {
+            lock.unlock();
+        }
+    }
+
+    public String getTask() {
+        lock.lock();
+        try {
+            while (queue.isEmpty()) {
+            condition.await();
+        }
+            return queue.remove();
+        } finally {
+            lock.unlock();
+        }
+    }
+}
+```
+
+await() ：造成当前线程在接到信号或被中断之前一直处于等待状态。
+
+boolean await(long time, TimeUnit unit) ：造成当前线程在接到信号、被中断或到达指定等待时间之前一直处于等待状态---》是否超时，超时异常
+
+awaitNanos(long nanosTimeout) ：造成当前线程在接到信号、被中断或到达指定等待时间之前一直处于等待状态。返回值表示剩余时间，如果在nanosTimesout之前唤醒，那么返回值 = nanosTimeout - 消耗时间，如果返回值 <= 0 ,则可以认定它已经超时了。
+
+awaitUninterruptibly() ：造成当前线程在接到信号之前一直处于等待状态。【注意：该方法对中断不敏感】。
+
+awaitUntil(Date deadline) ：造成当前线程在接到信号、被中断或到达指定最后期限之前一直处于等待状态。如果没有到指定时间就被通知，则返回true，否则表示到了指定时间，返回返回false。
+
+signal() ：唤醒一个等待线程。该线程从等待方法返回前必须获得与Condition相关的锁。
+
+signalAll() ：唤醒所有等待线程。能够从等待方法返回的线程必须获得与Condition相关的锁。

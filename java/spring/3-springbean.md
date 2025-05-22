@@ -103,7 +103,7 @@ beanFactory.addBeanPostProcessor(new ApplicationContextAwareProcessor(this));
 
 - 依赖注入BeanFactory等
 
-4. `后置处理阶段`
+4. `BeanFactory后置处理阶段`
 
 *AbstractApplicationContext#postProcessBeanFactory*:
 
@@ -587,8 +587,12 @@ public class TestJsr250 {
 }
 ```
 
-
 ## 后置处理器
+
+![image-20250521112053378](image/3-springbean/image-20250521112053378.png)
+
+
+
 ### BeanPostProcessor
 bean后置处理器，bean创建对象初始化前后进行拦截工作的
 初始化前后调用(后置处理器)
@@ -800,7 +804,7 @@ public class AppConfig {
 }
 ```
 
-# Bean 初始化顺序
+# Bean 初始化
 
 
 - 注解方式
