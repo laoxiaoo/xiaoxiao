@@ -72,3 +72,62 @@ master 选举，将一个node变为master
 - 节点平等的分布式架构
   - 每个节点都可以接受所有请求
   - 可能请求a share，但a可以发给b，让b给数据给a，最后返回
+
+# Es分片数据刷新策略
+
+Es分片默认刷新频率为1s
+
+刷新频率越高越耗资源（刷新即写入硬盘，并会产生记录）
+
+Mapping结构默认会是1s刷新
+
+```json
+{
+  "settings": {},
+  "defaults": {
+    "index": {
+      "refresh_interval": "1s"
+    }
+  }
+}
+```
+
+ 
+
+为保证数据实时性，es提供手动刷新方法，以Java为例
+
+```Java
+org.elasticsearch.action.support.WriteRequest.RefreshPolicy
+```
+
+- `RefreshPolicy#IMMEDIATE:`
+  请求向ElasticSearch提交了数据，立即进行数据刷新，然后再结束请求。
+  优点：实时性高、操作延时短。
+  缺点：资源消耗高。
+- `RefreshPolicy#WAIT_UNTIL:`
+  请求向ElasticSearch提交了数据，等待数据完成刷新，然后再结束请求。
+  优点：资源消耗低。
+  缺点：操作延时长，一般刷新时间都是1s。
+- `RefreshPolicy#NONE:`
+  默认策略。
+  请求向ElasticSearch提交了数据，不关系数据是否已经完成刷新，直接结束请求。
+  优点：操作延时短、资源消耗低。
+  缺点：实时性低。
+
+如：
+
+```Java
+UpdateRequest request = new UpdateRequest(tableName, id);
+Map<String, Object> value = columnValue.getValue();
+request.doc(value);
+// ES数据立即刷新
+request.setRefreshPolicy(WriteRequest.RefreshPolicy.IMMEDIATE);
+UpdateResponse response = highLevelClient.update(request, RequestOptions.DEFAULT);
+```
+
+或者Es语法调用：
+
+```bash
+PUT /test/_doc/2?refresh=true
+{"test": "test"}
+```
