@@ -8,6 +8,53 @@
   - 文章的关键字检索
   - 电商的分类查询
 
+# 倒排索引
+
+ **词项（Term）** 映射到包含该词项的 **文档列表（Posting List）**,适合搜索场景,
+
+比如说，一个文档，doc1内容是username->"天天向上"
+
+那么，分词将其分为天天，向上，分别指向doc1
+
+## doc_values
+
+ES中，除了倒排索引，还会有正排索引
+
+doc_values和fielddata就是用来给文档建立正排索引的。他俩一个很显著的区别是，前者的工作地盘主要在磁盘，而后者的工作地盘在内存。
+
+对于非text字段类型，doc_values默认情况下是打开的
+
+关闭doc_values
+
+```json
+PUT users
+{
+    "mappings" : {
+      "properties" : {
+        "name" : {
+          "type" : "text"
+        },
+        "mobile" : {
+          "type" : "keyword"
+        },
+        "age" : {
+          "type" : "integer",
+          "doc_values": false
+        }
+      }
+    }
+}
+```
+
+对age搜索排序，发现报错，意思就是`age`字段不支持排序了，需要打开doc_values才行
+
+`原因：`
+
+比如说，所以我们要查找包含`brown`的文档，先在词项列表中找到 brown，然后扫描所有列，可以快速找到包含 brown 的文档。
+
+但是如果是要对搜索结果进行排序或者其它聚合操作，倒排索引这种方式就没真这么容易了，反而是类下面这种正排索引更方便。doc_values其实是Lucene在构建倒排索引时，会额外建立一个有序的正排索引（基于document => field value的映射列表）。
+
+![image-20250523204714168](image/2-describe/image-20250523204714168.png)
 
 # 核心概念
 
@@ -19,6 +66,11 @@
 
 每个索引都有多个或者一个type，一个type下的document，有着相同的字段
 
+**在7.X后，官方废弃type,默认type为_doc**
+
+故：
+ES 的Type 被废弃后，库表合一，Index 既可以被认为对应 MySQL 的 Database，也可以认为对应 table。
+
 - index:索引
 
 包含一堆有相似结构文档的数据，如：订单索引
@@ -29,7 +81,7 @@
 | type     | 表     |
 | index    | 数据库 |
 
-- share
+## share
 
 如果一个index有3t的数据，它把他分为三份，每一个share存1t，这样，查询就增加了速度
 
@@ -131,3 +183,20 @@ UpdateResponse response = highLevelClient.update(request, RequestOptions.DEFAULT
 PUT /test/_doc/2?refresh=true
 {"test": "test"}
 ```
+
+# ES为什么快
+
+1. 基于 **分布式架构**，查询可以并行执行（跨多个分片/节点），充分利用多核 CPU 和集群资
+   1. 如，有多个replica share，一个查询可以同时扫描多个分片，并在内存中合并结果
+2.  **倒排索引 + 分词优化**
+3. **文件系统缓存（Page Cache）**：倒排索引默认驻留在内存中，查询时直接读取，速度极快
+4. **查询缓存（Query Cache）**：[filter](/database/es/3-curd?id=对比)查询结果可缓存，减少重复计算
+
+# ES 写入流程
+
+- 客户端选择一个 node 发送请求过去，这个 node 就是 `coordinating node`（协调节点）。
+- `coordinating node` 对 document 进行路由，将请求转发给对应的 node（有 primary shard）。
+- 实际的 node 上的 `primary shard` 处理请求，然后将数据同步到 `replica node`。
+- `coordinating node` 如果发现 `primary node` 和所有 `replica node` 都搞定之后，就返回响应结果给客户端
+
+![image-20250523233935303](image/2-describe/image-20250523233935303.png)

@@ -122,11 +122,11 @@ POST /sys_org_company/_delete_by_query
 
 # 结构化查询
 
-## 基本知识
 
-> 结构化查询（Query DSL）  
 
-query的时候，会先比较查询条件，然后计算分值，最后返回文档结果  
+## 结构化查询（Query DSL）  
+
+结构化查询是指使用 Elasticsearch 的查询 DSL (Domain Specific Language) 来执行复杂的搜索操作，通常涉及评分计算（_score），最后返回文档结果  
 
 查询全部，会将所有的数据查询出来
 
@@ -139,28 +139,54 @@ GET /test_index/test_type/_search?scroll=1m
 }
 ```
 
-> 结构化过滤（Filter DSL）  
+- `match` 查询（全文搜索）
+- `multi_match` 查询
+- `query_string` 查询
+- `wildcard` 查询
+- `fuzzy` 查询
 
-过滤器，对查询结果进行缓存，不会计算相关度，避免计算分值，执行速度非常快  
+## 结构化过滤（Filter DSL） 
+
+结构化过滤是指使用过滤器（filter）来执行精确匹配，不计算相关性分数，只返回匹配或不匹配的文档 
 
 ```json
 GET /order/product/_search
 {
-  "query":{
+    "query":{
+        "bool": {
+            "must": [
+                {"match":{"name": "iphone"}}
+            ],
+            "filter": [
+                {"range":{"price":{"gt":"3000"}}}  
+            ]
+        }
+    }
+```
+
+```json
+GET /products/_search
+{
+  "query": {
     "bool": {
-      "must": [
-        {"match":{"name": "iphone"}}
-      ],
       "filter": [
-      {"range":{"price":{"gt":"3000"}}}  
+        { "term": { "status": "active" } },
+        { "range": { "price": { "lte": 1000 } } }
       ]
     }
   }
+}
 ```
 
-## 结构化过滤（Filter DSL）  
 
-> term 过滤  
+
+- `term` 查询（精确匹配）
+- `terms` 查询（多值精确匹配）
+- `range` 查询（范围查询）
+- `exists` 查询（字段是否存在）
+- `bool` 过滤器（与查询的 bool 类似但不计算分数）
+
+### term 过滤  
 
 term 主要用于精确匹配哪些值，比如数字，日期，布尔值或 not_analyzed 的字符串（未经分析的文本数据类型），相当于sql <b id="blue">age=26  </b>
 
@@ -309,6 +335,44 @@ BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
     }
 }
 ```
+
+## 对比
+
+|       特性       |             结构化查询（Query）              |           结构化过滤（Filter）           |
+| :--------------: | :------------------------------------------: | :--------------------------------------: |
+| **是否默认缓存** |                   ❌ 不缓存                   |                ✅ 自动缓存                |
+|   **适用场景**   | 全文搜索、模糊匹配（如 `match`、`wildcard`） | 精确匹配、范围查询（如 `term`、`range`） |
+|   **性能优化**   |             尽量用 `filter` 替代             |            直接使用 `filter`             |
+|   **缓存控制**   |                 无法直接缓存                 |        可通过 `query_cache` 优化         |
+
+**最佳实践**：
+
+✅ ​**优先使用 `filter` 进行精确匹配**​（如状态、ID、分类）。
+
+✅ ​**将可缓存的逻辑放在 `filter` 中**，不可缓存的逻辑放在 `query` 中。
+
+✅ ​**避免在 `query` 中使用高开销操作**​（如 `wildcard`、`fuzzy`）。
+
+✅ ​**监控缓存命中率**，优化频繁查询的缓存策略。
+
+1. **当需要精确匹配时**（如状态、ID、分类等），优先使用过滤
+2. **当需要全文搜索或模糊匹配时**，使用查询
+3. **组合使用时**：将过滤条件放在 `filter` 子句，查询条件放在 `must` 子句
+
+```json
+{
+  "query": {
+    "bool": {
+      "must": [ { "match": { "description": "fast" } } ],
+      "filter": [ { "term": { "status": "active" } } ]
+    }
+  }
+}
+```
+
+
+
+这样能最大化 Elasticsearch 的查询性能
 
 # 自动补全
 

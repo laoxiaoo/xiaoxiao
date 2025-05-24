@@ -151,13 +151,13 @@ MYISAM中:
 
 # 锁的类型
 
-> 表锁和行锁
+## 表锁和行锁
 
 mysql  如果以索引为条件进行操作的话，则是行锁
 
 如果**索引失效**,则会由行锁上升到表锁
 
-> 间隙锁
+## 间隙锁
 
 如果我在索引列插入： 1,3,5,6,7这些数据
 
@@ -165,7 +165,41 @@ mysql  如果以索引为条件进行操作的话，则是行锁
 
 这个时候，数据库会将 1-7的数据锁上，这时我们插入id=2的数据是插入不了的，因为已经产生了间隙锁
 
-> 获取数据库锁的次数信息
+## for update
+
+语句为查询结果集施加排他锁（X锁），在事务提交前阻止其他事务对这些行进行**修改或加锁**。其底层依赖InnoDB的行级锁机制，但锁的粒度会根据查询条件动态调整
+
+当使用for update时，锁定行的方式取决于where中的字段是否具有索引，而不是唯一索引。如果where条件中的字段具有索引（无论是普通索引还是唯一索引），MySQL将锁定与查询结果集匹配的行，如果where中的字段没有索引MySQL将锁表
+
+1. For Update只能应用于`SELECT`语句中。
+2. 对于使用了For Update的`SELECT`语句，只有当事务提交或回滚时，所加的锁才会被释放。
+
+### 典型应用场景
+
+在高并发下单场景中，通过`SELECT ... FOR UPDATE`锁定当前库存行，确保"查询-校验-扣减"操作的原子性，避免超卖（伪代码示例）
+
+ps:一般电商也不会使用mysql扣库存
+
+```sql
+START TRANSACTION;
+SELECT stock FROM products WHERE id=1001 FOR UPDATE; -- 锁定
+IF stock > 0 THEN 
+   UPDATE products SET stock=stock-1 WHERE id=1001;
+END IF;
+COMMIT;
+```
+
+## 共享锁（读锁）
+
+1. `FOR UPDATE` 在 REPEATABLE READ 下可以被读取（快照读），但在 READ COMMITTED 下会被阻塞。
+2. `FOR SHARE` 允许其他事务读取，但不允许修改。
+
+`FOR SHARE`（MySQL 8.0+ 推荐 `FOR SHARE`，旧版用 `LOCK IN SHARE MODE`）加的是 **共享锁（S 锁）**
+
+- **其他事务可以读取该行**（不会被阻塞）。
+- **但不能修改或删除该行**（会被阻塞）。
+
+## 获取数据库锁的次数信息
 
 ```sql
 show status like "innodb_row_locks%";

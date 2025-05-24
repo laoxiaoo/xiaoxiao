@@ -25,10 +25,7 @@ POST table_4182d99ae22f4c55a487d886d71f42df/_search
 
 # 简单的CRUD
 
-**在7.X后，官方废弃type,默认type为_doc**
 
-故：
-ES 的Type 被废弃后，库表合一，Index 既可以被认为对应 MySQL 的 Database，也可以认为对应 table。
 
 ## 简单的集群管理
 
