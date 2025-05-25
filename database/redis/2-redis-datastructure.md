@@ -207,6 +207,12 @@ OK
 "1"
 ```
 
+## 性能瓶颈
+
+- 如果 `List` 数据量超过 **10K**，考虑优化查询方式或改用其他数据结构。
+- 如果 `List` 数据量超过 **1M**，强烈建议改用 **Redis Stream** 或 **Sorted Set**。
+- 如果需要频繁访问中间元素，考虑改用 **Hash** 或 **Sorted Set**。
+
 # SET集合
 
 ## 基本操作
@@ -370,7 +376,10 @@ set key field value
 ZINCRBY key increment member
 ```
 
+## 对比list
 
+- **Sorted Set 在频繁修改数据时仍然比 List 更高效**，尤其是在需要排序、范围查询或随机访问时。
+- **Sorted Set 的性能瓶颈主要出现在超高频率写入或超大范围查询时**，此时可以考虑分片或外部数据库。
 
 # 经纬度
 
@@ -437,3 +446,6 @@ Reading messages... (press Ctrl-C to quit)
 2) "laoxiao"
 ```
 
+# 各种数据结构的底层
+
+![image-20250524164221651](image/2-redis-datastructure/image-20250524164221651.png)
