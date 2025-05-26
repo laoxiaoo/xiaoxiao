@@ -6,13 +6,19 @@
 
 - producer：消息生存者,负责创建消息，投递kafka
 
-- consumer：消息消费者，连接kafka接收消息，进而进行相应的业务逻辑处理、
+- consumer：消息消费者，连接kafka接收消息，进而进行相应的业务逻辑处理
 
-  > broker：
+- Topic: 消息的分类，每条消息都属于一个特定的 Topic。用户可以通过 Topic 来组织和管理消息。
+
+- broker：
 
   kafka 集群的 server，(其实就是一台机器)负责处理消息读、写请求，存储消息
 
   一般topic的partion的数量和broker集群数量一致（如果partion数量大于broker，可能会导致一个broker有多个同一topic的partion，导致数据分布不均匀）
+
+- **分区（Partition）**：为了实现扩展性，一个非常大的 topic 可以分布到多个 broker(即服务器)上， 一个 topic 可以分为多个 partition，每个 partition 是一个有序的队列;
+
+  **副本（Replica）**：副本，为保证集群中的某个节点发生故障时，该节点上的 partition 数据不丢失，且 kafka 仍然能够继续工作，kafka 提供了副本机制，一个 topic 的每个分区都有若干个副本， 一个 **leader** 和若干个 **follower**。
 
 ## 分区和主题
 

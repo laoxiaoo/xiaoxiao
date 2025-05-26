@@ -75,7 +75,7 @@ RocketMQ的路由发现采用的是Pull模型。当Topic路由信息出现变化
 
 ## Broker 
 
-Broker充当着消息中转角色，负责存储消息、转发消息。Broker在RocketMQ系统中负责接收并存储从生产者发送来的消息，同时为消费者的拉取请求作准备。Broker同时也存储着消息相关的元数据（**非message数据**），包括消费者组消费进度偏移offset、主题、队列等。  
+实际处理消息存储、转发等服务的核心组件，包括消费者组消费进度偏移offset、主题、队列等。  
 
 > 结构
 
@@ -96,7 +96,7 @@ Broker充当着消息中转角色，负责存储消息、转发消息。Broker�
 5. Consumer跟Producer类似，跟其中一台NameServer建立长连接，获取其所订阅Topic的路由信息，
    然后根据算法策略从路由信息中获取到其所要消费的Queue，然后直接跟Broker建立长连接，开始消费其中的消息。Consumer在获取到路由信息后，同样也会每30秒从NameServer更新一次路由信息。不过不同于Producer的是，**Consumer还会向Broker发送心跳**，以确保Broker的存活状态  
 
-> Topic的创建模式
+# Topic的创建模式
 
 手动创建Topic时，有两种模式：
 
@@ -118,7 +118,7 @@ Producer会将消息写入到这8个队列，但Consumer只会消费0 1 2 3这4�
 
 perm用于设置对当前创建Topic的操作权限：2表示只写，4表示只读，6表示读写。  
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/rokectmq/20210728212224.png)
+![](./image/20210728212224.png)
 
 # 安装
 
@@ -230,6 +230,8 @@ Send shutdown request to mqnamesrv(36664) OK
 </dependency>
 ```
 
+
+
 # 消息生产
 
 ## 生产过程
@@ -283,11 +285,11 @@ drwxr-xr-x. 2 root root  246 7月  28 10:47 config
 drwxr-xr-x. 3 root root   23 7月  28 08:44 consumequeue
 # 其中存放着消息索引文件indexFile
 drwxr-xr-x. 2 root root   31 7月  28 08:44 index
-# 其中存放着消息索引文件indexFile
+
 -rw-r--r--. 1 root root    4 7月  28 08:41 lock
 ```
 
-> commitlog
+### commitlog
 
 commitlog目录中存放着**很多的mappedFile文件**，当前Broker中的所有消息都是落盘到这些mappedFile文件中的。mappedFile文件**最大1G**，文件名由20位十进制数构成，表示当前文件的第一条消息的起始位移偏移量  
 
@@ -299,7 +301,7 @@ commitlog目录中存放着**很多的mappedFile文件**，当前Broker中的所
 
 mappedFile文件内容由一个个的消息单元构成。每个消息单元中包含消息总长度MsgLen、消息的物理位置physicalOffset、消息体内容Body、消息体长度BodyLength、消息主题Topic、Topic长度TopicLength、消息生产者BornHost、消息发送时间戳BornTimestamp、消息所在的队列QueueId、消息在**Queue中存储的偏移量QueueOffset**等近20余项消息相关属性  
 
-> consumequeue
+### consumequeue
 
 消息存放在commitlog中，consumequeue存放消息索引
 
@@ -348,7 +350,7 @@ drwxr-xr-x. 6 root root 42 7月  28 08:44 TopicTest
    1. PageCache机制，页缓存机制，是OS对文件的缓存机制，用于加速对文件的读写操作。一般来
       说，程序对文件进行顺序读写 的速度几乎接近于内存读写速度  
 
-> indexFile
+### indexFile
 
 除了通过通常的指定Topic进行消息消费外，RocketMQ还提供了根据key进行消息查询的功能。该查询是通过store目录中的index子目录中的indexFile进行索引实现的快速查询。当然，这个indexFile中的索引数据是在包含了key的消息被发送到Broker时写入的。如果消息中没有包含key，则不会写入  
 
@@ -366,28 +368,69 @@ drwxr-xr-x. 6 root root 42 7月  28 08:44 TopicTest
 
 ![image-20210730082107106](./image/20210730082114.png)
 
+## 整理流程概括
+
+开发者在创建Topic时，需要指定一个很关键的参数——MessageQueue，如：[创建模式](/MQ/rocketmq/rocketmq?id=topic的创建模式)的图片中，会指定Queue的数量等
+
+MessageQueue本质就是一个数据分片的机制。比如order_topic一共有1万条消息，那么可以大致认为每个MessageQueue保存2500条消息。但是，这不是绝对的，需要根据Producer写入消息的策略来定，可能有的MessageQueue中消息多些，有的少些。我们先暂且认为消息是在MessageQueue上平均分配的，然后MessageQueue也可能平均分布在Master-Broker上，如下图：
+
+![image-20250525162522236](image/rocketmq/image-20250525162522236.png)
+
+消息存储：
+
+生产者发送消息到Broker后，Master-Broker会将消息写入磁盘上的一个日志文件——CommitLog，按照顺序写入文件末尾，CommitLog中包含了各种各样不通类型的Topic对应的消息内容，如下图：
+
+![image-20250525162648601](image/rocketmq/image-20250525162648601.png)
+
+消息是保存在MessageQueue中的，那这个CommitLog和MessageQueue是什么关系呢？事实上，对于每一个Topic，它在某个Broker所在的机器上都会有一些MessageQueue，每一个MessageQueue又会有很多ConsumeQueue文件，这些ConsumeQueue文件里存储的是一条消息对应在CommitLog文件中的offset偏移量
+
+如果我们想发送对topic 发送一条消息，queue1、queue2、queue3、queue3，均匀分布在两个Master-Broker中，Producer选择queue1这个MessageQueue发送了一条“消息A”。那么：
+
+1. 首先Master-Broker接收到消息A后，将其内容顺序写入自己机器上的CommitLog文件末尾；
+2. 然后，这个Master-Broker会将消息A在CommitLog文件中的物理位置——offset，写入queue1对应的ConsumeQueue文件末尾（其实不单单offset，还包括消息长度、tag hashcode等信息，一条数据是20个字节，每个ConsumeQueue文件能保存30万条数据，所以每个ConsumeQueue文件的大小约为5.72MB）；
+
+![image-20250525164808493](image/rocketmq/image-20250525164808493.png)
+
 # 消息消费
+
+
 
 ## 消费模式
 
-> Topic模式
-
-广播消费模式下，相同Consumer Group的每个Consumer实例都接收同一个Topic的全量消息。即每条消息都会被发送到Consumer Group中的**每个Consumer **
-
-> 集群模式
+### 集群模式
 
 集群消费模式下，相同Consumer Group的每个Consumer实例平均分摊同一个Topic的消息。即每条消息只会被发送到Consumer Group中的某个Consumer。  
 
-## Rebalance机制
+![image-20250525172423880](image/rocketmq/image-20250525172423880.png)
+
+### 广播模式模式
+
+广播消费模式下，相同Consumer Group的每个Consumer实例都接收同一个Topic的全量消息。即每条消息都会被发送到Consumer Group中的**每个Consumer **
+
+![image-20250525172514555](image/rocketmq/image-20250525172514555.png)
+
+## Rebalance机制（负载均衡）
+
+消费端的负载均衡是指**将 Broker 端中多个队列按照某种算法分配给同一个消费组中的不同消费者**。
 
 Rebalance机制讨论的前提是：**集群消费 **
 
 Rebalance机制的本意是为了提升消息的并行消费能力。例如，⼀个Topic下5个队列，在只有1个消费者的情况下，这个消费者将负责消费这5个队列的消息。如果此时我们增加⼀个消费者，那么就可以给其中⼀个消费者分配2个队列，给另⼀个分配3个队列，从而提升消息的并行消费能力  
 
+![image-20250525173104238](image/rocketmq/image-20250525173104238.png)
+
+> **Rebalance限制**
+
+由于一个队列最多分配给一个消费者，因此当某个消费者组下的消费者实例数量大于队列的数量时，多余的消费者实例将分配不到任何队列。
+
 > Rebalance危害  
 
-消费暂停：在只有一个Consumer时，其负责消费所有队列；在新增了一个Consumer后会触发Rebalance的发生。此时原Consumer就需要暂停部分队列的消费，等到这些队列分配给新的Consumer后，这些暂停消费的队列才能继续被消费。
-消费重复：Consumer 在消费新分配给自己的队列时，必须接着之前Consumer 提交的消费进度的offset继续消费。然而默认情况下，offset是异步提交的，这个异步性导致提交到Broker的offset与Consumer实际消费的消息并不一致。这个不一致的差值就是可能会重复消费的消息。  
+消费暂停：
+
+在只有一个Consumer时，其负责消费所有队列；在新增了一个Consumer后会触发Rebalance的发生。此时原Consumer就需要暂停部分队列的消费，等到这些队列分配给新的Consumer后，这些暂停消费的队列才能继续被消费。
+消费重复：
+
+Consumer 在消费新分配给自己的队列时，必须接着之前Consumer 提交的消费进度的offset继续消费。然而默认情况下，offset是异步提交的，这个异步性导致提交到Broker的offset与Consumer实际消费的消息并不一致。这个不一致的差值就是可能会重复消费的消息。  
 
 > Rebalance产生的原因
 
@@ -396,27 +439,43 @@ Rebalance机制的本意是为了提升消息的并行消费能力。例如，�
 
 ## Queue分配算法 
 
-消费的时候通过构造器传入的
+一个Topic中的Queue只能由Consumer Group中的一个Consumer进行消费，而一个Consumer可以同时消费多个Queue中的消息。常见的Queue分配算法有四种，分别是：平均分配策略、环形平均策略、一致性hash策略、同机房策略。这些策略是通过在创建Consumer时的构造器传进去的
 
-> 平均分配策略  
+Java Api 中，可以通过构造方法设置，可以通过AllocateMessageQueueStrategy了解，默认使用平均分配
+
+### 平均分配策略  
 
 该算法是要根据avg = QueueCount / ConsumerCount 的计算结果进行分配的。如果能够整除，则按顺序将avg个Queue逐个分配Consumer；如果不能整除，则将多余出的Queue按照Consumer顺序逐个分配。  
 
+![image-20250525174915477](image/rocketmq/image-20250525174915477.png)
+
 **先计算好每个consumer应该分配几个queue**
 
-> 环形平均策略  
+### 环形平均策略  
 
 环形平均算法是指，根据消费者的顺序，依次在由queue队列组成的环形图中逐个分配  
 
-**挨个分配给consumer，一个一个分配**
+**挨个分配给consumer，一个一个分配**，该方法不需要提前计算
 
-> 一致性hash策略  
+![image-20250525174956671](image/rocketmq/image-20250525174956671.png)
+
+### 一致性hash策略  
 
 该算法会将consumer的hash值作为Node节点存放到hash环上，然后将queue的hash值也放到hash环上，通过顺时针方向，距离queue最近的那个consumer就是该queue要分配的consumer  
 
 **会导致分配不均匀**
 
-> 同机房策略  
+![image-20250525175039935](image/rocketmq/image-20250525175039935.png)
+
+### 同机房策略  
+
+AllocateMessageQueueByMachineRoom：
+
+按机房分配，BrokerName 需要以 机房@brokerName命名
+
+当然，我们也可以自己自定义策略
+
+
 
 ## 订阅关系的一致性 
 
@@ -424,7 +483,7 @@ Rebalance机制的本意是为了提升消息的并行消费能力。例如，�
 
 > 错误订阅关系  
 
-同一个topic订阅了不同Topic 
+同一个topic订阅了不同Tag
 
 如图：错误的示例：
 
@@ -585,9 +644,9 @@ log.debug("延迟消息队列：{}", LocalDateTime.now());
 producer.shutdown();
 ```
 
-## 事务消息
+## 事务消息（重要）
 
-## 问题场景
+### 问题场景
 
 工行用户A向建行用户B转账1万元 ：
 
@@ -603,7 +662,19 @@ producer.shutdown();
 
 解决思路是，让第1、2、3步具有原子性，要么全部成功，要么全部失败  
 
+### 事务消息生命周期
+
+- 初始化：半事务消息被生产者构建并完成初始化，待发送到服务端的状态。
+- 事务待提交：半事务消息被发送到服务端，和普通消息不同，并不会直接被服务端持久化，而是会被单独存储到事务存储系统中，等待第二阶段本地事务返回执行结果后再提交。此时消息对下游消费者不可见。
+- 消息回滚：第二阶段如果事务执行结果明确为回滚，服务端会将半事务消息回滚，该事务消息流程终止。
+- 提交待消费：第二阶段如果事务执行结果明确为提交，服务端会将半事务消息重新存储到普通存储系统中，此时消息对下游消费者可见，等待被消费者获取并消费。
+- 消费中：消息被消费者获取，并按照消费者本地的业务逻辑进行处理的过程。 此时服务端会等待消费者完成消费并提交消费结果，如果一定时间后没有收到消费者的响应，Apache RocketMQ会对消息进行重试处理。具体信息，请参见[消费重试](https://rocketmq.apache.org/zh/docs/featureBehavior/10consumerretrypolicy)。
+- 消费提交：消费者完成消费处理，并向服务端提交消费结果，服务端标记当前消息已经被处理（包括消费成功和失败）。 Apache RocketMQ默认支持保留所有消息，此时消息数据并不会立即被删除，只是逻辑标记已消费。消息在保存时间到期或存储空间不足被删除前，消费者仍然可以回溯消息重新消费。
+- 消息删除：Apache RocketMQ按照消息保存机制滚动清理最早的消息数据，将消息从物理文件中删除。更多信息，请参见[消息存储和清理机制](https://rocketmq.apache.org/zh/docs/featureBehavior/11messagestorepolicy)。
+
 ### 代码片段
+
+官方文档有不同实现：[事务消息 | RocketMQ](https://rocketmq.apache.org/zh/docs/featureBehavior/04transactionmessage/)
 
 1. 定义一个监听器，用于操作本地事务和消息回查
 
@@ -611,9 +682,15 @@ producer.shutdown();
 static class ICBCTransactionListener implements TransactionListener {
     @Override
     public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-        //当消息投递到mq后，处于半提交状态
-        // 执行本地事务
-        return LocalTransactionState.UNKNOW;
+        //当消息投递到mq后，处于半提交状态，调用这个方法
+        try {
+            boolean success = doBusinessLogic();  // 执行本地事务
+            //要么提交消息，要么回滚
+            return success ? LocalTransactionState.COMMIT_MESSAGE 
+                           : LocalTransactionState.ROLLBACK_MESSAGE;
+        } catch (Exception e) {
+            return LocalTransactionState.UNKNOW;   // 触发回查[6,9](@ref)
+        }
     }
 
     @Override
@@ -622,18 +699,27 @@ static class ICBCTransactionListener implements TransactionListener {
         //1.回调操作返回UNKNWON
         //2.TC没有接收到TM的最终全局事务确认指令
         log.debug("收到回查消息：{}", msg);
+        /**
+           * 事务检查器一般是根据业务的ID去检查本地事务是否正确提交还是回滚，此处以订单ID属性为例。
+           * 在订单表找到了这个订单，说明本地事务插入订单的操作已经正确提交；如果订单表没有订单，说明本地事务已经回滚。
+         */
+        final String orderId = messageView.getProperties().get("OrderId");
         return LocalTransactionState.COMMIT_MESSAGE;
     }
 }
 ```
 
 2. 启动事务消息
+   1. setExecutorService主要是给checkLocalTransaction线程池异步调用
+
 
 ```java
-TransactionMQProducer txProducer = new TransactionMQProducer("tx");
-txProducer.setNamesrvAddr(ProductBase.ADDRESS);
+
+//事务消息的group
+TransactionMQProducer txProducer = new TransactionMQProducer("transaction_group");
+//设置namespace
+txProducer.setNamesrvAddr("127.0.0.1:9876");
 ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1000l, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
-//为生产者指定线程池
 txProducer.setExecutorService(executor);
 txProducer.setTransactionListener(new ICBCTransactionListener());
 txProducer.start();
@@ -770,3 +856,40 @@ MQClientInstance不是对外应用类，也就是说用户不需要自己实例�
  所以只要ClientConfig里的相关参数（ IP@instanceName@unitName ）一致，这些Client会复用一个MQClientInstance 
 
 如果我们同一个应用，连接了多个集群，那么，不配置instanceName，那么会公用一个MQClientInstance ，则，只会连接一个集群
+
+
+
+# RocketMQ 消息积压
+
+## 消费者线程
+
+我们在配置消费的时候，一般都会配置线程数
+
+如：
+
+```java
+DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("consumer_group");
+// 统一设置最小和最大线程数（推荐）
+consumer.setConsumeThreadMin(20);
+consumer.setConsumeThreadMax(20);
+```
+
+RocketMQ 消费者线程池采用 `LinkedBlockingQueue` 作为阻塞队列，默认未设置队列容量，导致其成为无界队列; 用户可配置 **核心线程数（`consumeThreadMin`）** 和 **最大线程数（`consumeThreadMax`）**，但由于无界队列特性，线程池不会触发扩容至最大线程数，实际运行中线程数始终等于核心线程数
+
+## 消息拉取速度与本地消费速度的关联
+
+消费者拉取的消息会暂存到 `ProcessQueue`，其积压状态触发流控规则：
+
+- **消息数量阈值**：单队列默认 1000 条
+
+- **消息大小阈值**：单队列默认 100MB
+- **偏移量跨度阈值**：非顺序消费场景下，队列首尾消息偏移差默认不超过 2000
+
+若本地消费速度慢，导致 `ProcessQueue` 达到阈值，消费者会暂停拉取消息，延迟一段时间（如顺序消费加锁失败时延迟 3 秒）后再尝试
+
+## 策略
+
+1. 根据rebanlce机制，适当的调整consumer的数量
+2. **线程池调优**：调整consumeThreadMin的大小
+3. 从consumer端着手，看代码上有没有拉低消费的代码进行优化
+4. producer端，对消息生存限流
