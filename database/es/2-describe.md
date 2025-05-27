@@ -200,3 +200,26 @@ PUT /test/_doc/2?refresh=true
 - `coordinating node` 如果发现 `primary node` 和所有 `replica node` 都搞定之后，就返回响应结果给客户端
 
 ![image-20250523233935303](image/2-describe/image-20250523233935303.png)
+
+# ES主分片写数据流程
+
+![image-20250526195043740](image/2-describe/image-20250526195043740.png)
+
+1. 主分片先将数据写入ES的 memory buffer，然后定时（默认1s）将 memory buffer 中的数据写入一个新的 segment 文件中，并进入操作系统缓存 Filesystem cache（同时清空 memory buffer）
+   1. 数据存在 memory buffer 时是搜索不到的，只有数据被 refresh 到 Filesystem cache 之后才能被搜索到
+2. 由于 memory Buffer 和 Filesystem Cache 都是基于内存，假设服务器宕机，那么数据就会丢失，所以 ES 通过 translog 日志文件来保证数据的可靠性，在数据写入 memory buffer 的同时，将数据也写入 translog 日志文件中，当机器宕机重启时，es 会自动读取 translog 日志文件中的数据，恢复到 memory buffer 和 Filesystem cache 中去。
+
+# ES 查询流程
+
+1. 请求到达协调节点：每个节点可能扮演协调节点、数据节点（Data Node）或主节点（Master Node）的角色。客户端的查询请求首先到达协调节点，协调节点负责解析请求、协调查询并汇总结果。
+   1. **解析DSL**：协调节点接收到请求后，使用内部的JSON解析器（如Jackson）将DSL解析为查询对象
+   2. **查询验证**：检查DSL语法是否正确，索引是否存在，字段是否合法。
+   3. **路由计算**：根据查询的索引名和分片路由规则，确定哪些分片（Primary Shard和Replica Shard）需要参与查询
+
+2. 查询分发到数据节点
+3. 数据节点的查询执行
+   1. 每个数据节点负责处理其本地分片的查询
+4. 结果汇总与返回：数据节点完成查询后，将结果（包含Doc ID、评分和文档内容）返回给协调节点。协调节点执行以下操作
+   1. **结果合并**：合并所有分片的查询结果，执行全局排序（如果需要）。
+   2. **分页处理**：根据`from`和`size`参数，截取最终结果集。
+   3. **响应生成**：将结果序列化为JSON，返回给客户端。

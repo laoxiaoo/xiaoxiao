@@ -365,37 +365,6 @@ public Object postProcessAfterInitialization(Object bean, String beanName) throw
              * 正常执行：前置通知-》目标方法-》后置通知-》返回通知
              * 出现异常：前置通知-》目标方法-》后置通知-》异常通知
 
-# 事务原理
-
-## 基本原理
-
-@EnableTransactionManagement注解中import了TransactionManagementConfigurationSelector选择器
-
-它导入了两个组件
-
- * AutoProxyRegistrar
- * ProxyTransactionManagementConfiguration
-
-> AutoProxyRegistrar
-
- * 给容器中注册一个 InfrastructureAdvisorAutoProxyCreator 组件；
-
- * InfrastructureAdvisorAutoProxyCreator：
-
-   利用后置处理器机制在对象创建以后，包装对象，返回一个代理对象（增强器），代理对象执行方法利用拦截器链进行调用,在AbstractAutoProxyCreator#postProcessAfterInitialization方法中创建代理类
-
-* 在代理类创建时，添加BeanFactoryTransactionAttributeSourceAdvisor增强器
-
-> ProxyTransactionManagementConfiguration
-
-**他是一个config**，给容器注入了相关的bean
-
-- 给容器中注册事务增强器：BeanFactoryTransactionAttributeSourceAdvisor
-- 事务注解解析器：AnnotationTransactionAttributeSource
-- 事务拦截器：TransactionInterceptor（保存了事务的属性信息）
-  - 是一个 MethodInterceptor（方法拦截器），在目标方法执行的时候，执行拦截器链
-  - 在TransactionInterceptor#invoke方法中进行拦截工作（如：获取事务属性，事务提交，回滚等）
-
 ## DefaultAopProxyFactory
 
 - 通过这个facory创建代理类
@@ -502,57 +471,3 @@ Set<BeanDefinitionHolder> scannedBeanDefinitions =
       this.componentScanParser.parse(componentScan, sourceClass.getMetadata().getClassName());
 ```
 
-
-
-# 几个不常用的后置处理器
-
-## Bean 初始化后置处理器
-
->  BeanPostProcessor
-
-bean在初始化前后调用方法
-
-## Bean实例化后置处理
-
->  InstantiationAwareBeanPostProcessor
-
-```java
-public interface InstantiationAwareBeanPostProcessor extends BeanPostProcessor {
-
-   @Nullable
-   default Object postProcessBeforeInstantiation(Class<?> beanClass, String beanName) throws BeansException {
-      return null;
-   }
-
-   default boolean postProcessAfterInstantiation(Object bean, String beanName) throws BeansException {
-      return true;
-   }
-
-   @Nullable
-   default PropertyValues postProcessProperties(PropertyValues pvs, Object bean, String beanName)
-         throws BeansException {
-
-      return null;
-   }
-}
-```
-
-## Bean工厂后置处理
-
->  BeanFactoryPostProcessor
-
-bean 定义已经加载，还没创建对象的时候调用
-
-我们可以用beanfactory进行一些操作：获取bean的定义名称
-
-## Bean定义后置处理
-
->  BeanDefinitionRegistryPostProcessor
-
-可以注入额外的bean组件
-
-## 容器单实例bean创建后
-
->  SmartInitializingSingleton
-
-容器单实例bean初始化后，执行

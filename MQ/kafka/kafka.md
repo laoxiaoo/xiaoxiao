@@ -110,9 +110,34 @@ Topic: mytest	TopicId: lHL_52IoSSWPJDRecdDctA	PartitionCount: 1	ReplicationFacto
  ./bin/kafka-console-consumer.sh --bootstrap-server localhost:9092 --from-beginning --topic my-replicated-topic
 ```
 
-# 消息可靠性传输
+# 消息生产
 
-## 消费者自动提交带来的问题
+## 发送模式
+
+### 异步发送
+
+对于生产者的异步发送来说就是，我发送完当前消息后，并不需要你将当前消息的发送结果立马告诉我，而是可以随即进行下一条消息的发送。但是我会允许添加一个回调函数，接收你后续返回的发送结果。异步发送这块我们直接调用kafkaProducer的send方法即可实现异步发送。
+
+### 同步发送
+
+如果生产者需要使用同步发送的方式，只需要拿到 send 方法返回的future对象后，调用其 get() 方法即可。此时如果消息还未发送到broker中，get方法会被阻塞，等到 broker 返回消息发送结果后会跳出当前方法并将结果返回。
+
+
+
+
+
+
+## 分区策略
+
+所谓分区写入策略，即是生产者将数据写入到kafka主题后，kafka如何将数据分配到不同分区中的策略。
+
+常见的有三种策略，轮询策略，随机策略，和按键保存策略
+
+
+
+# 消息消费
+
+## 自动提交
 
 kafka的消息消费位置 offset我们称之为位移
 
@@ -123,7 +148,7 @@ kafka的消息消费位置 offset我们称之为位移
 1. 重复消费：当我消费到某个位置时，没有定期提交，kafka挂了，这个时候，就会重新消费
 2. 消息丢失：当我批量poll某些消息时，只成功消息了一部分，而kafka定期提交，记录消费了全部，则此时就会造成其他一些消息的丢失
 
-## 消费者手动提交
+
 
 ### 原生的客户端消费
 
@@ -236,7 +261,65 @@ public static void synSendMessage(KafkaTemplate kafkaTemplate) {
 }
 ```
 
-# Kafka秒杀公平性保证  
+# 事务消息
+
+## 特性
+
+- **原子性**：事务性消息要么完全成功，要么完全失败。这确保了消息不会被部分处理。
+- **可靠性**：一旦消息被写入Kafka，它们将被视为已经处理，即使发生了应用程序或系统故障。
+
+##  生产者配置
+
+acks：这是有关生产者接收到确认之后才认为消息发送成功的设置。对于事务性消息，通常将其设置为acks=all，以确保消息仅在事务完全提交后才被视为成功发送。
+
+transactional.id：这是用于标识生产者实例的唯一ID。在配置文件中设置transactional.id是启用事务性消息的关键步骤。
+
+enable.idempotence：幂等性是指相同的消息不会被重复发送。对于事务性消息，通常将其设置为enable.idempotence=true，以确保消息不会重复发送。
+
+```java
+import org.apache.kafka.clients.producer.KafkaProducer;
+import org.apache.kafka.clients.producer.Producer;
+import org.apache.kafka.clients.producer.ProducerConfig;
+import java.util.Properties;
+
+public class MyKafkaProducer {
+    public static Producer<String, String> createProducer() {
+        Properties properties = new Properties();
+        properties.put(ProducerConfig.BOOTSTRAP_SERVERS_CONFIG, "localhost:9092");
+        properties.put(ProducerConfig.KEY_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(ProducerConfig.VALUE_SERIALIZER_CLASS_CONFIG, "org.apache.kafka.common.serialization.StringSerializer");
+        properties.put(ProducerConfig.TRANSACTIONAL_ID_CONFIG, "my-transactional-id");
+
+        return new KafkaProducer<>(properties);
+    }
+}
+
+```
+
+```java
+//开启事务
+producer.beginTransaction();
+//发送消息
+producer.send(new ProducerRecord<>("my-topic", "key1", "value1"));
+producer.send(new ProducerRecord<>("my-topic", "key2", "value2"));
+
+//对事务进行回滚或者提交处理
+try {
+    producer.commitTransaction();
+} catch (ProducerFencedException | OutOfOrderSequenceException | AuthorizationException e) {
+    // 处理异常，通常中止事务并重试
+    producer.close();
+} catch (CommitFailedException e) {
+    // 事务提交失败，通常中止事务并重试
+    producer.close();
+}
+
+
+```
+
+
+
+# 顺序消费
 
 消息的可靠性传输可以保证秒杀业务的公平性。关于秒杀业务的公平性，我们还需要考虑一点：消息的顺序性  
 
