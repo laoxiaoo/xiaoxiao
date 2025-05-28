@@ -396,6 +396,36 @@ public static void inorder(Node<Integer> node) {
 
 ![image-20210630210928543](./image/20210630210928.png)
 
+```java
+import java.util.LinkedList;
+import java.util.Queue;
+
+public static void breadthFirst(Node<Integer> root) {
+    if (root == null) {
+        return;
+    }
+    
+    Queue<Node<Integer>> queue = new LinkedList<>();
+    queue.add(root);
+    
+    while (!queue.isEmpty()) {
+        Node<Integer> current = queue.poll();
+        System.out.print(current.val + ",");
+        
+        if (current.left != null) {
+            queue.add(current.left);
+        }
+        if (current.right != null) {
+            queue.add(current.right);
+        }
+    }
+}
+```
+
+
+
+
+
 ## 二叉搜索树
 
 - 插入时，数据比当前节点小放在左子树，比当前节点大放在右子树

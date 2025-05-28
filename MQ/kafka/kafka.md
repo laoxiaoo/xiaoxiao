@@ -272,7 +272,7 @@ public static void synSendMessage(KafkaTemplate kafkaTemplate) {
 
 acks：这是有关生产者接收到确认之后才认为消息发送成功的设置。对于事务性消息，通常将其设置为acks=all，以确保消息仅在事务完全提交后才被视为成功发送。
 
-transactional.id：这是用于标识生产者实例的唯一ID。在配置文件中设置transactional.id是启用事务性消息的关键步骤。
+transactional.id：这是用于标识生产者实例的唯一ID。在配置文件中设置transactional.id是启用事务性消息的关键步骤。是生产者级别的全局唯一标识，**一个生产者对应一个固定的 `transactional.id`**，用于标识事务的连续性
 
 enable.idempotence：幂等性是指相同的消息不会被重复发送。对于事务性消息，通常将其设置为enable.idempotence=true，以确保消息不会重复发送。
 
@@ -337,3 +337,33 @@ try {
 2. retries=0，不重试 （可能会丢消息(一般不会使用)，适用于吞吐量指标重要性高于数据丢失  ）
    1. 开启幂等性的方式比较简单，我们只需要设置enable.idempotence**参数为**true就可以了  
    2. 幂等性配置不能夸分区实现 
+
+# Kafka生产者幂等性
+
+生产者幂等性主要避免生产者数据重复提交至Kafka broker中并落盘。在正常情况下，Producer向Broker发送消息，Broker将消息追加写到对应的流（即某一Topic的某一Partition）中并落盘，并向Producer返回ACK信号，表示确认收到。但是Producer和Broker之间的通信总有可能出现异常，如果消息已经写入，但ACK在半途丢失了，Producer就会进行retry操作再次发送该消息，造成重复写入
+
+1. PID。每个新的Producer在初始化的时候会被分配一个唯一的PID，这个PID对用户是不可见的
+2. Sequence Numbler。对于每个PID，该Producer发送数据的每个都对应一个从0开始单调递增的Sequence Number
+3. Broker端在缓存中保存了这seq number,对于接收的每条消息,如果其序号比Broker缓存中序号大于1则接受它,否则将其丢弃,这样就可以实现了消息重复提交了.
+   1. 但是如果其他服务也提交了同样的消息，那么就需要业务上处理了
+
+Producer使用幂等性的示例非常简单,与正常情况下Producer使用相比变化不大,只需要 把Producer的配置enable.idempotence设置为true即可,如下所示:
+
+```java
+Properties props = new Properties();
+props.put(ProducerConfig.ENABLE_IDEMPOTENCE_CONFIG, "true");
+//当enable.idempotence为true时acks默认为 all
+// props.put("acks", "all");
+props.put("bootstrap.servers", "localhost:9092");
+props.put("key.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+props.put("value.serializer", "org.apache.kafka.common.serialization.StringSerializer");
+KafkaProducer producer = new KafkaProducer(props);
+producer.send(new ProducerRecord(topic, "test");
+```
+
+# Kafka缺点
+
+1. 由于是批量发送，数据并非真正的实时
+2. 仅支持统一分区内消息有序，无法实现全局消息有序；
+3. 监控不完善，需要安装插件；
+4. 依赖zookeeper进行元数据管理；3.0版本去除，4.0实现了自己的注册中心

@@ -1,3 +1,5 @@
+# 
+
 # String基本特性
 
 1. Jdk8的底层采用char数组存储， Jdk9 byte数组存储

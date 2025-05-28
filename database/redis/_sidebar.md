@@ -4,5 +4,6 @@
 * [持久化](/database/redis/4-persistence)
 * [主从复制](/database/redis/5-replication)
 * [哨兵模式](/database/redis/6-sentinel)
+* [集群模式](/database/redis/7-cluster)
 * [客户端Api](/database/redis/8-api)
 * [事务](/database/redis/9-transation)

@@ -907,3 +907,13 @@ public static AutowiredAnnotationBeanPostProcessor beanPostProcessor() {
 ```
 
 如此，InjectPerson就能注入进去对应的bean了
+
+
+
+# Autowire的原理
+
+Spring 在注册BeanPostProcessor的后置处理器的时候，注入了AutowiredAnnotationBeanPostProcessor，他实现了MergedBeanDefinitionPostProcessor
+
+这个后置处理器，在Bean实例化后会回调，用于合并BeanDefinition
+
+它解析Autowired的注解，进行beanDefinition的解析，然后再属性注入阶段进行Bean的注入
