@@ -370,9 +370,159 @@ BoolQueryBuilder boolQueryBuilder = QueryBuilders.boolQuery()
 }
 ```
 
-
-
 这样能最大化 Elasticsearch 的查询性能
+
+## Filter的原理
+
+Filter主要是通过*bitset机制与caching机制*来实现的
+
+### bitset机制
+
+比如我们有一个倒排索引：
+
+1. 过滤date为2020-02-02（filter：2020-02-02）
+   1. 从倒排索引中，找到doc2,doc3符合，doc1不符合
+   2. Filter为每个在倒排索引中搜索到的结果，构建一个bitset，[0, 1, 1]（**非常重要**）；bitset是一个二进制数组，匹配为1，不匹配为0
+
+2. 多个过滤条件时,遍历每个过滤条件对应的bitset，优先从最稀疏的开始搜索，查找满足所有条件的document
+   1. 稀疏、密集的判断是通过匹配的多少（即bitset中元素为1的个数）[0, 0, 0, 1, 0, 0] 比较稀疏、[0,
+      1, 0, 1, 0, 1] 比较密集
+   2. 多个filter组合查询时，每个filter条件都会对应一个bitset
+   3. 比如：filter，postDate=2017-01-01，userID=1
+      1. 匹配的bitset分别是[0,1,1]  [0,1,0]; 那么匹配的则是doc2
+
+### caching bitset
+
+1. caching bitset，跟踪query，在最近256个query中超过一定次数的过滤条件，缓存其bitset。对
+   于小segment（<1000，或<3%），不缓存bitset
+2. 如果document有新增或修改，那么cached bitset会被自动更新
+3. filter大部分情况下，在query之前执行，先尽量过滤尽可能多的数据
+   1. query：要计算doc对搜索条件的relevance score，还会根据这个score排序
+   2. filter：只是简单过滤出想要的数据，不计算relevance score，也不排序
+
+# 搜索精准度
+
+## boost
+
+搜索条件权重。可以将某个搜索条件的权重加大，此时匹配这个搜索条件的document，在计算relevance score时，权重更大的搜索条件的document对应的relevance score会更高，当然也就会优先被返回回来。默认情况下，搜索条件的权重都是1
+
+比如：搜索帖子，如果标题包含Hadoop或java或spark或Elasticsearch，就优先输出包含java的，再输出spark的，再输出Hadoop的，最后输出Elasticsearch的。
+
+```json
+GET /article/_search
+{
+    "query": {
+        "bool": {
+            "should": [
+                {
+                    "term": {
+                        "title": {
+                            "value": "java",
+                            "boost": 5
+                        }
+                    }
+                },
+                {
+                    "term": {
+                        "title": {
+                            "value": "spark",
+                            "boost": 4
+                        }
+                    }
+                },
+                {
+                    "term": {
+                        "title": {
+                            "value": "hadoop",
+                            "boost": 3
+                        }
+                    }
+                },
+                {
+                    "term": {
+                        "title": {
+                            "value": "elasticsearch"
+                        }
+                    }
+                }
+            ]
+        }
+    }
+}
+```
+
+## dis_max
+
+### 问题
+
+某个帖子，doc1，title中包含java，content不包含java beginner任何一个关键词；
+某个帖子，doc2，title中包含java，content中包含beginner；
+
+我们进行搜索：
+
+```json
+GET /forum/article/_search
+{
+    "query": {
+        "dis_max": {
+            "queries": [
+                { "match": { "title": "java beginner" }},
+                { "match": { "body":  "java beginner" }}
+            ]
+        }
+    }
+}
+```
+
+结果是 doc1排在doc2的前面，因为doc1的评分可能是：1+1=2，两个字段都有评分， 而doc2则是 0+1.5=1.5
+
+dis_max的出现就是为了*只取某一个query最大的分数*，完全不考虑其他query的分数
+
+如下：
+
+```json
+GET /forum/article/_search
+{
+    "query": {
+        "dis_max": {
+            "queries": [
+                { "match": { "title": "java beginner" }},
+                { "match": { "body":  "java beginner" }}
+            ]
+        }
+    }
+}
+```
+
+此时，doc1排在doc2的后面
+
+## 自定义相关度
+
+相关文档：[函数分数查询 |Elasticsearch 指南 [7.3\] |弹性的](https://www.elastic.co/guide/en/elasticsearch/reference/7.3/query-dsl-function-score-query.html#query-dsl-function-score-query)
+
+### 解决的问题
+
+在使用ES进行全文搜索时，搜索结果默认会以文档的相关度进行排序，而这个 "文档的相关度"，是可以通过 function_score 自己定义的，也就是说我们可以通过使用function_score，来控制 "怎样的文档相关度得分更高" 这件事
+
+示例：
+
+```json
+GET /book/_search
+{
+    "query": {
+        "function_score": {
+            "query": {
+                "match_all": {}
+            },
+            "boost": "5",
+            "random_score": {}
+            "min_score":2
+        }
+    }
+}
+```
+
+
 
 # 自动补全
 
