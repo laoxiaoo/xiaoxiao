@@ -761,63 +761,8 @@ POST /_bulk
 
 # 并发处理方案
 
-ES中用的是乐观锁并发方案
-
-每次修改，ES都会去修改_version
-
-如果A线程操作数据，version=1，回写数据后version=2
-
-B线程修改数据，version=1，回写数据发现version不相等，则会将这条数据扔掉，不会让后修改的数据覆盖
 
 
-
-## 乐观锁
-
-A线程操作数据，A拿到vesion1的数据，B线程拿到的也是vesion1的数据
-
-A线程修改数据后，判断库中vesion与自己拿到的数据是否一致，如果一致则回写成功，数据vesion+1
-
-B线程修改数据，回写发现vesion不一致，重新读取数据，再次操作，判断版本号，进行回写
-
-## 悲观锁
-
-A线程操作数据，其他线程无法获取数据，其他线程阻塞，直到A线程操作完并且将数据回写之后
-
-## ES乐观锁处理
-
-- 手动处理
-
-如果执行失败，则我们需要去重新获取version,再次执行，_version=1时，修改才能成功
-
-```json
-PUT /order/product/4?version=1
-```
-
-- 只有当你提供的version比es中的_version大的时候，才能完成修改
-
-```json
-?version=1&version_type=external
-```
-
-- partial update会内置乐观锁,下面的语句表示乐观锁重试5次
-
-```json
-post、index/type/id/_update?retry_on_conflict=5
-```
-
-## ES写一致性原理
-
-consistency，one（primary shard），all（all shard），quorum（default）
-
-- 我们在发送任何一个增删改操作的时候，比如说put /index/type/id，都可以带上一个consistency参数，指明我们想要的写一致性是什么？
-
-```bash
-put /index/type/id?consistency=quorum
-```
-
-one：要求我们这个写操作，只要有一个primary shard是active活跃可用的，就可以执行
- all：要求我们这个写操作，必须所有的primary shard和replica shard都是活跃的，才可以执行这个写操作
- quorum：默认的值，要求所有的shard中，必须是大部分的shard都是活跃的，可用的，才可以执行这个写操作
 
 # 深入查询
 

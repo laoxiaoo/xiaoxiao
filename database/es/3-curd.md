@@ -893,3 +893,87 @@ put /test_join/_doc/s_1?routing=c_2
 }
 ```
 
+# 并发处理方案
+ES中用的是乐观锁并发方案
+
+每次修改，ES都会去修改_version
+
+如果A线程操作数据，version=1，回写数据后version=2
+
+B线程修改数据，version=1，回写数据发现version不相等，则会将这条数据扔掉，不会让后修改的数据覆盖
+
+## ES乐观锁处理
+
+1. 查询到某条数据，我们能够获取到_seq_no或者 _version
+2. 此时，我们更新的时候，带上if_seq_no=_seq_no,此时，如果 _seq_no=1则更新成功，如果失败我们将再次查询数据的 _seq_no，进行更新，直到成功为止（CAS）
+
+```json
+PUT /test_index/_doc/4?if_seq_no=1&if_primary_term=1
+{
+"test_field": "client2 changed"
+}
+```
+
+## external version
+
+当version_type=external的时候，只有当你提供的version比es中的_version大的时候，才能完成修改
+
+如：当ES中version<5时，就可以执行成功
+
+```json
+PUT /test_index/_doc/5?version=2&version_type=external
+{
+"test_field": "external client1 changed"
+}
+```
+
+# ES一致性
+
+ES是分布式部署的，那么，ES是怎么保证各个share的一致性呢
+
+5.0版本之前，ES是通过<b id="blue">quorum机制</b>和<b id="blue">timeout机制</b>来保证一致性的
+
+## quorum机制
+
+在写入时，带上参数consistency
+
+```json
+PUT /index/indextype/id?consistency=quorum
+```
+
+consistency有三个类型
+
+one：要求我们这个写操作，只要有一个primary shard是active活跃可用的，就可以执行
+
+ all：要求我们这个写操作，必须所有的primary shard和replica shard都是活跃的，才可以执行这个写操作
+
+ quorum：默认的值，要求所有的shard中，必须是大部分的shard都是活跃的，可用的，才可以执行这个写操作
+
+
+
+什么是<b id="gray">法定数shard</b>？
+
+```shel
+int((primary shard + number_of_replicas) / 2) + 1
+
+```
+
+number_of_replicas:比如，3个primary shard，**每个primary shard有一个副本shard**，那么总shard=6,所以number_of_replicas=1
+
+## timeout机制
+
+默认1分钟， 当quorum时，active的shard低于法定shard时候,等待timeout时间，如果过了这个时间，还是低于法定shard，则报错，写入失败，比如：
+
+## 5.0以后
+
+wait_for_active_shards=具体的活跃shard数量
+
+下面语句表示，如果活跃数少于4，则等待timeout，如果说，当前ES服务的shard只有2个（一主一副），则下面的语句必定失败
+
+```json
+PUT /test_index/_doc/1?wait_for_active_shards=4&timeout=10s
+{
+"name":"xiao mi"
+}
+```
+
