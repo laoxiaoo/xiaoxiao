@@ -57,13 +57,13 @@ create table t_user (id int primary key, name varchar(50), unique(name));
 
 - 非叶子节点也存储数据
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210702112453.jpg)
+![](./image/20210702112453.jpg)
 
 ### B+树理解
 
 - 是*二叉查找树的改良版本*
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210702111418.jpg)
+![](./image/20210702111418.jpg)
 
 - 每页相当于上图的一个磁盘块
 - InnoDB存储引擎中页的大小为16KB（操作系统的预读一页是4K，所以存储引擎的页大小应该是4k的整数倍），一般表的主键类型为INT（占用4个字节）或BIGINT（占用8个字节），指针类型也一般为4或8个字节，也就是说一个页（B+Tree中的一个节点）中大概存储16KB/(8B+8B)=1K个键值（因为是估值，为方便计算，这里的K取值为〖10〗^3）。也就是说一个深度为3的B+Tree索引可以维护10^3 * 10^3 * 10^3 = 10亿 条记录。
@@ -73,10 +73,10 @@ create table t_user (id int primary key, name varchar(50), unique(name));
 - 磁盘预读：每次读取数据，磁盘都是将一块数据进行返回（也称为页），所以将数据放到节点会使得一页存储的数据减少（我们每次比对，只需要比对key）
 - 如果将数据存储在非叶子节点，那么会造成树的层级增加，增加了磁盘IO
 
-### B+与B-树的区别
+### B+与B树的区别
 
-- 非叶子节点只存储键值信息。
-- 所有叶子节点之间都有一个链指针。
+- B+非叶子节点只存储键值信息。
+- B+所有叶子节点之间都有一个链指针。(树的所有叶节点构成一个有序链表，可以按照key排序的次序依次遍历全部数据)
 - 数据记录都存放在叶子节点中。
 **适用场景：**B树适合进行随机读写操作，因为每个节点都包含了数据；而B+树适合进行范围查询和顺序访问，因为数据都存储在叶子节点上，并且叶子节点之间使用链表连接，有利于顺序遍历。
 
@@ -86,7 +86,7 @@ create table t_user (id int primary key, name varchar(50), unique(name));
 - InnoDB 主键使用的是聚簇索引和辅助索引，MyISAM 不管是主键索引，还是二级索引使用的都是非聚簇索引。
   下图形象说明了聚簇索引表(InnoDB)和非聚簇索引(MyISAM)的区别：
 
-![](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210702113122.png)
+![](./image/20210702113122.png)
 
 innodb中：
 
@@ -321,9 +321,9 @@ MRR 通过把「随机磁盘读」，转化为「顺序磁盘读」，从而提�
 
 # 索引下推
 
-索引下推(Index Condition Pushdown，简称ICP)，是MySQL5.6版本的新特性，它能减少回表查询次数，提高查询效率。
+索引下推(Index Condition Pushdown，简称<b id="red">ICP</b>)，是MySQL5.6版本的新特性，它能减少回表查询次数，提高查询效率。
 
-比如，我们有Sql
+比如，建立了联合索引（name, age）, 我们有Sql
 
 ```sql
 SELECT * from user where  name like '陈%' and age=10
@@ -331,7 +331,7 @@ SELECT * from user where  name like '陈%' and age=10
 
 > 没有索引下推：
 
-会忽略age这个字段，直接通过name进行查询，然后拿着取到的id值一次次的回表查询
+直接通过name进行查询，然后拿着取到的id值一次次的回表查询,那么，age在这个联合索引的建立就失效了
 
 ![image-20250430123609328](image/3-index/image-20250430123609328.png)
 
@@ -340,3 +340,46 @@ SELECT * from user where  name like '陈%' and age=10
 InnoDB并没有忽略age这个字段，而是在索引内部就判断了age是否等于20，对于不等于20的记录直接跳过，因此在(name,age)这棵索引树中只匹配到了一个记录，此时拿着这个id去主键索引树中回表查询全部数据，这个过程只需要回表一次。
 
 ![image-20250430123635690](image/3-index/image-20250430123635690.png)
+
+# 联合索引
+
+## 大致结构
+
+假设表 `users`，有联合索引 `(country, city, last_name)`。部分数据如下：
+
+| id (PK) | country | city     | last_name |
+| :------ | :------ | :------- | :-------- |
+| 101     | China   | Beijing  | Li        |
+| 102     | China   | Beijing  | Wang      |
+| 103     | China   | Shanghai | Chen      |
+| 104     | China   | Shanghai | Zhang     |
+| 201     | USA     | New York | Smith     |
+| 202     | USA     | New York | Johnson   |
+| 203     | USA     | Seattle  | Brown     |
+
+那么存储的结构大概是：
+
+```
+叶子节点 1: (China, Beijing, Li)   -> PK 101
+           (China, Beijing, Wang) -> PK 102
+叶子节点 2: (China, Shanghai, Chen) -> PK 103
+           (China, Shanghai, Zhang)-> PK 104
+叶子节点 3: (USA, New York, Johnson)-> PK 202
+           (USA, New York, Smith)  -> PK 201
+叶子节点 4: (USA, Seattle, Brown)   -> PK 203
+```
+
+## 失效场景
+
+| **场景**              | **示例**                     | **是否失效** | **关键原因**           |
+| :-------------------- | :--------------------------- | :----------- | :--------------------- |
+| 缺少最左列            | `WHERE b=2`                  | ✅            | 违反最左前缀原则       |
+| 范围查询后的列        | `WHERE a>1 AND b=2`          | ✅            | 范围后索引列无序       |
+| 索引列使用函数        | `WHERE UPPER(a)='ABC'`       | ✅            | B+树存储原始值         |
+| `OR` 连接非索引列     | `WHERE a=1 OR d=4` (d无索引) | ✅            | 无法利用索引有序性     |
+| `LIKE` 以 `%` 开头    | `WHERE a LIKE '%abc'`        | ✅            | 无法定位起始点         |
+| 使用 `!=` 或 `NOT IN` | `WHERE a != 1`               | ✅            | 需全索引扫描           |
+| 数据倾斜严重          | `WHERE status=1` (值占比90%) | ⚠️可能        | 优化器认为全表扫描更快 |
+| 排序跳过索引列        | `ORDER BY b` (索引 `(a,b)`)  | ✅            | 无法利用索引顺序       |
+| 隐式类型转换          | `WHERE int_col = '123'`      | ✅            | 函数转换导致索引失效   |
+| 跨列查询              | `WHERE a=1 AND c=3`          | ✅            | 缺少中间列导致局部无序 |
