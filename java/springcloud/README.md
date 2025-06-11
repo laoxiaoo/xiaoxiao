@@ -10,7 +10,7 @@
 
 个个微服务直接相互调用，形成一个架构，它强调的时整体
 
-# dubble与cloud的区别
+# Dubble与cloud的区别
 
 dubble是基于rpc远程调用，cloud时基于restful的
 
@@ -34,10 +34,36 @@ dubble是基于rpc远程调用，cloud时基于restful的
 - 增加了运维成本
 - 使整体的服务变复杂
 
+# 一些概念
+
+服务注册：服务提供者将（服务器IP，访问协议，端口等）注册/登记到注册中心
+
+服务发现：服务消费者从注册中心近实时的获取到注册的服务列表，根据一定的策略选择一个服务访问
+
+负载均衡：
+
+熔断：即断路保护；如果下游服务因为压力过大，响应变慢或者失败，上游服务为了保护系统的可用性，暂时的切断对下游服务的调用
+
+链路追踪：对一次调用的请求链路（多个服务），进行日志记录（如：通过traceid贯穿整个链路，spanceId记录某个服务的日志id），性能健康
+
+- spanId : 同一个线程中唯一, 从0始，按照调用链路从0递增
+- traceId : 在一个 链路 中 traceId 唯一
+
+API网关：
+
 # SpringCloud是什么
 
-SpringCloud=分布式微服务架构下的一站式解决方案，
-是各个微服务架构落地技术的集合体，俗称微服务全家桶
+SpringCloud=分布式微服务架构下的一站式解决方案，是各个微服务架构落地技术的<b id="red">集合体</b>，俗称微服务全家桶
+
+利用SpringBoot的开发便利性简化了微服务架构的开发（自动装配）
+
+
+
+我们需要注意，SpringCloud其实是一套规范，是一套用于构建微服务架构的规范，而不是一个可以拿来即用的框架（所谓规范就是应该有哪些功能组件，然后组件之间怎么配合，共同完成什么事情）。在这个规范之下第三方的Netflix公司开发了一些组件、Spring官方开发了一些框架/组件，包括第三方的阿里巴巴开发了一套框架/组件集合Spring CloudAlibaba，这些才是SpringCloud规范的实现。
+
+# SpringCloud解决了什么问题
+
+SpringCloud规范及实现意图要解决的问题其实就是微服务架构实施过程中存在的一些问题，比如微服务架构中的服务注册发现问题、网络问题（比如熔断场景）、统一认证安全授权问题、负载均衡问题、链路追踪等问题。
 
 # CAP 理论
 
@@ -64,73 +90,6 @@ NoSql==>   （redis,Mogodb等非关系型数据库）遵循的原则是：CAP原
 
 如在大型网站中，选择的时AP原则，因为服务不能挂，挂了就是很严重的灾难性事故
 
+# Spring Cloud 组件
 
-
-# 建立公共模块-api
-
-## 建立实体bean
-
-**Lombok**
-
-Lombok能以简单的注解形式来简化java代码，提高开发人员的开发效率。例如开发中经常需要写的javabean
-
-引入jar包
-
-```xml
-<dependency>
-    <groupId>org.projectlombok</groupId>
-    <artifactId>lombok</artifactId>
-</dependency>
-```
-
-```java
-public class TUser {
-    @Getter
-    @Setter
-    private String id;
-    @Getter
-    @Setter
-    private String username;
-}
-```
-
-## 搭建基础环境
-
-这个是微服务提供者（mybatis+controller）：dept-8001
-
-## 新建微服务消费者 
-
-建立微服务 dept-80
-
-配置config
-
-```java
-@Configuration
-public class ConfigBean {
-
-    @Bean
-    public RestTemplate getRestTemplate(){
-        //RestTemplate提供了多种便捷访问远程Http服务的方法
-        return new RestTemplate();
-    }
-}
-```
-
-### 使用RestTemplate
-
-RestTemplate提供了多种便捷访问远程Http服务的方法， 
-是一种简单便捷的访问restful服务模板类，是Spring提供的用于访问Rest服务的客户端模板工具集
-
-```java
-@RestController
-public class UserController {
-    @Autowired
-    private RestTemplate restTemplate;
-    private final String url = "http://localhost:8001";
-
-    @GetMapping("getUser")
-    public List getUser(){
-        return restTemplate.getForObject(url+"/getUser",List.class);
-    }
-}
-```
+![image-20250611214320321](image/README/image-20250611214320321.png)
