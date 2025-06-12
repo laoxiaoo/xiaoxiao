@@ -23,17 +23,19 @@ Eureka Server提供服务注册服务
 
 EurekaClient是一个Java客户端，用于简化Eureka Server的交互，客户端同时也具备一个内置的、使用轮询(round-robin)负载算法的负载均衡器。在应用启动后，将会向Eureka Server发送心跳(默认周期为30秒)。如果Eureka Server在多个心跳周期内没有接收到某个节点的心跳，EurekaServer将会从服务注册表中把这个服务节点移除（默认90秒）
 
-#### 三大角色
+## 三大角色
 
-Eureka Server 提供服务注册和发现
+<b id="blue">Eureka Server</b> 提供服务注册和发现
 
-Service Provider服务提供方将自身服务注册到Eureka，从而使服务消费方能够找到
+<b id="blue">Service Provider</b>服务提供方将自身服务注册到Eureka；并且通过心跳机制进行续约
 
-Service Consumer服务消费方从Eureka获取注册服务列表，从而能够消费服务
+<b id="blue">Service Consumer</b>服务消费方定期的向serve拉取服务注册列表
 
 > EurekaClient通过poll模式获取注册数据
 
-**EurekaClient:通过注册中心进行访问没如果server多个心跳周期没有收到某个节点，则server会将其从服务注册表移除（默认90秒）**
+<b id="blue">EurekaClient心跳</b>
+
+通过注册中心进行访问没如果server多个心跳周期没有收到某个节点(默认30S续约一次)，则server会将其从服务注册表移除（默认90秒）
 
 ## Euraka 与zookeeper的区别
 zookeeper保证的是cp：在向注册中心注册时，zookeeper可以允许几分钟的注册事件，但不能接收服务down掉不可用，当master接口与其他节点失去联系时，其余节点重新选择leader，但如果选择leader时间太长，选举期间，整个zk集群是不可用的，这时就会导致注册服务瘫痪。
@@ -46,8 +48,9 @@ euraka保证的是ap：eureka各个节点平等，只要有一台在，就能保
 
 3 网络稳定，再同步到其他节点
 
+## 建立Eureka服务
 
-## 建立eureka服务
+### 服务端构建
 
 新建cloud-eureka-7001服务
 
@@ -99,7 +102,7 @@ public class Application7001 {
 访问<http://localhost:7001/>
 
 
-## 微服务注册
+### Client注册
 
 微服务注册进eureka服务中心
 
@@ -195,9 +198,11 @@ eureka:
 127.0.0.1   eureka7002.com
 127.0.0.1   eureka7003.com
 
-2. 新建两个eureka项目
+2. 新建另外两个eureka server的项目 : 修改yml配置
+   1. 修改hostname,可以自定义名称，用于区分Eureka的不同实例,但是hostname需要在主机的host文件中，能指向对应的地址
+   2. defaultZone，需要指向其他集群的地址，用<b id="blue">,</b>隔开
+   3. 集群模式下，<b id="blue">register-with-eureka</b>和<b id="blue">fetch-registry</b>都可以改成<b id="blue">true</b>
 
-修改yml配置
 
 ```yaml
 eureka:
@@ -216,7 +221,7 @@ eureka:
       defaultZone: http://eureka7002.com:7002/eureka/,http://eureka7003.com:7003/eureka/
 ```
 
-3. 修改注册的服务配置（将应用服务注册到eureka集群中）
+3. 在Client修改注册的服务配置（将应用服务注册到eureka集群中）
 
 ```yaml
 eureka:
@@ -228,10 +233,23 @@ eureka:
 
 访问：<http://eureka7001.com:7001/>能看到集群信息
 
+## 失效剔除
+
+Eureka Server会定时（默认60s）的进行检查，如果发现实例在一定时间(默认90s)内没有收到心跳，则会注销该实例
 
 ## Eureka自我保护
 
-某时刻某一个微服务不可用了，eureka不会立刻清理，一定时间内（默认90秒）依旧会对该微服务的信息进行保存，直到这段时间内，服务依旧没有发送心跳数据，这是CAP里面的AP思想
+问题：提供者和注册中心之间的网络有点问题，不代表服务提供者不可用，不代表服务消费者无法访问服务提供者
+
+解决方案：如果在15分钟内超过85%的客户端节点都没有正常的心跳，那么Eureka就认为客户端与注册中心出现了网络故障，Eureka Server自动进入自我保护机制。
+
+处于自我保护时：
+
+1. 不会剔除任何服务实例（可能是服务提供者和EurekaServer之间网络问题），保证了大多数服务依然可
+   用
+2. EurekaServer仍然能够接受新服务的注册和查询请求，但是不会被同步到其它节点上，保证当前节点
+   依然可用，当网络稳定时，当前EurekaServer新的注册信息会被同步到其它节点中。
+3. 通过eureka.server.enable-self-preservation配置可用关停自我保护，默认值是打开
 
 
 # Nacos
