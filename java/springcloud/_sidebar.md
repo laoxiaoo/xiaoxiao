@@ -1,6 +1,7 @@
 * [基础概念](/java/springcloud/README)
-* [RestfulHttp服务端](/java/springcloud/1-restful-HTTP)
 * [注册中心](/java/springcloud/2-register-Center)
+* [RestfulHttp服务端](/java/springcloud/1-restful-HTTP)
+* [负载均衡](/java/springcloud/3-load-balance)
 * [网关](/java/springcloud/3-gateway)
 * [分布式事务](/java/springcloud/4-distributed-transaction)
 * [流量容错](/java/springcloud/5-trafficFault-tolerant)

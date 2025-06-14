@@ -114,13 +114,22 @@ public class Application7001 {
 
 ```xml
 <!-- 将微服务provider注册进eureka -->
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-eureka</artifactId>
+  <dependency>
+      <groupId>org.springframework.cloud</groupId>
+      <artifactId>spring-cloud-starter-netflix-eureka-client</artifactId>
 </dependency>
 <dependency>
     <groupId>org.springframework.cloud</groupId>
     <artifactId>spring-cloud-starter-config</artifactId>
+</dependency>
+<!--Spring boot 相关引入	-->
+ <dependency>
+     <groupId>org.springframework.boot</groupId>
+     <artifactId>spring-boot-starter-web</artifactId>
+</dependency>
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-actuator</artifactId>
 </dependency>
 ```
 
@@ -232,6 +241,30 @@ eureka:
 ```
 
 访问：<http://eureka7001.com:7001/>能看到集群信息
+
+## 获取Eureka注册的服务
+
+从代码上我们可以如此获取，不过一般都不会这么用，因为我们拿到注册服务后，一般还会做负载算法等操作
+
+<b id="blue">SERVER-8001</b>：就是注册服务的application的name
+
+```java
+@Autowired
+private DiscoveryClient discoveryClient;
+
+@GetMapping("/testEureka")
+public void testEureka() {
+    discoveryClient.getServices().forEach(System.out::println);
+    List<ServiceInstance> list = discoveryClient.getInstances("SERVER-8001");
+    for (ServiceInstance instanceInfo : list) {
+        System.out.println(instanceInfo.getInstanceId());
+    }
+}
+```
+
+如下，能看到相关的注册信息
+
+![image-20250614154056895](image/2-register-Center/image-20250614154056895.png)
 
 ## 失效剔除
 
