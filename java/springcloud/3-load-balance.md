@@ -11,16 +11,45 @@
 4. 客户端负载
    1. 如Ribbon: 客户端从注册中心拿到对应的服务提供者的注册信息，再做出算法判断，负载到对应的服务
 
+# Ribbon的初步使用
+
+1. 检查项目里是否引入了<b id="gray">spring-cloud-starter-ribbon</b>包
+
+![image-20250615113358531](image/3-load-balance/image-20250615113358531.png)
+
+1. 初始化RestTemplate的Bean
+   1. <b id="blue">LoadBalanced</b>是关键，意味着restTemplate能够从服务中心获取到对应的服务来进行负载均衡的选择
+
+```java
+@Bean
+@LoadBalanced
+public RestTemplate getRestTemplate() {
+    return new RestTemplate();
+}
+```
+
+2. 服务调用
+   1. <b id="blue">SERVER-8001</b>就是服务提供者的服务注册名（spring.application.name），通过它能从注册中心获取到对应的服务
+
+```java
+@Autowired
+private RestTemplate restTemplate;
+
+@GetMapping("/getPort")
+public String getPort() {
+    return restTemplate.getForObject("http://SERVER-8001/test/getPort", String.class);
+}
+```
+
+3. 可以在<b id="blue">SERVER-8001</b>服务端，提供一个接口，这个接口返回当前服务的端口号，发布两个服务
+   1. 访问客户端的接口，获取到的端口变化来观察轮训机制
+
 # Ribbon负载均衡
-
-
 
 Ribbon在工作时分成两步
 第一步先选择 EurekaServer ,它优先选择在同一个区域内负载较少的server.
 第二步再根据用户指定的策略，在从server取到的服务注册列表中选择一个地址。
 其中Ribbon提供了多种策略：比如轮询、随机和根据响应时间加权。
-
-
 
 ## 负载均衡器有三大组件  
 
@@ -30,82 +59,7 @@ Ribbon在工作时分成两步
 
 
 
-## Ribbon的基本实现
-
-首先，它集成的是客户端的
-
-在80端口上进行集成
-
-导入jar包
-
-**H.SR1版本之后，只需要引入类似spring-cloud-starter-zookeeper-discovery的jar包**
-
-```xml
-<!-- Ribbon相关 -->
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-eureka</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-ribbon</artifactId>
-</dependency>
-<dependency>
-    <groupId>org.springframework.cloud</groupId>
-    <artifactId>spring-cloud-starter-config</artifactId>
-</dependency>
-```
-
-配置文件
-
-```yaml
-eureka:
-  client: #客户端注册进eureka服务列表内
-    # 因为时客户端，所以不需要向注册中心注册
-    register-with-eureka: false
-    service-url:
-      #defaultZone: http://localhost:7001/eureka
-      defaultZone: http://eureka7001.com:7001/eureka/,http://eureka7002.com:7002/eureka/,http://eureka7003.com:7003/eureka/
-```
-
-> ribbion配合RestTemplate使用
-
-config配置更改
-
-```java
-@Bean
-@LoadBalanced
-public RestTemplate getRestTemplate(){
-    //RestTemplate提供了多种便捷访问远程Http服务的方法
-    return new RestTemplate();
-}
-```
-
-control更改，这时，直接使用服务端**spring.application.name= provider-dept8001**来访问
-此时，使用RestTemplate调用远程服务就能实现负载均衡的策略
-
-```java
-// private final String url = "http://localhost:8001";
- private final String url = "http://provider-dept8001";
-
-
- @GetMapping("getUser")
- public List getUser(){
-     return restTemplate.getForObject(url+"/getUser",List.class);
- }
-```
-
-## Ribbon的负载均衡
-
-复制一个与dept-8001相同的项目，该端口为8002，并且配置文件instance-id需要更改，其他不更改，运行80端口地址，发现会轮询的访问这两个dept服务，如果有一个服务挂了，也会去访问，ribbon通过spring.application.name来访问服务端，如果application系统，就会通过负载均衡的方式来访问
-
-```yaml
-eureka:
-  instance:
-    instance-id: provider-dept-8002
-```
-
-## Ribbon的内置负载均衡
+# Ribbon内置负载均衡
 
 他们都是IRule接口的实现类
 
@@ -119,19 +73,37 @@ eureka:
 | RandomRule                | 随机选择一个server                                           | 在index上随机，选择index对应位置的server                     |
 | ZoneAvoidanceRule         | 复合判断server所在区域的性能和server的可用性选择server       | 使用ZoneAvoidancePredicate和AvailabilityPredicate来判断是否选择某个server，前一个判断判定一个zone的运行性能是否可用，剔除不可用的zone（的所有server），AvailabilityPredicate用于过滤掉连接数过多的Server。 |
 
-默认是RoundRobinRule（轮询选择），若想使用其他，为RestTemplate赋予负载均衡功能
+# Ribbon原理图
 
-```java
-@Configuration
-public class ConfigBean {
-    @Bean
-    @LoadBalanced
-    public RestTemplate getRestTemplate(){
-        //RestTemplate提供了多种便捷访问远程Http服务的方法
-        return new RestTemplate();
-    }
-}
+![image-20250615160410944](image/3-load-balance/image-20250615160410944.png)
+
+
+# Ribbon的类解析
+
+1. 他的父接口为com.netflix.loadbalancer.IRule，通过choose方法返回对应的服务
+2. 默认为ZoneAvoidanceRule，断点在choose方法中，可以看到，对应的默认算法
+
+![image-20250615152357754](image/3-load-balance/image-20250615152357754.png)
+
+# 更换负载均衡
+
+1. 如果想更换负载均衡策略，则可以将服务的全限定名配置在Client的配置文件中
+   1. <b id="blue">server-8001</b>表示服务端的appname,表示指定当前服务的负载均衡策略
+
+```yml
+server-8001:
+  ribbon:
+    NFlOadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
 ```
+
+2. 如果想全局生效，可以如此
+
+```yml
+ribbon:
+    NFlOadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+```
+
+
 
 ## 自定义负载均衡
 
@@ -162,3 +134,4 @@ public class PaymentMain80 {
 rest接口第N次请求数%服务器总集群数量=实际调用服务器下标
 
 每次服务重启后rest从1开始计算 
+
