@@ -135,3 +135,59 @@ rest接口第N次请求数%服务器总集群数量=实际调用服务器下标
 
 每次服务重启后rest从1开始计算 
 
+
+
+# 绑定拦截器过程
+
+1. SpringCloud,通过SpringBoot spi的方式，注入了RibbonAutoConfiguration
+
+![image-20250616222348986](image/3-load-balance/image-20250616222348986.png)
+
+2. 从<b id="blue">RibbonAutoConfiguration</b>，我们看到了LoadBalancerAutoConfiguration，通过find,我们找到，他在common中进行加载
+
+![image-20250616223524769](image/3-load-balance/image-20250616223524769.png)
+
+![image-20250616223503137](image/3-load-balance/image-20250616223503137.png)
+
+3. LoadBalancerAutoConfiguration中，配合LoadBalanced注解，将所有的标识了LoadBalanced的RestTemplate Bean注入到容器中
+   1. LoadBalanced注解是一个@Qualifier类型，[具体可以了解](/java/spring/2-ioc?id=限定注入)
+
+```java
+public class LoadBalancerAutoConfiguration {
+
+    @LoadBalanced
+    @Autowired(required = false)
+    private List<RestTemplate> restTemplates = Collections.emptyList();
+```
+
+4. 从下面代码可以看出，@LoadBalanced添加了注解的RestTemplate对象会被添加⼀个拦截器 LoadBalancerInterceptor，该拦截器就是后续 拦截请求进⾏负载处理的
+
+![image-20250617211644164](image/3-load-balance/image-20250617211644164.png)
+
+# 拦截器链执行过程
+
+1. 通过断点，我们可以看到，restTemplate.getForObject调用最终会执行到拦截器方法LoadBalancerInterceptor#intercept
+
+![image-20250617230936462](image/3-load-balance/image-20250617230936462.png)
+
+2. 从上面可以看到，最终的负载均衡是在这里面执行的
+
+```java
+return this.loadBalancer.execute(serviceName, requestFactory.createRequest(request, body, execution));
+```
+
+3. 并且，loadBalancer是<b id="blue">LoadBalancerClient</b>类型，他的实现类是<b id="blue">RibbonLoadBalancerClient</b>
+
+# 负载均衡的执行
+
+1. 探究<b id="blue">RibbonLoadBalancerClient</b>，我们发现他是在最初我们看到的<b id="blue">RibbonAutoConfiguration</b>中进行注入的
+
+```java
+@Bean
+@ConditionalOnMissingBean(LoadBalancerClient.class)
+public LoadBalancerClient loadBalancerClient() {
+    return new RibbonLoadBalancerClient(springClientFactory());
+}
+```
+
+2. 
