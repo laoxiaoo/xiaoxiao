@@ -190,4 +190,51 @@ public LoadBalancerClient loadBalancerClient() {
 }
 ```
 
-2. 
+2. <b id="blue">SpringClientFactory</b>从源码上看，实现了<b id="blue">NamedContextFactory</b>，它是一个**子容器**
+
+   1. 在调用SpringClientFactory#getClient或者SpringClientFactory#getLoadBalancer时候，进行子容器的懒加载
+   2. 子容器的创建是懒加载的过程，通过appname为Key，然后为每个服务名创建一个子容器，如图，有一个SERVER-8001的服务，那么客户端中就有一个这个子容器，子容器对应了各个负载均衡器
+
+   ![image-20250618215714580](image/3-load-balance/image-20250618215714580.png)
+
+   1. 加载了配置项<b id="blue">RibbonClientConfiguration</b>
+
+```java
+public class SpringClientFactory extends NamedContextFactory<RibbonClientSpecification> {
+
+    static final String NAMESPACE = "ribbon";
+
+    public SpringClientFactory() {
+       super(RibbonClientConfiguration.class, NAMESPACE, "ribbon.client.name");
+    }
+```
+
+3. <b id="blue">RibbonClientConfiguration</b>是个配置项，加载了很多Bean，这些Bean都由子容器进行管理
+
+4.  <b id="blue">RibbonClientConfiguration</b>默认加载了<b id="blue">ZoneAwareLoadBalancer</b>Bean，这个Bean就是我们默认的负载均衡的Bean
+
+![image-20250618214456203](image/3-load-balance/image-20250618214456203.png)
+
+5. 回到<b id="blue">RibbonLoadBalancerClient#execute</b>方法，第一行代码获取的实际上就是默认的负载均衡器
+
+![image-20250618215153380](image/3-load-balance/image-20250618215153380.png)
+
+6. 通过<b id="blue">getServer</b>选择一个通过<b id="blue">ILoadBalancer</b>选择一个Server
+
+![image-20250618220238124](image/3-load-balance/image-20250618220238124.png)
+
+7. 最终在AbstractServerPredicate#incrementAndGetModulo方法中，进行server的选择
+
+```java
+private int incrementAndGetModulo(int modulo) {
+    for (;;) {
+        //当前服务的索引值
+        int current = nextIndex.get();
+        //取余获取下一个索引
+        int next = (current + 1) % modulo;
+        //cas设置下一个索引
+        if (nextIndex.compareAndSet(current, next) && current < modulo)
+            return current;
+    }
+}
+```
