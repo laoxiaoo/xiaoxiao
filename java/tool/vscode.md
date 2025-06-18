@@ -109,3 +109,21 @@ json格式化/压缩
      },
    "terminal.integrated.defaultProfile.windows": "Git-Bash",
 ```
+
+# 多行操作
+
+1. 此时，光标在第一行
+
+![image-20250618210038125](image/vscode/image-20250618210038125.png)
+
+2. 按住alt+shift,点击最后一行，这样就可以选中多个光标了
+
+![image-20250618210236353](image/vscode/image-20250618210236353.png)
+
+3. 如果想要批量跳到最后一行，则可以按住Ctrl+->键盘
+
+![image-20250618210418300](image/vscode/image-20250618210418300.png)
+
+4. 同时批量的操作
+
+![image-20250618210437409](image/vscode/image-20250618210437409.png)
