@@ -40,7 +40,104 @@
 
 由Netflix开源的⼀个 延迟和容错库，⽤于隔离访问远程系统、服务或者第三⽅库，防⽌级联失败，从⽽ 提升系统的可⽤性与容错性。
 
+## 熔断配置
 
+1. 服务调用A->B,将B的接口设置延迟时间为10000s
+2. 在服务A启动Hystrix（引入jar包，然后Application启动类开启注解<b id="blue">@EnableCircuitBreaker</b>）
+
+```xml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-netflix-hystrix</artifactId>
+</dependency>
+```
+
+```Java
+@SpringBootApplication
+//本服务启动后会自动注册进eureka服务中
+@EnableEurekaClient
+//开启对hystrix熔断机制的支持
+@EnableCircuitBreaker
+public class EurekaClientConsumer
+```
+
+3. 使用<b id="blue">@HystrixCommand</b>注解，进行熔断配置
+   1. 使用<b id="blue">commandProperties</b>进行熔断的细节配置
+   2. 每一个配置都是一个<b id="blue">@HystrixProperty</b>
+   3. 这些属性值可以通过<b id="blue">HystrixCommandProperties</b>进行查阅
+   4. 比如下面的配置，就是进行超时时间的配置
+
+```java
+@HystrixCommand(commandProperties = {
+        @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")
+})
+@GetMapping("/getPortTimeOut")
+public String getPortTimeOut() {
+    return restTemplate.getForObject("http://SERVER-8001/test/getPortTimeOut", String.class);
+}
+```
+
+4. 上面配置了超时配置，如果超过时间，则访问B服务失败，抛出异常
+
+![image-20250624220126526](image/5-trafficFault-tolerant/image-20250624220126526.png)
+
+## 服务降级
+
+1. A->B，B可能出现几种情况
+   1. B的服务超时
+   2. B因为一些问题，抛出了异常
+2. 很多时候，我们不想B服务的异常对外，那么这个时候，我们可以进行服务降级兜底处理
+3. 添加<b id="gray">fallbackMethod</b>兜底方法，当 <b id="blue">SERVER-8001</b>服务抛出异常或者超时时候，访问兜底方法
+
+```java
+@HystrixCommand(commandProperties = {
+        @HystrixProperty(name = "execution.isolation.thread.timeoutInMilliseconds", value = "3000")
+}, fallbackMethod = "getPortTimeOutFallback")
+@GetMapping("/getPortTimeOut")
+public String getPortTimeOut() {
+    return restTemplate.getForObject("http://SERVER-8001/test/getPortTimeOut", String.class);
+}
+
+public String getPortTimeOutFallback() {
+    return "-1";
+}
+```
+
+## 舱壁模式
+
+### 问题
+
+如果不进⾏任何设置，所有熔断⽅法使⽤⼀个Hystrix线程池（默认10个线程），那么这样的话会导致问题，这个问题并不是扇出链路微服务不可⽤导致的，⽽是我们的线程机制导致的，如果⽅法A的请求把10个线程都⽤了，⽅法2请求处理的时候压根都没法去访问B，因为没有线程可⽤，并不是B服务不可⽤。
+
+![image-20250624232231343](image/5-trafficFault-tolerant/image-20250624232231343.png)
+
+## 解决方案
+
+为了避免问题服务请求过多导致正常服务⽆法访问， Hystrix 不是采⽤增加线程数，⽽是单独的为每⼀个控制⽅法创建⼀个线程池的⽅式，这种模式叫做“舱壁模式"，也是线程隔离的⼿段
+
+<b id="blue">threadPoolKey</b>：线程池的唯一标识
+
+<b id="blue">threadPoolProperties</b>：线程池的属性
+
+```java
+@HystrixCommand(threadPoolKey = "timeOutA", threadPoolProperties = {
+        @HystrixProperty(name = "coreSize", value = "1"),
+        @HystrixProperty(name = "maxQueueSize", value = "10"),
+})
+@GetMapping("/A")
+public String A() {
+    return restTemplate.getForObject("http://SERVER-8001/test/getPortTimeOut", String.class);
+}
+
+@HystrixCommand(threadPoolKey = "timeOutA", threadPoolProperties = {
+        @HystrixProperty(name = "coreSize", value = "1"),
+        @HystrixProperty(name = "maxQueueSize", value = "10"),
+})
+@GetMapping("/B")
+public String B() {
+    return restTemplate.getForObject("http://SERVER-8001/test/getPortTimeOut", String.class);
+}
+```
 
 ## 通配服务降级
 
