@@ -139,6 +139,56 @@ public String B() {
 }
 ```
 
+## 跳闸和自我修复
+
+![image-20250625213706321](image/5-trafficFault-tolerant/image-20250625213706321.png)
+
+
+
+
+
+```java
+/**
+ * 8秒钟内，请求次数达到2个，并且失败率在50%以上，就跳闸
+* 跳闸后活动窗⼝设置为3s
+ */
+ @HystrixCommand(
+ commandProperties = {
+     @HystrixProperty(name = 
+    "metrics.rollingStats.timeInMilliseconds",value = "8000"),
+     @HystrixProperty(name = 
+    "circuitBreaker.requestVolumeThreshold",value = "2"),
+     @HystrixProperty(name = 
+    "circuitBreaker.errorThresholdPercentage",value = "50"),
+     @HystrixProperty(name = 
+    "circuitBreaker.sleepWindowInMilliseconds",value = "3000")
+                }
+    )
+```
+
+## 健康查看
+
+基于Spring Boot的健康检查观察跳闸状态
+
+```yaml
+# springboot中暴露健康检查等断点接⼝
+management:
+  endpoints:
+    web:
+      exposure:
+        include: "*"
+  # 暴露健康接⼝的细节
+  endpoint:
+    health:
+      show-details: always
+```
+
+然后再访问http://localhost:8003/actuator/health
+
+
+
+
+
 ## 通配服务降级
 
 服务降级：（反正这个降级我找了许多资料，没搞懂，应该是服务端接收的压力达到设定的值，就不进入这个服务计算，进入预定的方法， 或者，这个服务挂了，我们取一个将就的结果，先凑合着用）
