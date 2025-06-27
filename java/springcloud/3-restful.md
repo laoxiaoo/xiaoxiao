@@ -1,18 +1,18 @@
 # 
 
-# Feign负载均衡
+# 前言
+
+在前面负载均衡的时候， [ribbon的初步使用](/java/springcloud/2-load-balance?id=ribbon的初步使用)，我们看到了，调用远程服务可以通过<b id="gray"> restTemplate.getForObject("http://SERVER-8001/test/getPort", String.class)</b>这种，拼接的方式进行调用，这样的方式不够灵活
+
+# Feign
 
 Feign是Netflix开发的声明式、模板化的HTTP客户端， Feign可以帮助我们更快捷、优雅地调用HTTP API。
 
-在Spring Cloud中，使用Feign非常简单——创建一个接口，并在接口上添加一些注解，代码就完成了
+在Spring Cloud中，使用Feign非常简单——创建一个接口，并在接口上添加一些注解，代码就完成了（类似Dubbo那样，面相interface编程）
 
+## 简单使用
 
-
-## 简单部署
-
-建立一个apimaven包，专门用于写feign的接口
-
-pom文件
+1. 导入jar包，pom文件
 
 ```xml
 <dependency>
@@ -21,7 +21,16 @@ pom文件
 </dependency>
 ```
 
-建立一个接口，之后，comsumer端就可以通过这个接口访问打provide端了
+2. 因为feign现在被弃用，所以现在都是引入openfeign
+
+```yaml
+<dependency>
+    <groupId>org.springframework.cloud</groupId>
+    <artifactId>spring-cloud-starter-openfeign</artifactId>
+</dependency>
+```
+
+3. 建立一个接口，之后，comsumer端就可以通过这个接口访问打provide端了
 
 ```java
 @FeignClient(value = "PROVIDER-DEPT") //指定provide的注册服务
@@ -32,22 +41,7 @@ public interface DeptClientService {
 }
 ```
 
-新建一个80端口的comsumer端
-
-pom的配置
-
-```xml
-<dependencies>
-    <dependency>
-        <groupId>org.springframework.cloud</groupId>
-        <artifactId>spring-cloud-starter-feign</artifactId>
-    </dependency>
-</dependencies>
-```
-
-配置文件和以前的comsumer一样
-
-建立control类
+3. 建立controller类
 
 ```java
 @RestController
@@ -62,7 +56,7 @@ public class UserController {
 }
 ```
 
-启动类需要@EnableFeignClients来开启feign
+4. 启动类需要@EnableFeignClients来开启feign
 
 ```java
 @SpringBootApplication
@@ -74,6 +68,37 @@ public class DepFeignApplication80 {
     }
 }
 ```
+
+5. 配置文件（[注册中心](/java/springcloud/1-register-Center?id=eureka)）这些可以参考负载均衡章节
+
+## 超时配置与重试机制
+
+如下：其中重试操作解释如下
+
+1. 当访问到故障请求的时候，它会再尝试访问⼀次当前实例（次数 由MaxAutoRetries配置）
+2. 如果不⾏，就换⼀个实例进⾏访问，如果还不⾏，再换⼀次实例访问（更换次数 由MaxAutoRetriesNextServer配置）
+3. 如果依然不⾏，返回失败信息
+
+```yaml
+# 对Ribbon进行配置，如果想正对某个服务，则可以配置 服务名.ribbon.xxx
+# 如果想配置全局，则直接配置 ribbon.xxx
+server-8001:
+  ribbon:
+    #请求连接超时时间
+    ConnectTimeout: 2000
+    #请求处理超时时间
+    ReadTimeout: 20000
+    #对所有操作都进⾏重试
+    OkToRetryOnAllOperations: true
+    #对当前选中实例重试次数，不包括第⼀次调⽤
+    MaxAutoRetries: 0
+    #切换实例的重试次数
+    MaxAutoRetriesNextServer: 0
+    # 负载均衡规则
+    NFlOadBalancerRuleClassName: com.netflix.loadbalancer.RandomRule
+```
+
+## 日志输出
 
 
 
