@@ -2,6 +2,6 @@
 * [注册中心](/java/springcloud/1-register-Center)
 * [负载均衡](/java/springcloud/2-load-balance)
 * [服务调用](/java/springcloud/3-restful)
-* [网关](/java/springcloud/3-gateway)
+* [网关](/java/springcloud/4-gateway)
 * [分布式事务](/java/springcloud/4-distributed-transaction)
 * [流量容错](/java/springcloud/5-trafficFault-tolerant)

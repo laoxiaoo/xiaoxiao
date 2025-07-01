@@ -100,11 +100,42 @@ server-8001:
 
 ## 日志输出
 
-
+Feign是http请求客户端，它在请求和接收响应的时候，可以 打印出⽐较详细的⼀些⽇志信息（响应头，状态码等等）
 
 # OpenFeign
 
 是Spring Cloud对Feign的扩展，支持Spring MVC注解（如`@RequestMapping`），并深度集成Spring Cloud功能（如服务发现、熔断器等）。通过动态代理生成实现类，简化了与Spring项目的整合
+
+如果我们想看到Feign请求时的⽇志，我们可以进⾏配置，默认情况下Feign的⽇志 没有开启
+
+1.  开启Feign⽇志功能及级别（这里配置的是日志显示的内容）
+   1.  NONE：默认的，不显示任何⽇志----性能最好 
+   2. BASIC：仅记录请求⽅法、URL、响应状态码以及执⾏时间----⽣产问题追踪 
+   3. HEADERS：在BASIC级别的基础上，记录请求和响应的header 
+   4. FULL：记录请求和响应的header、body和元数据----适⽤于开发及测试环境定位问 题
+
+```Java
+@Configuration
+public class FeignConfig {
+
+    @Bean
+    public Logger.Level getLeve() {
+        return Logger.Level.FULL;
+    }
+}
+```
+
+2.  配置log⽇志级别为debug
+   1. 这里表示<b id="blue">com.xiao.client.*</b>所有的feign客户端，请求响应都会答应日志
+   2. 如果想指定某个类，可以如此配置 com.xiao.config.FeignConfig：debug
+
+```yaml
+logging:
+  level:
+    com.xiao.client.*: debug
+```
+
+
 
 ## 基本使用
 
@@ -239,3 +270,85 @@ logging:
 在sun.net.www.protocol.http.HttpURLConnection#getOutputStream中，如果 body有值，则自动转为post请求, 而openfeign默认将参数放入body中
 
 所以，如果是get请求，需要带上**RequestParam**
+
+# Feign源码跟踪
+
+## 代理类注入过程
+
+1. 从<b id="blue">EnableFeignClients</b>注解进入，可以看到import了一个<b id="gray">FeignClientsRegistrar</b>类
+   1. FeignClientsRegistrar实现了ImportBeanDefinitionRegistrar，可以自定义注入bean
+
+```java
+@Override
+public void registerBeanDefinitions(AnnotationMetadata metadata,
+       BeanDefinitionRegistry registry) {
+    //注入EnableFeignClients的defaultConfiguration相关默认属性
+    registerDefaultConfiguration(metadata, registry);
+    //扫描FeignClient注解的接口，生成代理对象
+    registerFeignClients(metadata, registry);
+}
+```
+
+2. 进入到<b id="blue">registerFeignClients</b>-><b id="blue">registerFeignClient</b>方法，可以看到，每个标记的FeignClient的接口，都有会有一个<b id="blue">FeignClientFactoryBean</b>来生产代理类
+
+![image-20250701221908667](image/3-restful/image-20250701221908667.png)
+
+3. FeignClientFactoryBean是一个工厂Bean,由getObject返回一个代理对象，这个代理对象就是标识了feign的接口的代理对象
+
+```java
+@Override
+public Object getObject() throws Exception {
+    return getTarget();
+}
+```
+
+3. 通过getTarget方法最终进入到feign.ReflectiveFeign#newInstance方法
+   1. 通过下图，生成代理对象
+
+![image-20250701224427383](image/3-restful/image-20250701224427383.png)
+
+4. 其中InvocationHandler handler = factory.create(target, methodToHandler);返回代理指向类FeignInvocationHandler
+
+## 代理类执行过程
+
+1. 通过feign.SynchronousMethodHandler#invoke，来执行代理类的具体请求方法
+
+2. 请求进入到LoadBalancerFeignClient#execute，
+
+```java
+@Override
+public Response execute(Request request, Request.Options options) throws IOException {
+    try {
+       URI asUri = URI.create(request.url());
+       String clientName = asUri.getHost();
+       URI uriWithoutHost = cleanUrl(request.url(), clientName);
+       FeignLoadBalancer.RibbonRequest ribbonRequest = new FeignLoadBalancer.RibbonRequest(
+             this.delegate, request, uriWithoutHost);
+
+       IClientConfig requestConfig = getClientConfig(options, clientName);
+       //进入到负载均衡的过程
+       return lbClient(clientName).executeWithLoadBalancer(ribbonRequest,
+             requestConfig).toResponse();
+    }
+```
+
+3. 进入到executeWithLoadBalancer->LoadBalancerCommand#submit->LoadBalancerCommand#selectServer
+4. 可以看到getServerFromLoadBalancer方法
+
+```java
+public Server getServerFromLoadBalancer(@Nullable URI original, @Nullable Object loadBalancerKey) throws ClientException {
+    String host = null;
+    int port = -1;
+    if (original != null) {
+        host = original.getHost();
+    }
+    if (original != null) {
+        Pair<String, Integer> schemeAndPort = deriveSchemeAndPortFromPartialUri(original);        
+        port = schemeAndPort.second();
+    }
+    ILoadBalancer lb = getLoadBalancer();
+    if (host == null) {
+        if (lb != null){
+            //ribbon的负载均衡的选择Server
+            Server svc = lb.chooseServer(loadBalancerKey);
+```

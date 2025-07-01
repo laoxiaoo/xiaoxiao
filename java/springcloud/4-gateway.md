@@ -1,7 +1,14 @@
 # zuul路由网关
 
-
 # Gateway新一代网关
+
+## GateWay在架构中的位置
+
+1. 利用域名解析作为第一级负载均衡手段，负载到nginx上
+2. 通过nginx负载均衡到网关上
+3. 网关做：鉴权、 流量控制、熔断、路径重写、⽇志监控等操作
+
+![image-20250701230138909](image/4-gateway/image-20250701230138909.png)
 
 ## 三大概念
 
@@ -9,17 +16,18 @@
   - 路由为一组断言与一组过滤器的集合，他是网关的一个基本组件
 
 - 断言(Predicate)
-  - 我们匹配的条件，为true就进入相对路由
+  - 我们匹配的条件，为true就进入相对路由（类似于 nginx中的location匹配⼀样）
 
 - 过滤器(Filter)
   - 在pre类型的过滤器可以做参数校验，权限校验、流量监控等，
   - 在post类型可以做响应类容，响应头修改，等作用
 
-## 配置
+# 网关微服务搭建
 
 > 引入jar包
 
 - 新建gateway模块，引入jar包（包括：starter-web、nacos-discovery），注意，如果引入zookeeper-discovery，则需要exclusion掉他项目的默认的zookeeperjar包
+- 注意不要引入springboot web相关的包
 
 ```xml
 <dependency>
@@ -79,7 +87,7 @@ public class GatewayApplication {
 
 - 服务名即spring-name
 
-![image-20210703144901029](https://gitee.com/xiaojihao/pubImage/raw/master/image/spring/20210703144908.png)
+![image-20210703144901029](./image/20210703144908.png)
 
 ## 断言
 
