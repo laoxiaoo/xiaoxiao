@@ -24,10 +24,11 @@
 
 # 网关微服务搭建
 
-> 引入jar包
+## 引入jar包
 
 - 新建gateway模块，引入jar包（包括：starter-web、nacos-discovery），注意，如果引入zookeeper-discovery，则需要exclusion掉他项目的默认的zookeeperjar包
 - 注意不要引入springboot web相关的包
+- 注意GateWay一般单独一个maven服务，为了避免与父maven的springboot 相关的web包（引入webflux包）
 
 ```xml
 <dependency>
@@ -38,38 +39,44 @@
     <groupId>com.alibaba.cloud</groupId>
     <artifactId>spring-cloud-starter-alibaba-nacos-discovery</artifactId>
 </dependency>
+<!--引⼊webflux-->
+<dependency>
+    <groupId>org.springframework.boot</groupId>
+    <artifactId>spring-boot-starter-webflux</artifactId>
+</dependency>
 ```
 
-> 添加配置文件
+## 添加配置文件
 
 - 增加配置文件，gateway也是要注册进入注册中心的
   - id:路由的ID，没有固定规则但要求唯一，简易配合服务名
   - uri:  匹配后提供服务的路由地址
-  - predicates: 断言
+  - predicates: 断言，比如如下，路径有 <b id="gray">consumer</b>的进入到8004端口
+- routes：下可以配置多个路由配置
 
 ```yaml
-server:
-  port: 80
-
 spring:
   application:
-    name: gateway-80
+    name: gateway-server
   cloud:
-    nacos:
-      discovery:
-        server-addr: 192.168.1.131:8848
     gateway:
       routes:
-        - id: renren_fast_route
-          #匹配后提供服务的路由地址
-          #uri: http://localhost:8004         
-          ## 对注册中心的renren-fast进行轮询请求
-          uri: lb://renren-fast
+        - id: consumer-feign
+          uri: http://127.0.0.1:8004
           predicates:
-            - Path=/api/**   
+            - Path=/consumer/**
+eureka:
+  client: ##客户端注册进eureka服务列表内
+    service-url:
+      defaultZone: http://eureka7001.com:7001/eureka/,http://eureka7002.com:7002/eureka/
+
+  instance:
+    instance-id: gateway-server-${server.port}
+
+
 ```
 
-> 添加启动类
+## 添加启动类
 
 - 网关的启动类其实只需要enable注册中心即可
 
@@ -83,15 +90,29 @@ public class GatewayApplication {
 }
 ```
 
-> 启动后前往nacos注册中心能看到对应的配置
+
+
+启动后前往nacos注册中心能看到对应的配置
 
 - 服务名即spring-name
 
 ![image-20210703144901029](./image/20210703144908.png)
 
-## 断言
+## 测试
 
->  地址断言
+访问，转发到8004的服务
+
+![image-20250703215407849](image/4-gateway/image-20250703215407849.png)
+
+# 断言
+
+## 地址断言
+
+通过地址断言到对应的服务
+
+<b id="blue">lb</b>:表示轮训算法
+
+<b id="blue">renren-fast</b>：某个服务名称
 
 ```yaml
 routes:
@@ -101,13 +122,25 @@ routes:
         - Path=/api/** 
 ```
 
-## 过滤器
+# 过滤器
 
-> 过滤器配置
+## 简介
 
-在过滤器中，可以鉴权（做用户权限的判断）
+从过滤器类型的⻆度，Spring Cloud GateWay的过滤器分为GateWayFilter和 GlobalFilter两种
+
+| 过滤器类型    | 影响范围             |
+| ------------- | -------------------- |
+| GateWayFilter | 应⽤到单个路由路由上 |
+| GlobalFilter  | 应⽤到所有的路由上   |
+
+
+
+## 全局过滤器配置
+
+定义全局过滤器，会对所有路由⽣效，让容器扫描到，等同于注册了
 
 ```java
+//在过滤器中，可以鉴权（做用户权限的判断）
 @Component
 public class AuthorFilter implements GlobalFilter, Ordered {
     @Override
@@ -136,9 +169,9 @@ public class AuthorFilter implements GlobalFilter, Ordered {
 }
 ```
 
-## 路由
+# 路由
 
-### 重写地址
+## 重写地址
 
 RewritePath：
 
@@ -154,7 +187,7 @@ routes:
       - RewritePath=/api/?(?<segment>.*), /renren-fast/$\{segment}
 ```
 
-## 跨域配置
+# 跨域配置
 
 ```java
 @Configuration
