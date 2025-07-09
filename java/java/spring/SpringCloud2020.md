@@ -915,23 +915,11 @@ binder: defaultRabbit # 设置要绑定的消息服务的具体设置
 group: atguiguA
 ```
 
-# sleuth
+、
 
-提供了微服务链路服务跟踪方案
 
-## zipkin安装
 
-一条链路通过trace id 为唯一标识，span标识发起的请求信息， 各个span通过parent id关联起来
 
-trace:span的集合，一整条调用的链路存在的唯一标识
-
-span：调用链路的来源，标识一次请求
-
-![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/SpringCloud/20200324211701.jpg)
-
-一次调用链不同请求之间的服务依赖关系
-
-![](https://gitee.com/xiaojihao/xiaoxiao/raw/master/image/SpringCloud/20200324212836.png)
 
 - 下载zipKin
 

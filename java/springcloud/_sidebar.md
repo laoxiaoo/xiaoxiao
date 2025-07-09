@@ -5,3 +5,4 @@
 * [网关](/java/springcloud/4-gateway)
 * [分布式事务](/java/springcloud/4-distributed-transaction)
 * [流量容错](/java/springcloud/5-trafficFault-tolerant)
+* [分布式链路日志](/java/springcloud/6-full-link-log)
