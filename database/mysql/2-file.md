@@ -1,6 +1,28 @@
 #
 
-# ACID
+# 日志文件
+
+- 错误日志
+
+  默认开启，show variables like '%log_error%'， 可以查询错误日志的开启状态
+
+- 二进制日志（binary log）
+
+  记录了对MySQL数据库执行的更改操作，并且记录了语句的发生时间、执行时长；但是它不
+  记录select、show等不修改数据库的SQL。主要用于数据库恢复和主从复制（就是我们常说的bin log）
+
+  1. show variables like '%log_bin%'; //是否开启
+  2. show variables like '%binlog%'; //参数查看
+  3. show binary logs;//查看日志文件
+
+- 慢查询日志（Slow query log）
+
+  记录所有执行时间超时的查询SQL，默认是10秒。
+
+  1. show variables like '%slow_query%'; //是否开启
+  2. show variables like '%long_query_time%'; //时长
+
+# 日志在ACID的表现
 
 - 原子性（atomicity)： undo log实现
 - 一致性（consistency)：
