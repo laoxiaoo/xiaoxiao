@@ -62,3 +62,32 @@ innodb_flush_log_at_trx_commit参数控制日志刷新行为，默认为1
 - 0 ： 每隔1秒写日志文件和刷盘操作（写日志文件LogBuffer-->OS cache，刷盘<b id="gray">OS cache</b>-->磁盘文件），最多丢失1秒数据
 - 1：事务提交，立刻写日志文件（<b id="gray">OS cache</b>）和刷盘，数据不丢失，但是会频繁IO操作（默认的配置）
 - 2：事务提交，立刻写日志文件，每隔1秒钟进行刷盘操作（有风险，服务器down机，OS cache 数据会丢失）
+
+
+# InnoDB文件存储结构
+
+一个ibd数据文件-->Segment（段）-->Extent（区）-->Page（页）-->Row（行）
+
+![image-20221116201804736](image/image-20221116201804736.png)
+
+<b id="gray">tablespace</b>
+
+表空间，用于存储多个ibd数据文件
+
+<b id="gray">Segment</b>
+
+1. 段，用于管理多个Extent
+2. 分为数据段，索引段，回滚段（事务处理）
+
+<b id="gray">Extent</b>
+
+1. 区，一个区固定包含64个连续的页，大小为1M（一个page16K）。
+2. 当表空间不足，需要分配新的页资源，不会一页一页分，直接分配一个区
+
+<b id="gray">Page</b>
+
+1. 页，用于存储多个Row行记录，大小为16K
+
+<b id="gray">Row</b>
+
+1. 行，包含了记录的字段值、事务ID、（Trx id）、滚动指针（Roll pointer）、字段指针（Field pointers）等信息
