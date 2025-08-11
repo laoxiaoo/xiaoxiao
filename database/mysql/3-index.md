@@ -80,7 +80,7 @@ create table t_user (id int primary key, name varchar(50), unique(name));
 - 数据记录都存放在叶子节点中。
 **适用场景：**B树适合进行随机读写操作，因为每个节点都包含了数据；而B+树适合进行范围查询和顺序访问，因为数据都存储在叶子节点上，并且叶子节点之间使用链表连接，有利于顺序遍历。
 
-### 聚簇索引与非聚簇索引
+## 聚簇索引与非聚簇索引
 
 - 聚集索引与非聚集索引的区别是：叶节点是否存放一整行记录
 - InnoDB 主键使用的是聚簇索引和辅助索引，MyISAM 不管是主键索引，还是二级索引使用的都是非聚簇索引。
@@ -105,6 +105,13 @@ MYISAM中:
 ## 聚簇索引一定会是主键？
 
 在 InnoDB 中，聚集索引不一定是主键，但是主键一定是聚集索引：原因是如果没有定义主键，聚集索引可能是第一个不允许为 null 的唯一索引，如果也没有这样的唯一索引，InnoDB 会选择内置 6 字节长的 ROWID 作为隐含的聚集索引。
+
+## 回表查询
+
+通过索引查询主键值，然后再去聚簇索引查询记录信息
+
+1. 辅助索引存储索引的值，比如联合索引a,b， 那么只会存储a,b字段的值
+2. 回表即查询了辅助索引之外的字段，需要通过辅助索引的主键值去聚簇索引查询额外字段
 
 ## 什么情况下无法利用索引呢?
 
@@ -139,7 +146,6 @@ MYISAM中:
 1. hash会有碰撞问题，比如说：很多值计算hash之后，都占用了一个index，那么会导致这个index的链表过长
 2. 利用hash存储的话需要将所有的数据文件添加到内存，比较耗费内存空间
 3. hash更加适合等值计算
-
 
 # InnoDb和MyIsam区别
 
@@ -235,25 +241,25 @@ Extra:执行情况的描述和说明
 
 表示当前这一行所表示的查询类型：
 
-**`SIMPLE`:** 简单的 `SELECT` 查询（不包含子查询或 `UNION`）
+SIMPLE: 简单的 `SELECT` 查询（不包含子查询或 `UNION`）
 
-**`PRIMARY`:** 查询中最外层的 `SELECT`
+PRIMARY:查询中最外层的 `SELECT`
 
-**`UNION`:** `UNION` 操作中的第二个或后续的 `SELECT`
+UNION:`UNION` 操作中的第二个或后续的 `SELECT`
 
-**`DEPENDENT UNION`:** `UNION` 中的子查询依赖于外部查询
+DEPENDENT UNION: `UNION` 中的子查询依赖于外部查询
 
-**`UNION RESULT`:** `UNION` 查询的结果集
+UNION RESULT: `UNION` 查询的结果集
 
-**`SUBQUERY`:** select 的子查询
+SUBQUERY:select 的子查询
 
-**`DEPENDENT SUBQUERY`:** select 的子查询依赖外层的查询结果
+DEPENDENT SUBQUERY: select 的子查询依赖外层的查询结果
 
 ## type 
 
-**`ALL` (全表扫描):** **性能最差！** 没有使用索引
+ALL (全表扫描):**性能最差！** 没有使用索引
 
-**`index` (全索引扫描):** 基于索引的全表扫描，先扫描索引，再全表扫描
+index (全索引扫描): 基于索引的全表扫描，先扫描索引，再全表扫描
 
 - 比如，查询索引排序后的所有数据
 
@@ -274,9 +280,19 @@ Extra:执行情况的描述和说明
 
 ## key_len
 
-索引中**实际使用的字节数**
+索引中**实际使用的字节数**，可以判断复合索引是否被**完全使用**（`key_len` = 所有定义字段长度之和）还是**部分使用**
 
+## Extra
 
+- Using where
+  表示查询需要通过索引回表查询数据。
+- Using index
+  表示查询需要通过索引，索引就可以满足所需数据。
+- Using filesort
+  表示查询出来的结果需要额外排序，数据量小在内存，大的话在磁盘，因此有Using filesort
+  建议优化。
+- Using temprorary
+  查询使用到了临时表，一般出现于去重、分组等操作。
 
 # CHAR 和 VARCHAR 的区别
 
@@ -303,7 +319,7 @@ Extra:执行情况的描述和说明
 
 并且在表上有一个复合索引 `(Department, Position)`。
 
-### 查询场景
+## 查询场景
 
 假设我们希望查找所有`Manager`职位的员工：
 
@@ -311,11 +327,11 @@ Extra:执行情况的描述和说明
 SELECT * FROM employees WHERE Position = 'Manager';
 ```
 
-### 传统索引处理
+## 传统索引处理
 
 如果正常按索引`(Department, Position)`的顺序使用，理想情况下需要首先给出`Department`条件，以充分利用索引优势，但本查询并没有提供对`Department`的条件。
 
-### 跳跃扫描的优化实现（概念性）
+## 跳跃扫描的优化实现（概念性）
 
 通过类似Skip Scan的逻辑，MySQL优化器可能会：
 
@@ -477,3 +493,11 @@ mysql> show variables like '%ft%';
 - ft_boolean_syntax 表示：正对这些字符进行拆分
   - 比如，插入 c+aaa, 那么，会将 c 和 aaa构建索引
   - select * from user where match(name) against('aaa'); 能查询到这条数据
+
+# NULL查询
+
+NULL列需要增加额外空间来记录其值是否为NULL
+
+虽然MySQL可以在含有NULL的列上使用索引，但NULL和其他数据还是有区别的，不建议列上允许为
+NULL。最好设置NOT NULL，并给一个默认值，比如0和 ‘’ 空字符串等，如果是datetime类型，也可以
+设置系统当前时间或某个固定的特殊值，例如'1970-01-01 00:00:00'
