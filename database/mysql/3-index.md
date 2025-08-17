@@ -257,26 +257,42 @@ DEPENDENT SUBQUERY: select 的子查询依赖外层的查询结果
 
 ## type 
 
-ALL (全表扫描):**性能最差！** 没有使用索引
+### ALL 
 
-index (全索引扫描): 基于索引的全表扫描，先扫描索引，再全表扫描
+(全表扫描):**性能最差！** 没有使用索引
+
+### index 
+
+(全索引扫描): 基于索引的全表扫描，先扫描索引，再全表扫描
 
 - 比如，查询索引排序后的所有数据
 
-**`range`:** **只检索给定范围内的行**，使用索引选择行
+### range
 
-- `HERE` 子句中出现 `BETWEEN`、`>`、`<`、`>=`、`<=`、`IN()`、`LIKE 'pattern%'` (前缀匹配) 等范围条件。比全表扫描好
+ **只检索给定范围内的行**，使用索引选择行
 
-**`ref`:** 使用**非唯一索引**进行**等值匹配** (`WHERE index_column = value`)。可能返回多行。如果匹配的行数很少，效率也不错。
+### HERE
 
-**`eq_ref`:** 在连接查询 (`JOIN`) 中，使用**主键或唯一非空索引**进行等值匹配
+子句中出现 `BETWEEN`、`>`、`<`、`>=`、`<=`、`IN()`、`LIKE 'pattern%'` (前缀匹配) 等范围条件。比全表扫描好
+
+### ref
+
+使用**非唯一索引**进行**等值匹配** (`WHERE index_column = value`)。可能返回多行。如果匹配的行数很少，效率也不错。
+
+### eq_ref
+
+ 在连接查询 (`JOIN`) 中，使用**主键或唯一非空索引**进行等值匹配
 
 - 表与表之间是一对一的关系
 - 这是除了 `system`/`const` 之外最好的连接类型
 
-**`const`:** 通过主键（`PRIMARY KEY`）或唯一索引（`UNIQUE INDEX`）进行**等值查询**，最多只返回一行。速度非常快，因为只需读取一次。
+### const
 
-- **`system`:** 表只有一行（系统表）。这是 `const` 类型的特例。
+ 通过主键（`PRIMARY KEY`）或唯一索引（`UNIQUE INDEX`）进行**等值查询**，最多只返回一行。速度非常快，因为只需读取一次。
+
+### system
+
+ 表只有一行（系统表）。这是 `const` 类型的特例。
 
 ## key_len
 
@@ -501,3 +517,78 @@ NULL列需要增加额外空间来记录其值是否为NULL
 虽然MySQL可以在含有NULL的列上使用索引，但NULL和其他数据还是有区别的，不建议列上允许为
 NULL。最好设置NOT NULL，并给一个默认值，比如0和 ‘’ 空字符串等，如果是datetime类型，也可以
 设置系统当前时间或某个固定的特殊值，例如'1970-01-01 00:00:00'
+
+
+
+# 索引与排序
+
+MySQL查询支持filesort和index两种方式的排序，filesort是先把结果查出，然后在缓存或磁盘进行排序
+操作，效率较低。使用index是指利用索引自动实现排序，不需另做排序操作，效率会比较高。
+
+## filesort
+
+filesort有两种排序算法：双路排序和单路排序。
+双路排序：需要两次磁盘扫描读取，最终得到用户数据。第一次将排序字段读取出来，然后排序；第二次去读取其他字段数据。
+单路排序：从磁盘查询所需的所有列数据，然后在内存排序将结果返回。如果查询数据超出缓存
+sort_buffer，会导致多次磁盘读取操作，并创建临时表，最后产生了多次IO，反而会增加负担。解决方案：少使用select *；增加sort_buffer_size容量和max_length_for_sort_data容量。
+
+## index
+
+如果我们Explain分析SQL，结果中Extra属性显示Using filesort，表示使用了filesort排序方式，需要优化。如果Extra属性显示Using index时，表示覆盖索引，也表示所有操作在索引上完成，也可以使用index排序方式，建议大家尽可能采用覆盖索引。
+
+# 慢查询排查
+
+## 慢查询日志记录
+
+1. 通过命令，获取慢查询是否已经打开
+
+<b id="blue">slow_query_log</b>：OFF表示关闭
+
+<b id="blue">slow_query_log_file</b>：慢查询日志文件
+
+```sql
+mysql> show variables like 'slow_query_log%';
++---------------------+------------------------------------------+
+| Variable_name       | Value                                    |
++---------------------+------------------------------------------+
+| slow_query_log      | OFF                                      |
+| slow_query_log_file | /usr/local/mysql/data/localhost-slow.log |
++---------------------+------------------------------------------+
+```
+
+2. 慢查询相关设置
+
+<b id="blue">long_query_time</b>：阈值时间
+
+<b id="blue">log_queries_not_using_indexes</b>：记录没有使用索引的SQL
+
+```sql
+SET global slow_query_log = ON;
+SET global slow_query_log_file = 'OAK-slow.log';
+SET global log_queries_not_using_indexes = ON;
+SET long_query_time = 10;
+```
+
+## 慢查询总结
+
+1. 全表扫描：explain分析type属性all
+2. 全索引扫描：explain分析type属性index
+3. 索引过滤性不好：靠索引字段选型、数据量和状态、表设计
+4. 频繁的回表查询开销：尽量少用select *，使用覆盖索引
+
+# 分页查询优化
+
+1. 利用覆盖索引优化
+
+```sql
+select * from user limit 10000,100;
+select id from user limit 10000,100;
+```
+
+2. 利用子查询优化
+
+```sql
+select * from user limit 10000,100;
+select * from user where id>= (select id from user limit 10000,1) limit 100;
+```
+
