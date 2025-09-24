@@ -8,35 +8,75 @@
 
 - consumer：消息消费者，连接kafka接收消息，进而进行相应的业务逻辑处理
 
-- Topic: 消息的分类，每条消息都属于一个特定的 Topic。用户可以通过 Topic 来组织和管理消息。
+  - 同组内，一个消费者对应一个或者多个partition,但是一个partition只能对应一个consumer
+  - 这是为了避免同组内的consumer重复消费
 
-- broker：
+- broker：kafka 集群的 server，(其实就是一台机器)负责处理消息读、写请求，存储消息
 
-  kafka 集群的 server，(其实就是一台机器)负责处理消息读、写请求，存储消息
+  - Topic: 消息的分类，每条消息都属于一个特定的 Topic。用户可以通过 Topic 来组织和管理消息。一般topic的partion的数量和broker集群数量一致（如果partion数量大于broker，可能会导致一个broker有多个同一topic的partion，导致数据分布不均匀）
 
-  一般topic的partion的数量和broker集群数量一致（如果partion数量大于broker，可能会导致一个broker有多个同一topic的partion，导致数据分布不均匀）
+  - **分区（Partition）**：为了实现扩展性，一个非常大的 topic 可以分布到多个 broker(即服务器)上， 一个 topic 可以分为多个 partition，每个 partition 是一个有序的队列;
+  - **副本（Replica）**：副本，为保证集群中的某个节点发生故障时，该节点上的 partition 数据不丢失，且 kafka 仍然能够继续工作，kafka 提供了副本机制，一个 topic 的每个分区都有若干个副本， 一个 **leader** 和若干个 **follower**。
 
-- **分区（Partition）**：为了实现扩展性，一个非常大的 topic 可以分布到多个 broker(即服务器)上， 一个 topic 可以分为多个 partition，每个 partition 是一个有序的队列;
 
-  **副本（Replica）**：副本，为保证集群中的某个节点发生故障时，该节点上的 partition 数据不丢失，且 kafka 仍然能够继续工作，kafka 提供了副本机制，一个 topic 的每个分区都有若干个副本， 一个 **leader** 和若干个 **follower**。
+
 
 ## 分区和主题
 
 > topic：主题（抽象概念），kafka消息以主题为单位进行归类
 
-​		     生产值将消息发送特定主题，消费者负责订阅主题进行消费
+生产值将消息发送特定主题，消费者负责订阅主题进行消费
 
-​			 代表一个类别，如果把Kafka看做为一个数据库，topic可以理解为数据库中的一张表，topic的名字即为表名  
+ 代表一个类别，如果把Kafka看做为一个数据库，topic可以理解为数据库中的一张表，topic的名字即为表名  
 
 > partition ：分区（物理概念）
 
-一个主题下可以有多个分区，**offset是分区的唯一表示，保证了消息的顺序性**
+一个topic下可以有多个分区,每个partition可以进行副本备份，但是，客户端只与主分区进行交互，副本分区一般作为备份
 
-partition中的数据是有序的,在需要严格保证消息的消费顺序的场景下，需要将partition数目设为1  
+
+
+
 
 ![](./image/20200304203436.jpg)
 
 分区可以分布在不同的服务器上（**一个主题可以跨越多个broker**）
+
+## 保证消息的有序
+
+1. partition中的数据是有序的,在需要严格保证消息的消费顺序的场景下，需要将partition数目设为1  
+2. 最消息指定key(消息可以有key,也可以没有key ),对某个key进行取余，保证某个key都进入同一个partition
+
+## 偏移量
+
+消费者通过偏移量来区分已经读过的消息，从而消费消息
+
+## 消费组
+
+消费者是消费组的一部分。消费组保证每个分区只能被一个消费者使用，避免重复消费
+
+## kafka的优势
+
+1. 高吞吐量：单机每秒处理几十上百万的消息量。即使存储了许多TB的消息，它也保持稳定的性能。
+
+2. 高性能：单节点支持上千个客户端，并保证零停机和零数据丢失。
+3. 持久化数据存储：将消息持久化到磁盘。通过将数据持久化到硬盘以及replication防止数据丢失。
+  1. 零拷贝
+  2. 顺序读，顺序写
+  3. 利用Linux的页缓存
+4. 分布式系统，易于向外扩展。所有的Producer、Broker和Consumer都会有多个，均为分布式的。**无需停机即可扩展机器**。多个Producer、Consumer可能是不同的应用。
+5. 可靠性 - Kafka是分布式，分区，复制和容错的。
+   1. 比如，每个partition可以有多个或1个副本，这个副本只有partition所在服务挂掉情况下才会启用，
+6. 客户端状态维护：消息被处理的状态是在Consumer端维护，而不是由server端维护。当失败时能自动平衡。
+  1. 比如，消费的offset，就存储客户端
+7. 支持online和offline的场景。
+8. 支持多种客户端语言。Kafka支持Java、.NET、PHP、Python等多种语言。
+
+## 集群控制器
+
+1. 每个集群都有一个broker是集群控制器
+2. 控制器负责管理工作
+   1. 将分区分配给broker
+   2. 监控broker，比如，某个broker挂了，就将副本broker启动
 
 # 安装
 

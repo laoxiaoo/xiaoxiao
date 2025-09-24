@@ -251,19 +251,33 @@ mysql> create user test@'192.168.%' identified with mysql_native_password by '12
 
 ## MySQL用户lock
 
-通过执行create user/alter user命令中带account lock/unlock子句设
-置用户的lock状态
-• Create user语句默认的用户是unlock状态
-• mysql> create user abc2@localhost identified by 'mysql' account lock;
-• Query OK, 0 rows affected (0.01 sec)
-• Alter user语句默认不会修改用户的lock/unlock状态
-• mysql> alter user 'mysql.sys'@localhost account lock;
-• Query OK, 0 rows affected (0.00 sec)
-• mysql> alter user 'mysql.sys'@localhost account unlock;
-• Query OK, 0 rows affected (0.00 sec)
-• 当客户端使用lock状态的用户登录MySQL时，会收到如此报错
+通过执行create user/alter user命令中带account lock/unlock子句设置用户的lock状态
+
+- Create user语句默认的用户是unlock状态, 可用通过<b id="blue">account lock</b>
+
+```sql
+mysql> create user abc2@localhost identified by 'mysql' account lock;
+Query OK, 0 rows affected (0.01 sec)
+```
+
+
+- Alter user语句默认不会修改用户的lock/unlock状态
+
+```sql
+mysql> alter user 'mysql.sys'@localhost account lock;
+Query OK, 0 rows affected (0.00 sec)
+mysql> alter user 'mysql.sys'@localhost account unlock;
+Query OK, 0 rows affected (0.00 sec)
+
+```
+
+- 当客户端使用lock状态的用户登录MySQL时，会收到如此报错
+
+```sql
 Access denied for user 'user_name'@'host_name'.
 Account is locked
+
+```
 
 # 常用sql语句
 
