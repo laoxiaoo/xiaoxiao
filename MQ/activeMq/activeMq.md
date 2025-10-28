@@ -1,14 +1,102 @@
-**笔记为观看周阳老师所书**
 
-# 概述
+#
 
-## 消息中间件作用
+
+
+# 消息中间件作用
 
 - 解耦
 - 拓展性：
 - 削峰
 - 缓冲
 - 异步通信
+
+# 中间件选型的思考
+
+1、消息传输的可靠性：保证消息不会丢失。
+2、支持集群，包括横向扩展，单点故障都可以解决。
+3、性能要好，要能够满足业务的性能需求。
+
+# JMS
+
+## 概念
+
+- JMS是什么
+  - JMS Java Message Service，Java消息服务，是JavaEE中的一个技术，*是一个规范*
+- JMS规范
+  - JMS定义了Java中访问消息中间件的接口，并没有给予实现，实现JMS接口的消息中间件称为JMS Provider（*类似JDBC*），例如ActiveMQ
+- JMS Message
+  - 消息头:每个消息头字段都有相应的getter和setter方法
+  - 消息属性:如果需要除消息头字段以外的值，那么可以使用消息属性
+  - 消息体:封装具体的消息数据
+
+
+## JMS Message
+
+### Messge消息头
+
+| 字段名称        | 含义                                                         |
+| --------------- | ------------------------------------------------------------ |
+| JMSDestination  | 消息发送的目的地，主要是指queue和topic                       |
+| JMSDeliveryMode | JMSDeliveryMode字段包含了消息在发送的时候指定的投递模式      |
+| JMSMessageID    | 唯一识别的消息标识                                           |
+| JMSPriority     | 优先级，一共0-9， 0-4是普通消息， 5-9是加急消息，JMS要求，加急消息一定要优先于普通消息，其他可以随意 |
+
+​	
+
+### Message消息体
+
+1. 封装具体的消息数据
+
+2. 五种消息体格式
+
+```tex
+TextMessage
+MapMessage
+ObjectMessage
+BytesMessage
+StreamMessagg
+```
+
+- 发送和接受的消息体类型必须一致到位
+
+### 消息属性
+
+如果需要去除消息头字段以外的值，那么可以使用消息属性
+
+**识别/去重/重点标注**等操作非常有用的方法
+
+- 自定义属性
+
+```java
+//消息属性设置（provider）
+TextMessage textMessage = session.createTextMessage("msg+" + i);
+textMessage.setStringProperty("testP1", "111234");
+producer.send(textMessage);
+```
+
+- JMS定义属性
+  - 使用“JMSX”作为属性名的前缀
+
+```java
+Enumeration jmsxPropertyNames = connection.getMetaData().getJMSXPropertyNames();
+while (jmsxPropertyNames.hasMoreElements()) {
+    System.out.println(jmsxPropertyNames.nextElement());;
+}
+```
+
+# AMQP
+
+- 一个二进制协议，面向消息中间件
+- 基于此协议的客户端与消息中间件可传递消息，**并不受产品、开发语言等条件的限制**  
+- JMS是规范，针对Java语言，而AMQP是协议，不受语言限制
+
+## AMQP核心概念
+
+
+
+
+# ActiveMq概述
 
 ## 特点
 
@@ -53,7 +141,9 @@
 
 - 控制台说明
 
-![](../image/message/20215241930.png)
+![](./image/20215241930.png)
+
+
 
 # 两种模式
 
@@ -219,83 +309,7 @@ public static void main(String[] args) throws Exception {
 | **消息是否会丢失**   | 一般来说publisher发布消息到某一个topic时，只有正在监听该topic地址的sub能够接收到消息；如果没有sub在监听，该topic就丢失了。 | Sender发送消息到目标Queue，receiver可以异步接收这个Queue上的消息。Queue上的消息如果暂时没有receiver来取，也不会丢失。 |
 | **消息发布接收策略** | 一对多的消息发布接收策略，监听同一个topic地址的多个sub都能收到publisher发送的消息。Sub接收完通知mq服务器 | 一对一的消息发布接收策略，一个sender发送的消息，只能有一个receiver接收。receiver接收完后，通知mq服务器已接收，mq服务器对queue里的消息采取删除或其他操作。 |
 
-# JMS
 
-## 概念
-
-- JMS是什么
-  - JMS Java Message Service，Java消息服务，是JavaEE中的一个技术
-- JMS规范
-  - JMS定义了Java中访问消息中间件的接口，并没有给予实现，实现JMS接口的消息中间件称为JMS Provider，例如ActiveMQ
-- JMS Message
-  - 消息头:每个消息头字段都有相应的getter和setter方法
-  - 消息属性:如果需要除消息头字段以外的值，那么可以使用消息属性
-  - 消息体:封装具体的消息数据
-
-## JMS Message
-
-### Messge消息头
-
-1. JMSDestination
-
-消息发送的目的地，主要是指queue和topic
-
-2. DeliveryMode
-
-持久模式/非持久模式
-
-持久模式：JMS出现故障，消息不会丢失，会在服务器恢复后再次传递
-
-非持久模式：最多会传送一次，JMS出现故障，消息会丢失
-
-3. JMSPriority
-
-优先级，一共0-9， 0-4是普通消息， 5-9是加急消息，JMS要求，加急消息一定要优先于普通消息，其他可以随意
-
-4. JMSMessageID
-
-唯一识别的消息标识
-
-### Message消息体
-
-1. 封装具体的消息数据
-
-2. 五种消息体格式
-
-```tex
-TextMessage
-MapMessage
-ObjectMessage
-BytesMessage
-StreamMessagg
-```
-
-- 发送和接受的消息体类型必须一致到位
-
-### 消息属性
-
-如果需要去除消息头字段以外的值，那么可以使用消息属性
-
-**识别/去重/重点标注**等操作非常有用的方法
-
-- 自定义属性
-
-```java
-//消息属性设置（provider）
-TextMessage textMessage = session.createTextMessage("msg+" + i);
-textMessage.setStringProperty("testP1", "111234");
-producer.send(textMessage);
-```
-
-- JMS定义属性
-  - 使用“JMSX”作为属性名的前缀
-
-```java
-Enumeration jmsxPropertyNames = connection.getMetaData().getJMSXPropertyNames();
-while (jmsxPropertyNames.hasMoreElements()) {
-    System.out.println(jmsxPropertyNames.nextElement());;
-}
-```
 
 ## JMS可靠性机制
 
