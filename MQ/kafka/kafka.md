@@ -218,13 +218,7 @@ Topic: mytest	TopicId: lHL_52IoSSWPJDRecdDctA	PartitionCount: 1	ReplicationFacto
 kafka-console-producer.sh --broker-list localhost:9092 --topic topic_1
 ```
 
-## 添加分区
 
-通过命令行工具操作，主题的分区只能增加，不能减少。否则报错，通过--alter修改主题的分区数，增加分区。
-
-**2**表示添加后的分区数量
-
-kafka-topics.sh --zookeeper localhost/myKafka --alter --topic myTop1 --partitions 2
 
 # 副本机制
 
@@ -526,7 +520,48 @@ public static void synSendMessage(KafkaTemplate kafkaTemplate) {
 1. Consumer需要向Kafka记录自己的位移数据，这个汇报过程称为 提交位移(Committing Offsets)
 2. Consumer 需要为分配给它的每个分区提交各自的位移数据（每次poll之后，手动/自动的提交位移数据到kafka）
 3. 位移提交的由Consumer端负责的，Kafka只负责保管 （__consumer_offsets 主题进行保管）。
+   1. __consumer_offsets 存储结构是K-V结构，此时，K的内容为：groupId+topic+partition,V的内容为：偏移量
+
 4. 位移提交分为自动提交和手动提交、同步提交和异步提交
+
+
+
+# 主题管理
+
+## 创建主题
+
+```shell
+
+kafka-topics.sh --zookeeper localhost:2181/myKafka --create --topic topic_x --partitions 1 --replication-factor 1
+kafka-topics.sh --zookeeper localhost:2181/myKafka --create --topic topic_test_02 --partitions 3 --replication-factor 1 --config
+max.message.bytes=1048576 --config segment.bytes=10485760
+```
+
+## 查看主题
+
+```shell
+kafka-topics.sh --zookeeper localhost:2181/myKafka --list
+kafka-topics.sh --zookeeper localhost:2181/myKafka --describe --topic topic_x
+kafka-topics.sh --zookeeper localhost:2181/myKafka --topics-with-overrides --describe
+```
+
+## 删除主题
+
+```shell
+kafka-topics.sh --zookeeper localhost:2181/myKafka --delete --topic topic_x
+```
+
+
+
+# 添加分区
+
+通过命令行工具操作，主题的分区只能增加，不能减少。否则报错，通过--alter修改主题的分区数，增加分区。
+
+**2**表示添加后的分区数量
+
+kafka-topics.sh --zookeeper localhost/myKafka --alter --topic myTop1 --partitions 2
+
+
 
 # 数据生产流程
 
@@ -562,6 +597,65 @@ Group Coordinator 负责管理消费者组的成员关系（如重新平衡 Reba
 ## 重平衡
 
 当消费者组内的消费者数量发生变化（如消费者加入或离开）时，Kafka会触发重平衡，重新分配分区给消费者。重平衡期间，消费者无法消费消息，因此应尽量避免不必要的重平衡
+
+
+
+重平衡的触发条件主要有三个：
+1. 消费者组内成员发生变更，这个变更包括了增加和减少消费者，比如消费者宕机退出消费组。
+2. 主题的分区数发生变更，kafka目前只支持增加分区，当增加的时候就会触发重平衡
+3. 订阅的主题发生变化，当消费者组使用正则表达式订阅主题，而恰好又新建了对应的主题，就
+会触发重平衡
+
+
+
+## 避免重平衡影响
+
+重平衡过程中，消费者无法从kafka消费消息，这对kafka的TPS影响极大，而如果kafka集内节点较多，比如数百个，那重平衡可能会耗时极多。数分钟到数小时都有可能，而这段时间kafka基本处于不可用状态。所以在实际环境中，应该尽量避免重平衡发生。
+
+1. 流量小的时候，进行扩容的操作
+2. 避免系统误判节点不可用
+   1. session.timout.ms控制心跳超时时间，越长越不容易误判
+   2. heartbeat.interval.ms控制心跳发送频率，越高越不容易误判
+   3. max.poll.interval.ms控制poll的间隔。越大越不容易误判
+3. 推荐配置
+   1. session.timout.ms：设置为6s
+   2. heartbeat.interval.ms：设置2s
+   3. max.poll.interval.ms：推荐为消费者处理消息最长耗时再加1分钟
+
+## 自动再均衡
+
+为什么会有自动再均衡：
+
+1. 我们可以在新建主题的时候，手动指定主题各个Leader分区以及Follower分区的分配情况，即什么分区副本在哪个broker节点上。
+2. 随着系统的运行，broker的宕机重启，会引发Leader分区和Follower分区的角色转换，最后可能Leader大部分都集中在少数几台broker上，由于Leader负责客户端的读写操作，此时集中Leader分区的少数几台服务器的网络I/O，CPU，以及内存都会很紧张。
+3. Leader和Follower的角色转换会引起Leader副本在集群中分布的不均衡，此时我们需要一种手段，让Leader的分布重新恢复到一个均衡的状态。
+
+如何操作：
+
+1. 创建主题的时候，指定leader分区的服务器编号
+   1. --replica-assignment "0:1,1:0,0:1"表示：有三个partition，逗号分割开为partition配置
+   2. 0:1表示，当前partition的主分区为0号服务器编号， 第一个为主分区的服务器号
+   3. 那么1:0表示，当前partition的主分区号位1号服务器
+
+```shell
+kafka-topics.sh --zookeeper node1:2181/myKafka --create --topic tp_demo_03 --replica-assignment "0:1,1:0,0:1"
+```
+
+2. Kafka提供的自动再均衡脚本： kafka-preferred-replica-election.sh
+3. 该脚本仅指定zookeeper地址，则会对集群中所有的主题进行操作，自动再平衡
+
+## 修改副本因子
+
+为什么要修改副本因子：
+
+1. 我们创建主题的时候，可能流量不大，分配的服务器不够，比如服务器就两台，那么我们顶多两个副本，副本因子为2
+2. 当流量大时，我们需要扩容，此时，此时比如服务器4台，我们可以修改副本因子为4，让其分区有4个副本
+
+如何修改：
+
+1. 使用 kafka-reassign-partitions.sh 修改副本因子
+
+
 
 ## 消费方式
 
