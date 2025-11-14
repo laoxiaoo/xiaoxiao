@@ -655,7 +655,41 @@ kafka-topics.sh --zookeeper node1:2181/myKafka --create --topic tp_demo_03 --rep
 
 1. 使用 kafka-reassign-partitions.sh 修改副本因子
 
+## 分区分配策略
 
+### RangeAssignor
+
+Kafka默认采用RangeAssignor的分配算法
+
+如果有7个分区，3个消费者，则：每个消费者分配2个，多出来的1个由最开始的消费者消费
+
+![image-20251114224935758](image/kafka/image-20251114224935758.png)
+
+### RoundRobinAssignor
+
+轮询消费
+
+![image-20251114225110570](image/kafka/image-20251114225110570.png)
+
+### StickyAssignor
+
+问题：如果我们有一个消费者挂了，则会触发再平衡，再平衡会阻塞消费，这样很不友好
+
+目标：分区的分配尽量的均衡， 每一次重分配的结果尽量与上一次分配结果保持一致
+
+
+
+比如如下消费情况：
+
+![image-20251114225807105](image/kafka/image-20251114225807105.png)
+
+如果0号消费者挂了， 采用轮询的方式，则需要所有的消费者重新分配分区
+
+![image-20251114225840457](image/kafka/image-20251114225840457.png)
+
+按照Sticky的方式，仅对消费者1分配的分区进行重分配，红线部分。最终达到均衡的目的
+
+![image-20251114225932396](image/kafka/image-20251114225932396.png)
 
 ## 消费方式
 
@@ -668,6 +702,18 @@ consumer 采用 pull 模式从 broker 中读取数据
 但pull的方式，更适合大批量的数据，因为可以自主的选择pull 哪些数据
 
 所以他的吞吐量更大
+
+# 日志存储
+
+Kafka 消息是以主题为单位进行归类，各个主题之间是彼此独立的，互不影响。
+每个主题又可以分为一个或多个分区。
+每个分区各自存在一个记录消息数据的日志文件
+
+![image-20251114234114805](image/kafka/image-20251114234114805.png)
+
+日志文件存在多种后缀文件，重点需要关注 .index、.timestamp、.log 三种类型
+
+![image-20251114234220406](image/kafka/image-20251114234220406.png)
 
 # 事务操作
 
