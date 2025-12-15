@@ -12,6 +12,65 @@
 
 跟周边系统的整合和兼容不是很好。
 
+# RocketMQ特性
+
+1. 订阅与发布
+
+2. 消息顺序
+
+3. 消息过滤
+
+   1. RocketMQ的消费者可以根据Tag进行消息过滤，也支持自定义属性过滤
+
+4. 消息可靠性
+
+   1. Broker非正常关闭 
+   2. Broker异常Crash 
+   3. OS Crash 
+   4. 机器掉电，但是能立即恢复供电情况 
+   5. 机器无法开机（可能是cpu、主板、内存等关键设备损坏） 
+   6. 磁盘设备损坏
+
+   前四种情况都属于硬件资源可立即恢复情况，RocketMQ在这四种情况下能保证消息不丢，或者丢失少量数据（依赖刷盘方式是同步还是异步）
+
+   后一种：属于单点故障，且无法恢复，一旦发生，在此单点上的消息全部丢失
+
+5. 至少一次
+
+   1. 至少一次(At least Once)指每个消息必须投递一次。Consumer先Pull消息到本地，消费完成后，才向服务器返回ack，如果没有消费一定不会ack消息
+   
+6. 回溯消费
+
+   1. 回溯消费是指Consumer已经消费成功的消息，由于业务上需求需要重新消费
+
+7. 事务消息
+
+8. 定时消息
+
+   1. broker有配置项messageDelayLevel，默认值为“1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h”，18个level
+   2. 定时消息会暂存在名为SCHEDULE_TOPIC_XXXX的topic中，并根据delayTimeLevel存入特定的queue，queueId = delayTimeLevel – 1，即一个queue只存相同延迟的消息，保证具有相同发送延迟的消息能够顺序消费
+   3. broker会定时调度地消费SCHEDULE_TOPIC_XXXX，将消息写入真实的topic
+
+9. 消息重试
+
+10. 消息重投
+
+    1. 生产者在发送消息时：
+       	同步消息失败会重投
+       	异步消息有重试
+       	oneway没有任何保证。
+
+11. 流量控制
+
+    1. 生产者流控，因为broker处理能力达到瓶颈；消费者流控，因为消费能力达到瓶颈。
+
+12. 死信队列
+
+    1. 死信队列用于处理无法被正常消费的消息。
+    2. 达到最大重试次数后，若消费依然失败，则表明消费者在正常情况下无法正确地消费该消息
+    3. 在RocketMQ中，可以通过使用console控制台对死信队列中的消息进行重发来使得消费者实例再次进行消费
+
+
 # RocketMq 是什么
 
 - RocketMQ是一个队列模型的消息中间件，具有高性能、高可靠、高实时、分布式特点。
@@ -35,9 +94,15 @@ NameServer主要负责Topic和路由信息的管理，类似zookeeper。
 
 消息消费者，负责消息消费，一般是后台系统负责异步消费。
 
+PushConsumer：Consumer消费的一种类型，该模式下Broker收到数据后会主动推送给消费端
+
+PullConsumer：Consumer消费的一种类型，应用通常主动调用Consumer的拉消息方法从Broker服务器拉消息、主动权由应用控制。一旦获取了批量消息，应用就会启动消费过程
+
 <b id="blue">Producer</b>
 
 消息生产者，负责产生消息，一般由业务系统负责产生消息。
+
+<b id="blue">ConsumerGroup</b>：同一类Consumer的集合，这类Consumer通常消费同一类消息且消费逻辑一致，消费者组的消费者实例必须订阅完全相同的Topic（这一点与kafka不一样）
 
 ## Name Server  
 
@@ -91,6 +156,8 @@ RocketMQ的路由发现采用的是Pull模型。当Topic路由信息出现变化
 
 实际处理消息存储、转发等服务的核心组件，包括消费者组消费进度偏移offset、主题、队列等。  
 
+每个Topic的消息也可以分片存储于不同的 Broker。Message Queue 用于存储消息的物理地址，每个Topic中的消息地址存储于多个 Message Queue 中
+
 > 结构
 
 ![](./image/rocketmq_architecture_2.png)
@@ -143,6 +210,7 @@ perm用于设置对当前创建Topic的操作权限：2表示只写，4表示只
 
 ## 单机安装
 
+1. 安装JDK8环境
 1. 下载
 
 ```shell
@@ -150,8 +218,9 @@ perm用于设置对当前创建Topic的操作权限：2表示只写，4表示只
 
 ```
 
-2. 修改默认的内存(改成-Xms256m -Xmx256m -Xmn128m)
-   1. 修改[root@node1 bin]# vim runserver.sh
+3. 修改默认的内存(改成-Xms256m -Xmx256m -Xmn128m)
+
+4. 修改[root@node1 bin]# vim runserver.sh
 
 ```shell
 JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m"

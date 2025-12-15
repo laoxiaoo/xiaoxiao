@@ -1,7 +1,14 @@
 ﻿
 
 
+# 安装OpenJdk
 
+```shell
+[root@localhost rocketmq]# yum list | grep jdk
+## 安装某条
+[root@localhost rocketmq]# yum install java-1.8.0-openjdk.x86_64
+
+```
 
 
 # 集合

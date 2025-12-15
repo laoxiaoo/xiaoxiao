@@ -693,6 +693,7 @@ o: 换行插入
 
 # 软件安装
 
+
 ## rpm
 
 ### 安装命令
@@ -749,6 +750,16 @@ rpm包建议默认安装路径
 因为
 
 1. RPM是有卸载命令的，可以直接卸载，源码安装只能直接删除
+
+## 跟换yum源
+
+国内yum源：
+网易163：         安装方法查看：http://mirrors.163.com/.help/
+中科大：            安装方法查看：https://lug.ustc.edu.cn/wiki/mirrors/help
+阿里云：            安装方法查看: https://opsx.alibaba.com/mirror
+清华大学：        安装方法查看: https://mirrors.tuna.tsinghua.edu.cn/
+浙江大学：        安装方法查看: http://mirrors.zju.edu.cn/
+中国科技大学：安装方法查看: http://centos.ustc.edu.cn/
 
 ## rpm在线安装（yum）
 
