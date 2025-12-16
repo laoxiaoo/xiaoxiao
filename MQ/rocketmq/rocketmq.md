@@ -220,13 +220,13 @@ perm用于设置对当前创建Topic的操作权限：2表示只写，4表示只
 
 3. 修改默认的内存(改成-Xms256m -Xmx256m -Xmn128m)
 
-4. 修改[root@node1 bin]# vim runserver.sh
+4. 修改[root@node1 bin]# vim bin/runserver.sh，如果是虚拟机，则将内存配置调小点
 
 ```shell
 JAVA_OPT="${JAVA_OPT} -server -Xms4g -Xmx4g -Xmn2g -XX:MetaspaceSize=128m -XX:MaxMetaspaceSize=320m"
 ```
 
-修改[root@node1 bin]# vim runbroker.sh
+修改[root@node1 bin]# vim runbroker.sh,如果是虚拟机，则将内存配置调小点
 
 ```shell
 JAVA_OPT="${JAVA_OPT} -server -Xms8g -Xmx8g -Xmn4g"
