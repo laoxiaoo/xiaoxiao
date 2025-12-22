@@ -479,6 +479,71 @@ MessageQueue本质就是一个数据分片的机制。比如order_topic一共有
 
 ![image-20250525164808493](image/rocketmq/image-20250525164808493.png)
 
+## API
+
+###  instanceName 
+
+MQClientInstance不是对外应用类，也就是说用户不需要自己实例化使用他。并且，MQClientInstance的实例化并不是直接new后使用，而是通过MQClientManager这个类型。MQClientManager是个单例类，使用饿汉模式设计保证线程安全。他的作用是提供MQClientInstance实例（与集群进行交互）
+
+ 所以只要ClientConfig里的相关参数（ IP@instanceName@unitName ）一致，这些Client会复用一个MQClientInstance 
+
+如果我们同一个JVM，连接了多个集群，那么，不配置instanceName，那么会公用一个MQClientInstance ，则，只会连接一个集群
+
+### 同步模式
+
+```java
+DefaultMQProducer producer = new DefaultMQProducer();
+// 生产者组名
+producer.setProducerGroup("producer_test_01");
+// 实例名:默认Default, 同一个JVM，实例名不能相同
+producer.setInstanceName("producer_test_01_01");
+//重试次数
+producer.setRetryTimesWhenSendFailed(2);
+producer.setNamesrvAddr("192.168.236.103:9876");
+producer.start();
+Message msg = new Message("test-topic-1", "TagA", "Hello world".getBytes());
+//如果发送失败，则按照setRetryTimesWhenSendFailed次数重试
+//则可能会导致消息重复消费
+SendResult send = producer.send(msg);
+log.info("send result: {}", send);
+```
+
+### 单向发送
+
+发送一条消息出去要经过三步
+1. 客户端发送请求到服务器。
+2. 服务器处理该请求。
+3. 服务器向客户端返回应答
+
+Oneway方式只发送请求不等待应答，即将数据写入客户端的Socket缓冲区就返回，不等待对方返回结果。
+
+具体方式：
+
+```java
+Message msg = new Message("test-topic-1", "TagA", "Hello world".getBytes());
+producer.sendOneway(msg);
+```
+
+### 异步发送方式
+
+```java
+producer.setRetryTimesWhenSendAsyncFailed(2);
+Message msg = new Message("test-topic-1", "TagA", "Hello world".getBytes());
+producer.send(msg, new SendCallback() {
+    @Override
+    public void onSuccess(SendResult sendResult) {
+        //成功回调
+    }
+
+    @Override
+    public void onException(Throwable e) {
+		//失败次数达到后，进行回调
+    }
+});
+```
+
+
+
 # 消息消费
 
 
@@ -678,6 +743,47 @@ commitlog文件存在一个过期时间，默认为72小时，即三天。除了
 
 
 对于RocketMQ系统来说，删除一个1G大小的文件，是一个压力巨大的IO操作。在删除过程中，系统性能会骤然下降。所以，其默认清理时间点为凌晨4点，访问量最小的时间。也正因如果，我们要保障磁盘空间的空闲率，不要使系统出现在其它时间点删除commitlog文件的情况  
+
+## API
+
+### 两种模式
+
+1. 消息消费方式（Pull和Push）
+2. 两种模式都有 消息消费模式（广播模式和集群模式）
+3. 流量控制（可以结合sentinel来实现）
+4. 并发线程数设置
+   1. Push模式设置，Pull模式可以代码上控制怎么并发消费
+5. 消息的过滤（Tag、Key） TagA||TagB||TagC 
+
+### 代码实现
+
+```java
+DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer();
+    pushConsumer.setConsumerGroup("push_consumer_test_01");
+    //消费模式，广播模式;
+    //pushConsumer.setMessageModel(MessageModel.BROADCASTING);
+    //集群模式
+    pushConsumer.setMessageModel(MessageModel.BROADCASTING);
+    pushConsumer.setConsumeThreadMin(1);
+    pushConsumer.setConsumeThreadMax(10);
+    pushConsumer.setNamesrvAddr("192.168.236.103:9876");
+    pushConsumer.subscribe("test_topic_1", "*");
+    pushConsumer.setMessageListener(new MessageListenerConcurrently() {
+        @Override
+        public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs, ConsumeConcurrentlyContext context) {
+            for (MessageExt msg : msgs) {
+                try {
+                    log.info("consume message success, msg: {}", new String(msg.getBody(), "utf-8"));
+                } catch (UnsupportedEncodingException e) {
+                    log.info("consume message failed, msg: {}", msg);
+                }
+            }
+            return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+        }
+    });
+    pushConsumer.start();
+}
+```
 
 # RocketMQ应用
 
@@ -934,16 +1040,6 @@ consumer.setMaxReconsumeTimes(10);
 2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
 3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
 4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
-
-# 一些坑
-
-##  instanceName 
-
-MQClientInstance不是对外应用类，也就是说用户不需要自己实例化使用他。并且，MQClientInstance的实例化并不是直接new后使用，而是通过MQClientManager这个类型。MQClientManager是个单例类，使用饿汉模式设计保证线程安全。他的作用是提供MQClientInstance实例（与集群进行交互）
-
- 所以只要ClientConfig里的相关参数（ IP@instanceName@unitName ）一致，这些Client会复用一个MQClientInstance 
-
-如果我们同一个应用，连接了多个集群，那么，不配置instanceName，那么会公用一个MQClientInstance ，则，只会连接一个集群
 
 
 
