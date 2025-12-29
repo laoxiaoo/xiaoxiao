@@ -1077,3 +1077,15 @@ RocketMQ 消费者线程池采用 `LinkedBlockingQueue` 作为阻塞队列，默
 2. **线程池调优**：调整consumeThreadMin的大小
 3. 从consumer端着手，看代码上有没有拉低消费的代码进行优化
 4. producer端，对消息生存限流
+
+# 同步复制与异步复制
+
+如果一个Broker组有Master和Slave，消息需要从Master复制到Slave 上，有同步和异步两种复制方式。
+
+## 同步复制
+
+同步复制方式是等Master和Slave均写 成功后才反馈给客户端写成功状态；
+
+## 异步复制
+
+异步复制方式是只要Master写成功 即可反馈给客户端写成功状态。
