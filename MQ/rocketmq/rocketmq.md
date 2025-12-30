@@ -1089,3 +1089,12 @@ RocketMQ 消费者线程池采用 `LinkedBlockingQueue` 作为阻塞队列，默
 ## 异步复制
 
 异步复制方式是只要Master写成功 即可反馈给客户端写成功状态。
+
+# 高可用
+
+1. RocketMQ分布式集群是通过Master和Slave的配合达到高可用性的
+
+2. Master角色的Broker支持读和写，Slave角色的Broker仅支持读。
+
+   
+
