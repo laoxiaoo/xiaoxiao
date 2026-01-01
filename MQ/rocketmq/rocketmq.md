@@ -1135,3 +1135,44 @@ MMAP（Memory Mapped File）是一种操作系统提供的内存映射技术
 
    
 
+# 刷盘机制
+
+## 同步刷盘
+
+同步刷盘与异步刷盘的唯一区别是异步刷盘写完 PageCache直接返回，而同步刷盘需要等待刷盘
+完成才返回， 同步刷盘流程如下：
+(1). 写入 PageCache后，线程等待，通知刷盘线程刷盘。
+(2). 刷盘线程刷盘后，唤醒前端等待线程，可能是一批线程。
+(3). 前端等待线程向用户返回成功
+
+## 异步刷盘
+
+1. 写入消息到 PageCache时，如果内存不足，则尝试丢弃干净的 page，腾出内存供新消息使
+   用，策略是LRU 方式。
+2. 如果干净页不足，此时写入 PageCache会被阻塞，系统尝试刷盘部分数据，大约每次尝试 32
+   个 page, 来找出更多干净 PAGE。
+
+# 负载均衡
+
+## 指定Queue
+
+消息接收，和发送都可以指定queue，具体操作如下：
+
+1. 可以通过如下命令先创建topic
+
+```shell
+## 查询admin相关的命令的帮助文档，可以找到对应的命令
+[root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin 
+The most commonly used mqadmin commands are:
+   updateTopic          Update or create topic
+   deleteTopic          Delete topic from broker and NameServer.
+   updateSubGroup       Update or create subscription group
+   
+## updateTopic命令可以创建和修改topic
+## 查看创建topic命令的帮助文档
+[root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updatetopic --help
+
+##
+[root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updateTopic -n loclhost:9876 -b localhost:10911 -t topic_4 -w 6
+```
+
