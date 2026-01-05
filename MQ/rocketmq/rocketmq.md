@@ -855,55 +855,6 @@ sh bin/mqbroker -n localhost:9876 -c conf/broker.conf &
 
 
 
-## 延迟消息
-
-> 应用场景
-
-当消息写入到Broker后，在指定的时长后才可被消费处理的消息，称为延时消息  
-
-延时消息可以实现定时任务的功能，而无需使用定时器。
-
-典型的应用场景是：
-
-1. 电商交易中超时未支付关闭订单的场景
-2. 12306平台订票超时未支付取消订票的场景。  
-
-> 延迟等级
-
-延时消息的延迟时长**不支持随意时长**的延迟，是通过特定的延迟等级来指定的。延时等级定义在RocketMQ服务端的MessageStoreConfig类中的如下变量中  
-
-当然，如果需要自定义的延时等级，可以通过在broker加载的配置中新增如下配置（例如下面增加了1天这个等级1d）。配置文件在RocketMQ安装目录下的conf目录中。  
-
-```
-messageDelayLevel = 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h 1d
-```
-
-> 实现原理
-
-![image-20210801101041611](./image/20210801101048.png)
-
-Producer将消息发送到Broker后，Broker会首先将消息写入到commitlog文件，然后需要将其分发到相应的consumequeue。不过，在分发之前，系统会先判断消息中是否带有延时等级。若没有，则直接正常分发；若有则需要经历一个复杂的过程
-
-1.  将消息发送到Topic为SCHEDULE_TOPIC_XXXX的consumequeue中（这个XXXX其实就是延迟等级）
-
-修改消息的Topic为SCHEDULE_TOPIC_XXXX ?
-
-- 是按照消息投递时间排序的。一个Broker中同一等级的所有延时消息会被写入到consumequeue目录中SCHEDULE_TOPIC_XXXX目录下相同Queue中  
-
-> 代码示例
-
-```java
-Message msg = new Message(TOPIC,
-        "TagA",
-        "DelayOrderID188",
-        "Delay Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
-//设置消息延迟等级为3（也就是10s）
-msg.setDelayTimeLevel(3);
-SendResult send = producer.send(msg);
-log.debug("延迟消息队列：{}", LocalDateTime.now());
-producer.shutdown();
-```
-
 ## 事务消息（重要）
 
 ### 问题场景
@@ -1056,13 +1007,6 @@ consumer.setMaxReconsumeTimes(10);
 方式2：返回Null
 方式3：抛出异常  
 
-## 死信队列  
-
-1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
-2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
-3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
-4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
-
 
 
 # RocketMQ 消息积压
@@ -1176,3 +1120,62 @@ The most commonly used mqadmin commands are:
 [root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updateTopic -n loclhost:9876 -b localhost:10911 -t topic_4 -w 6
 ```
 
+# 死信队列  
+
+1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
+2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
+3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
+4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
+
+
+
+# 延迟消息
+
+> 应用场景
+
+当消息写入到Broker后，在指定的时长后才可被消费处理的消息，称为延时消息  
+
+延时消息可以实现定时任务的功能，而无需使用定时器。
+
+典型的应用场景是：
+
+1. 电商交易中超时未支付关闭订单的场景
+2. 12306平台订票超时未支付取消订票的场景。  
+
+> 延迟等级
+
+延时消息的延迟时长**不支持随意时长**的延迟，是通过特定的延迟等级来指定的。延时等级定义在RocketMQ服务端的MessageStoreConfig类中的如下变量中  
+
+当然，如果需要自定义的延时等级，可以通过在broker加载的配置中新增如下配置（例如下面增加了1天这个等级1d）。配置文件在RocketMQ安装目录下的conf目录中。  
+
+```
+messageDelayLevel = 1s 5s 10s 30s 1m 2m 3m 4m 5m 6m 7m 8m 9m 10m 20m 30m 1h 2h 1d
+```
+
+> 实现原理
+
+![image-20210801101041611](./image/20210801101048.png)
+
+Producer将消息发送到Broker后，Broker会首先将消息写入到commitlog文件，然后需要将其分发到相应的consumequeue。不过，在分发之前，系统会先判断消息中是否带有延时等级。若没有，则直接正常分发；若有则需要经历一个复杂的过程
+
+1.  将消息发送到Topic为SCHEDULE_TOPIC_XXXX的consumequeue中（这个XXXX其实就是延迟等级）
+
+修改消息的Topic为SCHEDULE_TOPIC_XXXX ?
+
+- 是按照消息投递时间排序的。一个Broker中同一等级的所有延时消息会被写入到consumequeue目录中SCHEDULE_TOPIC_XXXX目录下相同Queue中  
+
+> 代码示例
+
+```java
+Message msg = new Message(TOPIC,
+        "TagA",
+        "DelayOrderID188",
+        "Delay Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
+//设置消息延迟等级为3（也就是10s）
+msg.setDelayTimeLevel(3);
+SendResult send = producer.send(msg);
+log.debug("延迟消息队列：{}", LocalDateTime.now());
+producer.shutdown();
+```
+
+2. 当消息时间达到，则将当前消息投递到真正的topic中，进行消费
