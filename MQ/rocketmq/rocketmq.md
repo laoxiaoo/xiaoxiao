@@ -855,92 +855,6 @@ sh bin/mqbroker -n localhost:9876 -c conf/broker.conf &
 
 
 
-## 事务消息（重要）
-
-### 问题场景
-
-工行用户A向建行用户B转账1万元 ：
-
-我们可以使用同步消息来处理该需求场景 ：
-
-![image-20210801113618455](./image/20210801113618.png)
-
-> 问题
-
-如果1 2 成功， 3的扣款失败，但是此事4 建行读取消息已经成功
-
-> 解决方案
-
-解决思路是，让第1、2、3步具有原子性，要么全部成功，要么全部失败  
-
-### 事务消息生命周期
-
-- 初始化：半事务消息被生产者构建并完成初始化，待发送到服务端的状态。
-- 事务待提交：半事务消息被发送到服务端，和普通消息不同，并不会直接被服务端持久化，而是会被单独存储到事务存储系统中，等待第二阶段本地事务返回执行结果后再提交。此时消息对下游消费者不可见。
-- 消息回滚：第二阶段如果事务执行结果明确为回滚，服务端会将半事务消息回滚，该事务消息流程终止。
-- 提交待消费：第二阶段如果事务执行结果明确为提交，服务端会将半事务消息重新存储到普通存储系统中，此时消息对下游消费者可见，等待被消费者获取并消费。
-- 消费中：消息被消费者获取，并按照消费者本地的业务逻辑进行处理的过程。 此时服务端会等待消费者完成消费并提交消费结果，如果一定时间后没有收到消费者的响应，Apache RocketMQ会对消息进行重试处理。具体信息，请参见[消费重试](https://rocketmq.apache.org/zh/docs/featureBehavior/10consumerretrypolicy)。
-- 消费提交：消费者完成消费处理，并向服务端提交消费结果，服务端标记当前消息已经被处理（包括消费成功和失败）。 Apache RocketMQ默认支持保留所有消息，此时消息数据并不会立即被删除，只是逻辑标记已消费。消息在保存时间到期或存储空间不足被删除前，消费者仍然可以回溯消息重新消费。
-- 消息删除：Apache RocketMQ按照消息保存机制滚动清理最早的消息数据，将消息从物理文件中删除。更多信息，请参见[消息存储和清理机制](https://rocketmq.apache.org/zh/docs/featureBehavior/11messagestorepolicy)。
-
-### 代码片段
-
-官方文档有不同实现：[事务消息 | RocketMQ](https://rocketmq.apache.org/zh/docs/featureBehavior/04transactionmessage/)
-
-1. 定义一个监听器，用于操作本地事务和消息回查
-
-```java
-static class ICBCTransactionListener implements TransactionListener {
-    @Override
-    public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
-        //当消息投递到mq后，处于半提交状态，调用这个方法
-        try {
-            boolean success = doBusinessLogic();  // 执行本地事务
-            //要么提交消息，要么回滚
-            return success ? LocalTransactionState.COMMIT_MESSAGE 
-                           : LocalTransactionState.ROLLBACK_MESSAGE;
-        } catch (Exception e) {
-            return LocalTransactionState.UNKNOW;   // 触发回查[6,9](@ref)
-        }
-    }
-
-    @Override
-    public LocalTransactionState checkLocalTransaction(MessageExt msg) {
-        //回查:只有以下两种情况会回查
-        //1.回调操作返回UNKNWON
-        //2.TC没有接收到TM的最终全局事务确认指令
-        log.debug("收到回查消息：{}", msg);
-        /**
-           * 事务检查器一般是根据业务的ID去检查本地事务是否正确提交还是回滚，此处以订单ID属性为例。
-           * 在订单表找到了这个订单，说明本地事务插入订单的操作已经正确提交；如果订单表没有订单，说明本地事务已经回滚。
-         */
-        final String orderId = messageView.getProperties().get("OrderId");
-        return LocalTransactionState.COMMIT_MESSAGE;
-    }
-}
-```
-
-2. 启动事务消息
-   1. setExecutorService主要是给checkLocalTransaction线程池异步调用
-
-
-```java
-
-//事务消息的group
-TransactionMQProducer txProducer = new TransactionMQProducer("transaction_group");
-//设置namespace
-txProducer.setNamesrvAddr("127.0.0.1:9876");
-ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1000l, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
-txProducer.setExecutorService(executor);
-txProducer.setTransactionListener(new ICBCTransactionListener());
-txProducer.start();
-
-Message message = new Message("tx-topic", "taga", "tx".getBytes(StandardCharsets.UTF_8));
-//消息， 本地事务使用的业务参数
-TransactionSendResult sendResult = txProducer.sendMessageInTransaction(message, null);
-log.debug("启动事务生产者： {}", sendResult);
-```
-
 ##  批量消息
 
 ### 批量发送
@@ -1179,3 +1093,182 @@ producer.shutdown();
 ```
 
 2. 当消息时间达到，则将当前消息投递到真正的topic中，进行消费
+
+
+
+
+# 顺序消息
+
+指的是严格按照消息的发送顺序进行消费
+
+默认情况下生产者会把消息以Round Robin<b id="blue">轮询方式</b>发送到不同的Queue分区队列；而消费消息时会从多个Queue上拉取消息，这种情况下的发送和消费是不能保证顺序的。
+
+如果将消息仅发送到`同一个Queue`中，消费时也只从这个Queue上拉取消息，就严格保证了消息的顺序性。  
+
+*全局有序*:
+
+当发送和消费参与的Queue只有**一个**时所保证的有序是整个Topic中消息的顺序， 称为全局有序
+
+![image-20220528141719334](./image/image-20220528141719334.png)
+
+*分区有序*:
+
+1. 在创建producer的时候，我们创建queue选择器，指定投放的queue是哪个(`可以实现MessageQueueSelector  接口来选择当前生产者投递的队列` )
+2. 在消费端使用<b id="gray">MessageListenerOrderly</b>进行消息消费
+3. 这样，我们就保证了队列的顺序性
+
+![image-20220528141739224](./image/image-20220528141739224.png)
+
+> Producer
+>
+> `按照某种规则投递到指定的队列中`
+
+```java
+Message msg = new Message("TOPIC",
+        "TagA",
+        "SortOrderID188",
+        "Sort Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
+Integer orderId = 1;
+//模拟指定的orderId发送指定的队列之中
+SendResult send = producer.send(msg, new MessageQueueSelector() {
+    @Override
+    public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
+        Integer id = (Integer) arg;
+        int index = id % mqs.size();
+        return mqs.get(index);
+    }
+}, orderId);
+producer.shutdown();
+```
+
+> Consumer
+>
+> `consumer使用`<b id="blue">MessageListenerOrderly</b>来进行并发的顺序消费
+
+```java
+//线程数等设置为1
+consumer.setConsumeThreadMin(1);
+consumer.setConsumeThreadMax(1);
+consumer.setPullBatchSize(1);
+consumer.setConsumeMessageBatchMaxSize(1);
+//注册监听
+consumer.registerMessageListener(new MessageListenerOrderly() {
+    @Override
+    public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+        //进行消息的消费
+        return ConsumeOrderlyStatus.SUCCESS;
+    }
+});
+```
+
+## 与并发消息比较
+
+<b id="blue">MessageListenerConcurrently</b>是拉取到新消息之后就提交到线程池去消费，而<b id="blue">MessageListenerOrderly</b>则是通过加分布式锁和本地锁保证同时只有一条线程去消费一个队列上的数据。
+
+## MessageListenerOrderly的加锁机制
+
+1. 消费者在进行某个队列的消息拉取时首先向Broker服务器申请队列锁，如果申请到琐，则拉取消息，否则放弃消息拉取，等到下一个队列负载周期(20s)再试。这一个锁使得一个MessageQueue同一个时刻只能被一个消费客户端消费，防止因为队列负载均衡导致消息重复消费。
+2. 假设消费者对messageQueue的加锁已经成功，那么会开始拉取消息，拉取到消息后同样会提交到消费端的线程池进行消费。但在本地消费之前，会先获取该messageQueue对应的锁对象，每一个messageQueue对应一个锁对象，获取到锁对象后，使用synchronized阻塞式的申请线程级独占锁。这一个锁使得来自同一个messageQueue的消息在本地的同一个时刻只能被一个消费客户端中的一个线程顺序的消费。
+3. 在本地加synchronized锁成功之后，还会判断如果是广播模式，则直接进行消费，如果是集群模式，则判断如果messagequeue没有锁住或者锁过期(默认30000ms)，那么延迟100ms后再次尝试向Broker 申请锁定messageQueue，锁定成功后重新提交消费请求。
+
+## 顺序消费问题
+
+> 性能上的问题
+
+1. 使用了很多的锁，降低了吞吐量。
+2. 前一个消息消费阻塞时后面消息都会被阻塞。如果遇到消费失败的消息，会自动对当前消息进行重试（每次间隔时间为1秒），无法自动跳过，重试最大次数是Integer.MAX_VALUE，这将导致当前队列消费暂停，因此通常需要设定有一个最大消费次数，以及处理好所有可能的异常情况。
+
+> 消息投递问题
+
+1. 采用队列选择器的方法不能保证消息的严格顺序，我们的目的是将消息发送到同一个队列中
+2. 如果某个broker挂了，那么队列就会减少一部分
+3. 如果增加了服务器，那么也会造成短暂的造成部分消息无序
+
+# 事务消息（重要）
+
+## 问题场景
+
+工行用户A向建行用户B转账1万元 ：
+
+我们可以使用同步消息来处理该需求场景 ：
+
+![image-20210801113618455](./image/20210801113618.png)
+
+> 问题
+
+如果1 2 成功， 3的扣款失败，但是此事4 建行读取消息已经成功
+
+> 解决方案
+
+解决思路是，让第1、2、3步具有原子性，要么全部成功，要么全部失败  
+
+## 事务消息生命周期
+
+- 初始化：半事务消息被生产者构建并完成初始化，待发送到服务端的状态。
+- 事务待提交：半事务消息被发送到服务端，和普通消息不同，并不会直接被服务端持久化，而是会被单独存储到事务存储系统中，等待第二阶段本地事务返回执行结果后再提交。此时消息对下游消费者不可见。
+- 消息回滚：第二阶段如果事务执行结果明确为回滚，服务端会将半事务消息回滚，该事务消息流程终止。
+- 提交待消费：第二阶段如果事务执行结果明确为提交，服务端会将半事务消息重新存储到普通存储系统中，此时消息对下游消费者可见，等待被消费者获取并消费。
+- 消费中：消息被消费者获取，并按照消费者本地的业务逻辑进行处理的过程。 此时服务端会等待消费者完成消费并提交消费结果，如果一定时间后没有收到消费者的响应，Apache RocketMQ会对消息进行重试处理。具体信息，请参见[消费重试](https://rocketmq.apache.org/zh/docs/featureBehavior/10consumerretrypolicy)。
+- 消费提交：消费者完成消费处理，并向服务端提交消费结果，服务端标记当前消息已经被处理（包括消费成功和失败）。 Apache RocketMQ默认支持保留所有消息，此时消息数据并不会立即被删除，只是逻辑标记已消费。消息在保存时间到期或存储空间不足被删除前，消费者仍然可以回溯消息重新消费。
+- 消息删除：Apache RocketMQ按照消息保存机制滚动清理最早的消息数据，将消息从物理文件中删除。更多信息，请参见[消息存储和清理机制](https://rocketmq.apache.org/zh/docs/featureBehavior/11messagestorepolicy)。
+
+## 代码片段
+
+官方文档有不同实现：[事务消息 | RocketMQ](https://rocketmq.apache.org/zh/docs/featureBehavior/04transactionmessage/)
+
+1. 定义一个监听器，用于操作本地事务和消息回查
+   1. 消息回查是一同一个group 的producer为单位，进行回查的，具体调用group里面的哪个producer由producer自行决定
+
+```java
+static class ICBCTransactionListener implements TransactionListener {
+    @Override
+    public LocalTransactionState executeLocalTransaction(Message msg, Object arg) {
+        //当消息投递到mq后，处于半提交状态，调用这个方法
+        //可以通过本地事务使用的业务参数(arg)来进行触发本地事务提交
+        try {
+            boolean success = doBusinessLogic();  // 执行本地事务
+            //要么提交消息，要么回滚
+            return success ? LocalTransactionState.COMMIT_MESSAGE 
+                           : LocalTransactionState.ROLLBACK_MESSAGE;
+        } catch (Exception e) {
+            return LocalTransactionState.UNKNOW;   // 触发回查[6,9](@ref)
+        }
+    }
+
+    @Override
+    public LocalTransactionState checkLocalTransaction(MessageExt msg) {
+        //回查:只有以下两种情况会回查
+        //1.回调操作返回UNKNWON
+        //2.TC没有接收到TM的最终全局事务确认指令
+        log.debug("收到回查消息：{}", msg);
+        /**
+           * 事务检查器一般是根据业务的ID去检查本地事务是否正确提交还是回滚，此处以订单ID属性为例。
+           * 在订单表找到了这个订单，说明本地事务插入订单的操作已经正确提交；如果订单表没有订单，说明本地事务已经回滚。
+         */
+        final String orderId = messageView.getProperties().get("OrderId");
+        return LocalTransactionState.COMMIT_MESSAGE;
+    }
+}
+```
+
+2. 启动事务消息
+   1. setExecutorService主要是给checkLocalTransaction线程池异步调用
+
+
+```java
+//事务消息的group
+TransactionMQProducer txProducer = new TransactionMQProducer("transaction_group");
+//设置namespace
+txProducer.setNamesrvAddr("127.0.0.1:9876");
+ThreadPoolExecutor executor = new ThreadPoolExecutor(1, 1, 1000l, TimeUnit.SECONDS, new ArrayBlockingQueue<>(100));
+txProducer.setExecutorService(executor);
+txProducer.setTransactionListener(new ICBCTransactionListener());
+txProducer.start();
+
+Message message = new Message("tx-topic", "taga", "tx".getBytes(StandardCharsets.UTF_8));
+//消息， 本地事务使用的业务参数(arg)
+TransactionSendResult sendResult = txProducer.sendMessageInTransaction(message, arg);
+log.debug("启动事务生产者： {}", sendResult);
+```
+
+##  
