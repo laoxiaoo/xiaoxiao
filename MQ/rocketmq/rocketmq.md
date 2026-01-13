@@ -403,6 +403,28 @@ SendResult send = producer.send(msg);
 log.info("send result: {}", send);
 ```
 
+SendResult的几种状态
+
+```Java
+public enum SendStatus {
+    SEND_OK,
+    FLUSH_DISK_TIMEOUT,
+    FLUSH_SLAVE_TIMEOUT,
+    SLAVE_NOT_AVAILABLE;
+
+    private SendStatus() {
+    }
+}
+```
+
+SEND_OK：
+
+消息发送成功。要注意的是消息发送成功也不意味着它是可靠的。要确保不会丢失任何消息，还应启用同步Master服务器或同步刷盘，即SYNC_MASTER或SYNC_FLUSH。
+
+FLUSH_DISK_TIMEOUT：
+
+消息发送成功，但是服务器同步到Slave时超时。此时消息已经进入服务器队列，只有服务器宕机，消息才会丢失。
+
 ### 单向发送
 
 发送一条消息出去要经过三步
@@ -410,7 +432,7 @@ log.info("send result: {}", send);
 2. 服务器处理该请求。
 3. 服务器向客户端返回应答
 
-Oneway方式只发送请求不等待应答，即将数据写入客户端的Socket缓冲区就返回，不等待对方返回结果。
+**Oneway方式只发送请求不等待应答**，即将数据写入客户端的Socket缓冲区就返回，不等待对方返回结果。
 
 具体方式：
 
@@ -457,7 +479,7 @@ producer.send(msg, new SendCallback() {
 
 ![image-20250525172514555](image/rocketmq/image-20250525172514555.png)
 
-## Rebalance机制（负载均衡）
+## 负载均衡
 
 消费端的负载均衡是指**将 Broker 端中多个队列按照某种算法分配给同一个消费组中的不同消费者**。
 
@@ -575,9 +597,7 @@ public enum ConsumeFromWhere {
 }
 ```
 
-## 重试队列 
 
-当rocketMQ对消息的消费出现异常时，会将发生异常的消息的offset提交到Broker中的重试队列。系统在发生消息消费异常时会为当前的topic@group创建一个重试队列，该队列以**%RETRY%**  开头，到达重试时间后进行消费重试。  
 
 ## 同步提交与异步提交
 
@@ -639,6 +659,72 @@ commitlog文件存在一个过期时间，默认为72小时，即三天。除了
 
 对于RocketMQ系统来说，删除一个1G大小的文件，是一个压力巨大的IO操作。在删除过程中，系统性能会骤然下降。所以，其默认清理时间点为凌晨4点，访问量最小的时间。也正因如果，我们要保障磁盘空间的空闲率，不要使系统出现在其它时间点删除commitlog文件的情况  
 
+## 消费位点
+
+当建立一个新的消费组时，需要决定是否需要消费已经存在于 Broker 中的历史消息。
+
+CONSUME_FROM_LAST_OFFSET 将会忽略历史消息，并消费之后生成的任何消息。
+CONSUME_FROM_FIRST_OFFSET 将会消费每个存在于 Broker 中的信息。
+也可以使用 CONSUME_FROM_TIMESTAMP 来消费在指定时间戳后产生的消息。
+
+```java
+public static void main(String[] args) throws MQClientException {
+DefaultMQPushConsumer consumer = new
+DefaultMQPushConsumer("consumer_grp_15_01");
+consumer.setNamesrvAddr("node1:9886");
+consumer.subscribe("tp_demo_15", "*");
+// 以下三个选一个使用，如果是根据时间戳进行消费，则需要设置时间戳
+// 从第一个消息开始消费，从头开始
+consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_FIRST_OFFSET);
+// 从最后一个消息开始消费，不消费历史消息
+consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_LAST_OFFSET);
+// 从指定的时间戳开始消费
+consumer.setConsumeFromWhere(ConsumeFromWhere.CONSUME_FROM_TIMESTAMP);
+// 指定时间戳的值
+consumer.setConsumeTimestamp("");
+consumer.setMessageListener(new MessageListenerConcurrently() {
+@Override
+public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt>
+msgs, ConsumeConcurrentlyContext context) {
+// TODO 处理消息的业务逻辑
+return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+// return ConsumeConcurrentlyStatus.RECONSUME_LATER;
+}
+});
+consumer.start();
+}
+```
+
+
+
+## 消费慢处理
+
+1. 提高消费并行度
+   1. 同一个 ConsumerGroup 下，通过增加 Consumer 实例数量来提高并行度（需要注意的是超过订阅队列数的 Consumer 实例无效）。可以通过加机器，或者在已有机器启动多个进程的方式。
+   2. 提高单个 Consumer 的消费并行线程，通过修改参数 consumeThreadMin、consumeThreadMax实现。
+   3. 丢弃部分不重要的消息
+2. 批量方式消费
+   1. 通过设置 consumer的 consumeMessageBatchMaxSize 返个参数，默认是 1，即一次只消费一条消息，例如设置为 N，那么每次消费的消息数小于等于 N。
+3. 跳过非重要消息
+
+```java
+public ConsumeConcurrentlyStatus consumeMessage(List<MessageExt> msgs,
+ConsumeConcurrentlyContext context) {
+long offset = msgs.get(0).getQueueOffset();
+String maxOffset =
+msgs.get(0).getProperty(Message.PROPERTY_MAX_OFFSET);
+long diff = Long.parseLong(maxOffset) - offset;
+if (diff > 100000) {
+// TODO 消息堆积情况的特殊处理
+return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+}
+// TODO 正常消费过程
+return ConsumeConcurrentlyStatus.CONSUME_SUCCESS;
+}
+```
+
+
+
 ## API
 
 ### 两种模式
@@ -679,6 +765,10 @@ DefaultMQPushConsumer pushConsumer = new DefaultMQPushConsumer();
     pushConsumer.start();
 }
 ```
+
+# 重试队列 
+
+当rocketMQ对消息的消费出现异常时，会将发生异常的消息的offset提交到Broker中的重试队列。系统在发生消息消费异常时会为当前的topic@group创建一个重试队列，该队列以**%RETRY%**  开头，到达重试时间后进行消费重试。  
 
 # 消息存储
 
