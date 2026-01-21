@@ -216,143 +216,71 @@ public void test2() throws Exception {
 
 工厂分两种，通过不同的工厂，生产不同的颜色car
 
+工厂模式解决的问题：
+
+1. 简单工厂模式会有很多if，来判断生产哪一种实体类
+2. 工厂模式可以使用Map，来存储每一种实体的工厂，每个工厂值生产一种实体
+
 ![image-20250419154902910](image/gof/image-20250419154902910.png)
 
 ## 抽象工厂模式
 
 在工厂方法中添加方法，生成同颜色类型1和类型2,两种不同的car
 
+抽象工厂模式的特点：
+
+在工厂模式的基础上，每一个工厂可以生产多种不同的实体
+
  ![image-20250419155227436](image/gof/image-20250419155227436.png)
 
 # 建造者模式
 
-场景：
-– 我们要建造一个复杂的产品。比如：神州飞船,Iphone。这个复杂的产品的创建。有这样
-一个问题需要处理：
-• 装配这些子组件是不是有个步骤问题?
-– 实际开发中，我们所需要的对象构建时，也非常复杂，有很多步骤需要处理时。 
-
-**Product（产品角色）：** 一个具体的产品对象。
-
-**Builder（抽象建造者）：** 创建一个Product对象的各个部件指定的抽象接口。
-
-**ConcreteBuilder（具体建造者）：** 实现抽象接口，构建和装配各个部件。
-
-**Director（指挥者）：** 构建一个使用Builder接口的对象。它主要是用于创建一个复杂的对象。它主要有两个作用，一是：隔离了客户与对象的生产过程，二是：负责控制产品对象的生产过程。
-
----
-
-建立一个具体产品角色，飞机，这个飞机包括发动机和座位两个配件
+使用场景：比如，一个配置类，我们有许多属性需要设置
 
 ```java
-public class FlyShip {
-    //座位
-    private Engine engine;
-    //发动机
-    private Seat seat;
-
-    public Engine getEngine() {
-        return engine;
-    }
-    public void setEngine(Engine engine) {
-        this.engine = engine;
-    }
-    public Seat getSeat() {
-        return seat;
-    }
-    public void setSeat(Seat seat) {
-        this.seat = seat;
-    }
-    public void go(){
-        System.out.print("发动起启动"+engine+"座位准备："+seat);
-    }
-}
-
-//发动机类
-class Engine{
+public class ResourceConfig {
+    
     private String name;
-    public Engine(String name) {
-        this.name = name;
-    }
+    
+    private String path;
 }
+```
 
-class Seat {
+此时，我们可以构建 set方法来进行属性设置
+
+如果我们需要对属性属性设置之前，做一些必要的校验等，这个时候可以用建造者模式,
+
+1. 可以在属性设置之前，做一些必要的校验，校验通过才可以创建对象
+2. 在构造对象后，对象的属性值将**不可修改**
+
+```java
+public class ResourceConfig {
     private String name;
-    public Seat(String name) {
-        this.name = name;
+    private String path;
+    private ResourceConfig(Builder builder) {
+        this.name = builder.name;
+        this.path = builder.path;
+    }
+    public static class Builder {
+        private String name;
+        private String path;
+
+        public ResourceConfig build() {
+            return new ResourceConfig(this);
+        }
+        public Builder name(String name) {
+            this.name = name;
+            return this;
+        }
+        public Builder path(String path) {
+            this.path = path;
+            return this;
+        }
     }
 }
 ```
 
-构建飞机的配置的相关类
 
-```java
-public interface FlyShipBuilder {
-    public Engine builderEngine();
-    public Seat builderSeat();
-}
-```
-
-```java
-public class FlyShipBuilderImpl implements FlyShipBuilder {
-    @Override
-    public Engine builderEngine() {
-        //可以用工厂方式来构造这些配件
-        return new Engine("构造发动机");
-    }
-
-    @Override
-    public Seat builderSeat() {
-        return new Seat("构造座位");
-    }
-}
-```
-
-将这些配件组件成飞机
-
-```java
-public class FlySirectorImpl implements FlyDirector {
-    private FlyShipBuilder flyShipBuilder;
-
-
-    public  FlySirectorImpl(FlyShipBuilder flyShipBuilder) {
-        this.flyShipBuilder = flyShipBuilder;
-    }
-
-    /**
-     * 组件飞机，这个装配过程可能配件的装配顺序等都有不同
-     * @return
-     */
-    @Override
-    public FlyShip flyShipDirector() {
-        Engine engine = flyShipBuilder.builderEngine();
-        Seat seat = flyShipBuilder.builderSeat();
-        FlyShip flyShip = new FlyShip();
-        flyShip.setEngine(engine);
-        flyShip.setSeat(seat);
-        return flyShip;
-    }
-}
-```
-
-客户端
-
-```java
-public static void main(String[] args) {
-    FlyShipBuilder flyShipBuilder = new FlyShipBuilderImpl();
-    FlyDirector flyDirector = new FlySirectorImpl(flyShipBuilder);
-    FlyShip flyShip = flyDirector.flyShipDirector();//将组件组装
-    flyShip.go();//客户端生成飞机后进行运行
-}
-```
-
-抽象工厂与建造者模式对比
-
----
-
-抽象工厂模式实现对产品家族的创建，一个产品家族是这样的一系列产品：具有不同分类维度的产品组合，采用抽象工厂模式不需要关心构建过程，只关心什么产品由什么工厂生产即可。而建造者模式则是要求按照指定的蓝图建造产品，它的主要目的是通过组装零配件而产生一个新产品。
-
----
 
 # 原型模式
 
