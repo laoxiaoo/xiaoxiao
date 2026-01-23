@@ -286,7 +286,9 @@ public class ResourceConfig {
 
 使用场景：如果创建对象需要消耗大量时间，并且需要创建大量对象，则使用
 
- 浅克隆：如果对象里面有other对象，那么clone的对象里的对象和之前的对象里的对象指向内存相同
+## 浅拷贝 
+
+如果对象里面有other对象，那么clone的对象里的对象和之前的对象里的对象指向内存相同
 
 ```java
 public class Sheep implements Cloneable, Serializable {
@@ -329,7 +331,12 @@ public static void main(String[] args) throws Exception {
 }
 ```
 
-深克隆：相反
+## 深拷贝
+
+1. 重写clone方法
+2.  Object类的 clone() 是浅拷贝，要实现深拷贝需手动为`引用类型成员`调用 clone()
+3. 也可以使用mapstruct做深拷贝
+4. 也可使用序列化反序列化进行深拷贝
 
 ```java
 public class Sheep2 implements Cloneable, Serializable {
