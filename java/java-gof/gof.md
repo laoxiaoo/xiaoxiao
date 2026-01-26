@@ -452,6 +452,8 @@ public class Client {
 
 ## 应用场景
 
+> 在不改变原始类代码的情况下，给原始类添加附加功能
+
 – 安全代理：屏蔽对真实角色的直接访问。
 – 远程代理：通过代理类处理远程方法调用(RMI)
 – 延迟加载：先加载轻量级的代理对象，真正需要再加载真实对象。
@@ -600,11 +602,19 @@ public class Client {
 
 []: https://gitee.com/xiaojihao/learning/blob/master/demo-spring-boot/src/main/java/com/xiao/gof/upload/UploadProxy.java	"代码地址"
 
+## 无接口代理
 
+一般来来说，代理模式与被代理的方法应该属于同一个接口
+
+如果被代理的方法的类无接口，则可以由代理类实现该类，对该方法重新进行代理操作
 
 # 桥接模式
 
-以电脑为例：
+桥接模式的核心是**抽象与实现分离**，这里的 “抽象” 和 “实现” 不是 Java 语法中的`abstract`和接口实现，而是**业务上的两个独立变化维度**
+
+
+
+> 以电脑为例：
 
 销售电脑：销售联想台式、联想笔记本，联想是品牌维度，台式、笔记本是种类
 
@@ -683,13 +693,21 @@ public class Client {
 }
 ```
 
+从上面可以看到，Computer和Brand是真正做事的，那么他们两就是实现，而<b id="blue">Implementor</b>就是抽象，我们需要哪个功能，直接把对应的功能的类加载进去，就可以实现功能
+
 ## 适用场景(多个维度)
 
 银行日志管理：本地日志和异地日志两个维度
 
 部门管理:行政部门，开发部门
 
+## JDBC的桥接模式
 
+JDBC驱动是桥接模式的经典应用。
+
+如果我们想要把MySQL数据库换成Oracle数据库，只需要加载时，将com.mysql.jdbc.Driver换成 oracle.jdbc.driver.OracleDriver 就可以了。
+
+这两个Driver就是具体的实现
 
 # 组合模式
 
