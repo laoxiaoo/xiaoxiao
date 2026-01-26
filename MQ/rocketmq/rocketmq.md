@@ -1382,4 +1382,29 @@ TransactionSendResult sendResult = txProducer.sendMessageInTransaction(message, 
 log.debug("启动事务生产者： {}", sendResult);
 ```
 
+## 应用
+
+> 事务与本地事务表的思考
+
+在官网，可以看到这段文字
+
+在断网或者是生产者应用重启的特殊情况下，若服务端未收到发送者提交的二次确认结果，或服务端收到的二次确认结果为Unknown未知状态，经过固定时间后，服务端将对消息生产者即生产者集群中任一生产者实例发起消息回查。 **说明** 服务端回查的间隔时间和最大回查次数，请参见[参数限制](https://rocketmq.apache.org/zh/docs/introduction/03limits)。
+
+也就是说 executeLocalTransaction 方法，如果执行超时，此时，服务端回调checkLocalTransaction进行事务提交判断，此时，
+
+1. 业务代码如果执行过长，没有提交，我们直接查询业务表，发现没有数据，认定事务回滚，返回回滚状态给brocker
+2. 业务代码提交事务
+
+这个过程就会有问题了，事务提交了，消息没发出去
+
+加入本地事务表后：
+
+t_transation_log: 无论事务提交还是失败，都会往这个表设置数据（与业务表同一本地事务）
+
+1. 执行executeLocalTransaction 方法，方法执行成功or失败，都插入t_transation_log数据
+2. checkLocalTransaction检查t_transation_log表，有数据证明已提交，验证提交成功与失败
+3. 没有数据则没有提交，返回UNKNOWN等待下一次的检查，当检查的时间超过一定限制时间，告警并且默认失败
+
+
+
 # 限流
