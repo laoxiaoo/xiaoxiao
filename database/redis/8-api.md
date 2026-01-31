@@ -5,6 +5,7 @@ Redis提供了对键空间事件的订阅和发布功能，我们可以订阅指
 
 
 1. 订阅要监控的键，keyspace@0:，其中"0"为数据库编号，"*"表示所有键
+
 ```java
 
 Jedis jedis = new Jedis("localhost");
