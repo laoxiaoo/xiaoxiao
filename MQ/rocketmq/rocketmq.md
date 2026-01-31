@@ -457,71 +457,6 @@ producer.send(msg, new SendCallback() {
 
 ![image-20250525172514555](image/rocketmq/image-20250525172514555.png)
 
-## Rebalance机制（负载均衡）
-
-消费端的负载均衡是指**将 Broker 端中多个队列按照某种算法分配给同一个消费组中的不同消费者**。
-
-Rebalance机制讨论的前提是：**集群消费 **
-
-Rebalance机制的本意是为了提升消息的并行消费能力。例如，⼀个Topic下5个队列，在只有1个消费者的情况下，这个消费者将负责消费这5个队列的消息。如果此时我们增加⼀个消费者，那么就可以给其中⼀个消费者分配2个队列，给另⼀个分配3个队列，从而提升消息的并行消费能力  
-
-![image-20250525173104238](image/rocketmq/image-20250525173104238.png)
-
-> **Rebalance限制**
-
-由于一个队列最多分配给一个消费者，因此当某个消费者组下的消费者实例数量大于队列的数量时，多余的消费者实例将分配不到任何队列。
-
-> Rebalance危害  
-
-消费暂停：
-
-在只有一个Consumer时，其负责消费所有队列；在新增了一个Consumer后会触发Rebalance的发生。此时原Consumer就需要暂停部分队列的消费，等到这些队列分配给新的Consumer后，这些暂停消费的队列才能继续被消费。
-消费重复：
-
-Consumer 在消费新分配给自己的队列时，必须接着之前Consumer 提交的消费进度的offset继续消费。然而默认情况下，offset是异步提交的，这个异步性导致提交到Broker的offset与Consumer实际消费的消息并不一致。这个不一致的差值就是可能会重复消费的消息。  
-
-> Rebalance产生的原因
-
-1. 消费者所订阅Topic的Queue数量发生变化
-2. 消费者组中消费者的数量发生变化。  
-
-## Queue分配算法 
-
-一个Topic中的Queue只能由Consumer Group中的一个Consumer进行消费，而一个Consumer可以同时消费多个Queue中的消息。常见的Queue分配算法有四种，分别是：平均分配策略、环形平均策略、一致性hash策略、同机房策略。这些策略是通过在创建Consumer时的构造器传进去的
-
-Java Api 中，可以通过构造方法设置，可以通过AllocateMessageQueueStrategy了解，默认使用平均分配
-
-### 平均分配策略  
-
-该算法是要根据avg = QueueCount / ConsumerCount 的计算结果进行分配的。如果能够整除，则按顺序将avg个Queue逐个分配Consumer；如果不能整除，则将多余出的Queue按照Consumer顺序逐个分配。  
-
-![image-20250525174915477](image/rocketmq/image-20250525174915477.png)
-
-**先计算好每个consumer应该分配几个queue**
-
-### 环形平均策略  
-
-环形平均算法是指，根据消费者的顺序，依次在由queue队列组成的环形图中逐个分配  
-
-**挨个分配给consumer，一个一个分配**，该方法不需要提前计算
-
-![image-20250525174956671](image/rocketmq/image-20250525174956671.png)
-
-### 一致性hash策略  
-
-该算法会将consumer的hash值作为Node节点存放到hash环上，然后将queue的hash值也放到hash环上，通过顺时针方向，距离queue最近的那个consumer就是该queue要分配的consumer  
-
-**会导致分配不均匀**
-
-![image-20250525175039935](image/rocketmq/image-20250525175039935.png)
-
-### 同机房策略  
-
-AllocateMessageQueueByMachineRoom：
-
-按机房分配，BrokerName 需要以 机房@brokerName命名
-
-当然，我们也可以自己自定义策略
 
 
 
@@ -1016,53 +951,6 @@ consumer.setConsumeMessageBatchMaxSize(10);
 
 
 
-## 消息重置机制
-
-### 发送重试
-
-> 说明
-
-1. 生产者在发送消息时，若采用同步或异步发送方式，发送失败会重试，但oneway消息发送方式发送失败是没有重试机制的
-2. 只有普通消息具有发送重试机制，顺序消息是没有的  
-3. 消息发送重试有三种策略可以选择：同步发送失败策略、异步发送失败策略、消息刷盘失败策略  
-
-> 重试策略
-
-对于普通消息，消息发送默认采用round-robin策略来选择所发送到的队列。如果发送失败，默认重试2次。但在重试时是不会选择上次发送失败的Broker，而是选择其它Broker。当然，若只有一个Broker其也只能发送到该Broker，但其会尽量发送到该Broker上的其它Queue  
-
-## 消费重试
-
-对于无序消息（普通消息、延时消息、事务消息），当Consumer消费消息失败时，可以通过设置返回状态达到消息重试的效果。不过需要注意，无序消息的重试只对集群消费方式生效，广播消费方式不提供失败重试特性  
-
-
-
-对于无序消息集群消费下的重试消费，每条消息默认最多重试16次，但每次重试的间隔时间是不同的  
-
-若一条消息在一直消费失败的前提下，将会在正常消费后的第 4小时46分 后进行第16次重试。若仍然失败，则将消息投递到 死信队列  
-
-> 修改重试策略
-
-```java
-DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
-// 修改消费重试次数
-consumer.setMaxReconsumeTimes(10);
-```
-
-> 消费重试配置方式 
-
-集群消费方式下，消息消费失败后若希望消费重试，则需要在消息监听器接口的实现中明确进行如下三种方式之一的配置：  
-
-方式1：返回ConsumeConcurrentlyStatus.RECONSUME_LATER（推荐）
-方式2：返回Null
-方式3：抛出异常  
-
-## 死信队列  
-
-1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
-2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
-3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup ，即每个消费者组都有一个死信队列
-4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
-
 
 
 # RocketMQ 消息积压
@@ -1172,7 +1060,227 @@ The most commonly used mqadmin commands are:
 ## 查看创建topic命令的帮助文档
 [root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updatetopic --help
 
-##
+## 创建一个queue=6的topic
 [root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updateTopic -n loclhost:9876 -b localhost:10911 -t topic_4 -w 6
 ```
 
+2. 
+
+
+## consumer负载均衡
+
+消费端的负载均衡是指**将 Broker 端中多个队列按照某种算法分配给同一个消费组中的不同消费者**。
+
+Rebalance机制讨论的前提是：**集群消费 **
+
+Rebalance机制的本意是为了提升消息的并行消费能力。例如，⼀个Topic下5个队列，在只有1个消费者的情况下，这个消费者将负责消费这5个队列的消息。如果此时我们增加⼀个消费者，那么就可以给其中⼀个消费者分配2个队列，给另⼀个分配3个队列，从而提升消息的并行消费能力  
+
+![image-20250525173104238](image/rocketmq/image-20250525173104238.png)
+
+> **Rebalance限制**
+
+由于一个队列最多分配给一个消费者，因此当某个消费者组下的消费者实例数量大于队列的数量时，多余的消费者实例将分配不到任何队列。
+
+> Rebalance危害  
+
+消费暂停：
+
+在只有一个Consumer时，其负责消费所有队列；在新增了一个Consumer后会触发Rebalance的发生。此时原Consumer就需要暂停部分队列的消费，等到这些队列分配给新的Consumer后，这些暂停消费的队列才能继续被消费。
+消费重复：
+
+Consumer 在消费新分配给自己的队列时，必须接着之前Consumer 提交的消费进度的offset继续消费。然而默认情况下，offset是异步提交的，这个异步性导致提交到Broker的offset与Consumer实际消费的消息并不一致。这个不一致的差值就是可能会重复消费的消息。  
+
+> Rebalance产生的原因
+
+1. 消费者所订阅Topic的Queue数量发生变化
+2. 消费者组中消费者的数量发生变化。  
+
+## Queue分配算法 
+
+一个Topic中的Queue只能由Consumer Group中的一个Consumer进行消费，而一个Consumer可以同时消费多个Queue中的消息。常见的Queue分配算法有四种，分别是：平均分配策略、环形平均策略、一致性hash策略、同机房策略。这些策略是通过在创建Consumer时的构造器传进去的
+
+Java Api 中，可以通过构造方法设置，可以通过AllocateMessageQueueStrategy了解，默认使用平均分配
+
+### 平均分配策略  
+
+该算法是要根据avg = QueueCount / ConsumerCount 的计算结果进行分配的。如果能够整除，则按顺序将avg个Queue逐个分配Consumer；如果不能整除，则将多余出的Queue按照Consumer顺序逐个分配。  
+
+![image-20250525174915477](image/rocketmq/image-20250525174915477.png)
+
+**先计算好每个consumer应该分配几个queue**
+
+### 环形平均策略  
+
+环形平均算法是指，根据消费者的顺序，依次在由queue队列组成的环形图中逐个分配  
+
+**挨个分配给consumer，一个一个分配**，该方法不需要提前计算
+
+![image-20250525174956671](image/rocketmq/image-20250525174956671.png)
+
+### 一致性hash策略  
+
+该算法会将consumer的hash值作为Node节点存放到hash环上，然后将queue的hash值也放到hash环上，通过顺时针方向，距离queue最近的那个consumer就是该queue要分配的consumer  
+
+**会导致分配不均匀**
+
+![image-20250525175039935](image/rocketmq/image-20250525175039935.png)
+
+### 同机房策略  
+
+AllocateMessageQueueByMachineRoom：
+
+按机房分配，BrokerName 需要以 机房@brokerName命名
+
+当然，我们也可以自己自定义策略
+
+
+# 顺序消息
+
+指的是严格按照消息的发送顺序进行消费
+
+默认情况下生产者会把消息以Round Robin<b id="blue">轮询方式</b>发送到不同的Queue分区队列；而消费消息时会从多个Queue上拉取消息，这种情况下的发送和消费是不能保证顺序的。
+
+如果将消息仅发送到`同一个Queue`中，消费时也只从这个Queue上拉取消息，就严格保证了消息的顺序性。  
+
+*全局有序*:
+
+当发送和消费参与的Queue只有**一个**时所保证的有序是整个Topic中消息的顺序， 称为全局有序
+
+![image-20220528141719334](./image/image-20220528141719334.png)
+
+*分区有序*:
+
+1. 在创建producer的时候，我们创建queue选择器，指定投放的queue是哪个(`可以实现MessageQueueSelector  接口来选择当前生产者投递的队列` )
+2. 在消费端使用<b id="gray">MessageListenerOrderly</b>进行消息消费
+3. 这样，我们就保证了队列的顺序性
+
+![image-20220528141739224](image/image-20220528141739224.png)
+
+> Producer
+>
+> `按照某种规则投递到指定的队列中`
+
+```java
+Message msg = new Message("TOPIC",
+        "TagA",
+        "SortOrderID188",
+        "Sort Hello world".getBytes(RemotingHelper.DEFAULT_CHARSET));
+Integer orderId = 1;
+//模拟指定的orderId发送指定的队列之中
+SendResult send = producer.send(msg, new MessageQueueSelector() {
+    @Override
+    public MessageQueue select(List<MessageQueue> mqs, Message msg, Object arg) {
+        Integer id = (Integer) arg;
+        int index = id % mqs.size();
+        return mqs.get(index);
+    }
+}, orderId);
+producer.shutdown();
+```
+
+> Consumer
+>
+> `consumer使用`<b id="blue">MessageListenerOrderly</b>来进行并发的顺序消费
+
+```java
+//设置一次推送的消息1条
+consumer.setConsumeMessageBatchMaxSize(1);
+//并发设置
+consumer.setConsumeThreadMin(1);
+consumer.setConsumeThreadMax(1);
+
+//注册监听
+consumer.registerMessageListener(new MessageListenerOrderly() {
+    @Override
+    public ConsumeOrderlyStatus consumeMessage(List<MessageExt> msgs, ConsumeOrderlyContext context) {
+        //进行消息的消费
+        return ConsumeOrderlyStatus.SUCCESS;
+    }
+});
+```
+
+## 与并发消息比较
+
+<b id="blue">MessageListenerConcurrently</b>是拉取到新消息之后就提交到线程池去消费，而<b id="blue">MessageListenerOrderly</b>则是通过加分布式锁和本地锁保证同时只有一条线程去消费一个队列上的数据。
+
+## MessageListenerOrderly的加锁机制
+
+1. 消费者在进行某个队列的消息拉取时首先向Broker服务器申请队列锁，如果申请到琐，则拉取消息，否则放弃消息拉取，等到下一个队列负载周期(20s)再试。这一个锁使得一个MessageQueue同一个时刻只能被一个消费客户端消费，防止因为队列负载均衡导致消息重复消费。
+2. 假设消费者对messageQueue的加锁已经成功，那么会开始拉取消息，拉取到消息后同样会提交到消费端的线程池进行消费。但在本地消费之前，会先获取该messageQueue对应的锁对象，每一个messageQueue对应一个锁对象，获取到锁对象后，使用synchronized阻塞式的申请线程级独占锁。这一个锁使得来自同一个messageQueue的消息在本地的同一个时刻只能被一个消费客户端中的一个线程顺序的消费。
+3. 在本地加synchronized锁成功之后，还会判断如果是广播模式，则直接进行消费，如果是集群模式，则判断如果messagequeue没有锁住或者锁过期(默认30000ms)，那么延迟100ms后再次尝试向Broker 申请锁定messageQueue，锁定成功后重新提交消费请求。
+
+## 顺序消费问题
+
+> 性能上的问题
+
+1. 使用了很多的锁，降低了吞吐量。
+2. 前一个消息消费阻塞时后面消息都会被阻塞。如果遇到消费失败的消息，会自动对当前消息进行重试（每次间隔时间为1秒），无法自动跳过，重试最大次数是Integer.MAX_VALUE，这将导致当前队列消费暂停，因此通常需要设定有一个最大消费次数，以及处理好所有可能的异常情况。
+
+> 消息投递问题
+
+1. 采用队列选择器的方法不能保证消息的严格顺序，我们的目的是将消息发送到同一个队列中
+2. 如果某个broker挂了，那么队列就会减少一部分
+3. 如果增加了服务器，那么也会造成短暂的造成部分消息无序
+
+## 重试问题
+
+对于顺序消息，当消费者消费消息失败后，消息队列 RocketMQ 会自动不断进行消息重试（每次间隔时间为 1 秒），这时，应用会出现消息消费被阻塞的情况。因此，在使用顺序消息时，务必保证应用能够及时监控并处理消费失败的情况，避免阻塞现象的发生。
+
+比如：消息顺序为 1,2,3,4,5,6
+
+如果1消费一直在重试，那么2就不会被消费
+
+# 消息重试
+
+## 发送重试
+
+> 说明
+
+1. 生产者在发送消息时，若采用同步或异步发送方式，发送失败会重试，但oneway消息发送方式发送失败是没有重试机制的
+2. 只有普通消息具有发送重试机制，顺序消息是没有的  
+3. 消息发送重试有三种策略可以选择：同步发送失败策略、异步发送失败策略、消息刷盘失败策略  
+
+> 重试策略
+
+对于普通消息，消息发送默认采用round-robin策略来选择所发送到的队列。如果发送失败，默认重试2次。但在重试时是不会选择上次发送失败的Broker，而是选择其它Broker。当然，若只有一个Broker其也只能发送到该Broker，但其会尽量发送到该Broker上的其它Queue  
+
+## 消费重试
+
+对于无序消息（普通消息、延时消息、事务消息），当Consumer消费消息失败时，可以通过设置返回状态达到消息重试的效果。不过需要注意，无序消息的重试只对**集群消费方式生效**，广播消费方式不提供失败重试特性  
+
+
+
+对于无序消息集群消费下的重试消费，每条消息默认最多重试16次，但每次重试的间隔时间是不同的  
+
+若一条消息在一直消费失败的前提下，将会在正常消费后的第 4小时46分 后进行第16次重试。若仍然失败，则将消息投递到 死信队列  
+
+### 修改重试策略
+
+需要注意的是：
+
+消息最大重试次数的设置对相同 Group ID 下的所有 Consumer 实例有效。如果只对相同 Group ID 下两个 Consumer 实例中的其中一个设置了MaxReconsumeTimes，配置采用覆盖的方式生效，即最后启动的 Consumer 实例会覆盖之前的启动实例的配置
+
+```java
+DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
+// 修改消费重试次数
+consumer.setMaxReconsumeTimes(10);
+```
+
+### 消费重试触发机制
+
+集群消费方式下，消息消费失败后若希望消费重试，则需要在消息监听器接口的实现中明确进行如下三种方式之一的配置：  
+
+方式1：返回**ConsumeConcurrentlyStatus.RECONSUME_LATER**（推荐）
+方式2：返回Null
+方式3：抛出异常  
+
+## 重试队列
+
+重试队列就是一个特殊的Topic，名称为%RETRY%消费组名称（重试Topic），即每个消费者组都有一个重试队列
+
+## 死信队列  
+
+1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
+2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
+3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup （%DLQ%消费组名称），即每个消费者组都有一个死信队列
+4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
