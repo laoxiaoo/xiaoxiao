@@ -209,7 +209,13 @@ private UserManager userManager = new UserManagerSpy();
 private UserServiceImpl userService;
 ```
 
+
+
+# Spring环境接入
+
 ## @SpyBean
+
+等同于@Spy已换bean
 
 使用@MockBean替换Spring上下文中的Bean（这样会导致Spring上下文重启）
 
@@ -231,3 +237,116 @@ public void getUserInfo() {
 ## @MockBean
 
 等同于@mock替换spring的bean
+
+
+
+
+
+## 场景验证
+
+假定有：
+
+```java
+@FeignClient(value = "isrm-sup-provider", fallbackFactory = SupplierRemoteServiceImpl.class)
+
+public interface SupplierRemoteService
+```
+
+```java
+@FeignClient(value = "isrm-sup-provider", fallbackFactory = SupplierCompanyRemoteServiceImpl.class)
+
+public interface SupplierCompanyRemoteService，SupplierCompanyRemoteService
+```
+
+
+
+SupplierCompanyRemoteService 这个访问是正常访问远程地址，但是SupplierRemoteService 则使用http://127.0.0.1:19012这个地址来访问
+
+> 实现代码:
+
+1. @MockBean 会完全覆盖 Bean，导致所有方法默认返回 null。而 @SpyBean 包装了现有的 Bean（例如 LoadBalancerFeignClient ），默认保留其所有功能。
+2. 我们使用 Mockito 的 doAnswer 来动态拦截请求。argThat(request -> ...) 用于区分是哪个接口发起的请求。由于 Request 对象不直接包含接口类信息，我们通常通过 URL 中的 路径特征 （如 /supplier ）来判断。
+
+```java
+@SpringBootTest
+class FeignRedirectTest {
+
+    // 1. 使用 @SpyBean 而不是 @MockBean
+    // 这样对于未被 Stub (桩) 的调用，会自动执行真实逻辑（即 SupplierCompanyRemoteService 的正常访问）
+    @SpyBean
+    private Client feignClient;
+
+    @Autowired
+    private SupplierRemoteService supplierRemoteService;
+
+    @Autowired
+    private SupplierCompanyRemoteService supplierCompanyRemoteService;
+
+    @Test
+    void testSpecificRedirect() throws IOException {
+        // 创建一个原始的 Feign Client 用于发起重定向后的直连请求
+        // (避免再次通过 LoadBalancerClient，因为我们已经有了确定的 IP:Port)
+        Client directClient = new Client.Default(null, null);
+
+        // 2. 定义拦截逻辑
+        // 假设 SupplierRemoteService 的接口路径中包含 "/supplier/" 这样的特征
+        // 你需要根据实际代码中的 @RequestMapping 路径来修改这个匹配规则
+        String targetPathIdentifier = "/supplier/"; 
+
+        doAnswer(invocation -> {
+            Request originalRequest = invocation.getArgument(0);
+            Request.Options options = invocation.getArgument(1);
+
+            String url = originalRequest.url();
+            System.out.println("拦截到请求: " + url);
+
+            // 3. 构建新的 URL，替换服务名为本地地址
+            // 原始 URL 可能是 "http://isrm-sup-provider/supplier/..."
+            // 我们将其替换为 "http://127.0.0.1:19012/supplier/..."
+            // 注意：如果使用了 Ribbon/LoadBalancer，这里的 URL host 通常是服务名
+            String newUrl = url.replace("isrm-sup-provider", "127.0.0.1:19012");
+            
+            // 确保协议是 http (防止原始 url 只有 path)
+            if (!newUrl.startsWith("http")) {
+                newUrl = "http://127.0.0.1:19012" + url;
+            }
+
+            // 4. 创建新请求对象
+            Request newRequest = Request.create(
+                    originalRequest.httpMethod(),
+                    newUrl,
+                    originalRequest.headers(),
+                    originalRequest.body(),
+                    originalRequest.charset(),
+                    originalRequest.requestTemplate()
+            );
+
+            // 5. 使用直连 Client 发起请求
+            return directClient.execute(newRequest, options);
+
+        }).when(feignClient).execute(
+                // 仅匹配 SupplierRemoteService 的请求路径
+                argThat(request -> request.url().contains(targetPathIdentifier)), 
+                any()
+        );
+
+        // --- 验证 ---
+
+        // 场景 A: SupplierRemoteService 应该被重定向到 127.0.0.1:19012
+        // 前提：确保你本地 19012 端口有服务（如 WireMock），否则这里会报 Connection Refused
+        try {
+            supplierRemoteService.someMethod(); 
+        } catch (Exception e) {
+            // 如果本地没有起服务，这里报错是正常的，但可以看日志确认 URL 是否已变
+            System.out.println("SupplierRemoteService 调用结束: " + e.getMessage());
+        }
+        // 场景 B: SupplierCompanyRemoteService 应该走正常逻辑 (SpyBean 的默认行为)
+        // 它会继续使用原始的 feignClient (通常是 LoadBalancerFeignClient)
+        try {
+            supplierCompanyRemoteService.someOtherMethod();
+        } catch (Exception e) {
+            System.out.println("SupplierCompanyRemoteService 调用结束: " + e.getMessage());
+        }
+    }
+}
+```
