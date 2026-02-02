@@ -266,6 +266,10 @@ SupplierCompanyRemoteService 这个访问是正常访问远程地址，但是Sup
 
 1. @MockBean 会完全覆盖 Bean，导致所有方法默认返回 null。而 @SpyBean 包装了现有的 Bean（例如 LoadBalancerFeignClient ），默认保留其所有功能。
 2. 我们使用 Mockito 的 doAnswer 来动态拦截请求。argThat(request -> ...) 用于区分是哪个接口发起的请求。由于 Request 对象不直接包含接口类信息，我们通常通过 URL 中的 路径特征 （如 /supplier ）来判断。
+3. Client directClient = new Client.Default(...)
+
+   - 在 doAnswer 内部，我们不能再次调用 feignClient.execute ，否则可能会陷入递归或者再次触发负载均衡逻辑（而 127.0.0.1 不是服务名，过负载均衡器可能会报错）。
+   - 因此，我们实例化一个原生的 Client.Default （这是 Feign 自带的基础 HTTP 客户端），专门用来发送在这个测试中被强制重定向的请求。
 
 ```java
 @SpringBootTest
