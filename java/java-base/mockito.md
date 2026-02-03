@@ -354,3 +354,8 @@ class FeignRedirectTest {
     }
 }
 ```
+
+> 为什么要使用：Client directClient = new Client.Default(null, null)方法，进行directClient.execute(newRequest, options)直连调用
+
+从 [feign源码跟踪](/java/springcloud/3-restful?id=feign源码跟踪 )可以看到，通过LoadBalancerFeignClient#execute方法，进行lbClient的负载均衡调用，这里直接使用Client 就是为了避免再次进入mockito拦截的execute方法循环调用了
+
