@@ -1147,7 +1147,7 @@ The most commonly used mqadmin commands are:
 ## 查看创建topic命令的帮助文档
 [root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updatetopic --help
 
-##
+## 创建一个queue=6的topic
 [root@localhost rocketmq-all-4.9.8-bin-release]# ./bin/mqadmin updateTopic -n loclhost:9876 -b localhost:10911 -t topic_4 -w 6
 ```
 
@@ -1296,6 +1296,70 @@ consumer.registerMessageListener(new MessageListenerOrderly() {
 2. 如果某个broker挂了，那么队列就会减少一部分
 3. 如果增加了服务器，那么也会造成短暂的造成部分消息无序
 
+
+## 重试问题
+
+对于顺序消息，当消费者消费消息失败后，消息队列 RocketMQ 会自动不断进行消息重试（每次间隔时间为 1 秒），这时，应用会出现消息消费被阻塞的情况。因此，在使用顺序消息时，务必保证应用能够及时监控并处理消费失败的情况，避免阻塞现象的发生。
+
+比如：消息顺序为 1,2,3,4,5,6
+
+如果1消费一直在重试，那么2就不会被消费
+
+# 消息重试
+
+## 发送重试
+
+> 说明
+
+1. 生产者在发送消息时，若采用同步或异步发送方式，发送失败会重试，但oneway消息发送方式发送失败是没有重试机制的
+2. 只有普通消息具有发送重试机制，顺序消息是没有的  
+3. 消息发送重试有三种策略可以选择：同步发送失败策略、异步发送失败策略、消息刷盘失败策略  
+
+> 重试策略
+
+对于普通消息，消息发送默认采用round-robin策略来选择所发送到的队列。如果发送失败，默认重试2次。但在重试时是不会选择上次发送失败的Broker，而是选择其它Broker。当然，若只有一个Broker其也只能发送到该Broker，但其会尽量发送到该Broker上的其它Queue  
+
+## 消费重试
+
+对于无序消息（普通消息、延时消息、事务消息），当Consumer消费消息失败时，可以通过设置返回状态达到消息重试的效果。不过需要注意，无序消息的重试只对**集群消费方式生效**，广播消费方式不提供失败重试特性  
+
+
+
+对于无序消息集群消费下的重试消费，每条消息默认最多重试16次，但每次重试的间隔时间是不同的  
+
+若一条消息在一直消费失败的前提下，将会在正常消费后的第 4小时46分 后进行第16次重试。若仍然失败，则将消息投递到 死信队列  
+
+### 修改重试策略
+
+需要注意的是：
+
+消息最大重试次数的设置对相同 Group ID 下的所有 Consumer 实例有效。如果只对相同 Group ID 下两个 Consumer 实例中的其中一个设置了MaxReconsumeTimes，配置采用覆盖的方式生效，即最后启动的 Consumer 实例会覆盖之前的启动实例的配置
+
+```java
+DefaultMQPushConsumer consumer = new DefaultMQPushConsumer("cg");
+// 修改消费重试次数
+consumer.setMaxReconsumeTimes(10);
+```
+
+### 消费重试触发机制
+
+集群消费方式下，消息消费失败后若希望消费重试，则需要在消息监听器接口的实现中明确进行如下三种方式之一的配置：  
+
+方式1：返回**ConsumeConcurrentlyStatus.RECONSUME_LATER**（推荐）
+方式2：返回Null
+方式3：抛出异常  
+
+## 重试队列
+
+重试队列就是一个特殊的Topic，名称为%RETRY%消费组名称（重试Topic），即每个消费者组都有一个重试队列
+
+## 死信队列  
+
+1. 死信队列中的消息不会再被消费者正常消费，即DLQ对于消费者是不可见的
+2. 死信存储有效期与正常消息相同，均为 3 天（commitlog文件的过期时间），3 天后会被自动删除
+3. 死信队列就是一个特殊的Topic，名称为%DLQ%consumerGroup@consumerGroup （%DLQ%消费组名称），即每个消费者组都有一个死信队列
+4. 如果⼀个消费者组未产生死信消息，则不会为其创建相应的死信队列  
+=======
 # 事务消息（重要）
 
 ## 问题场景
