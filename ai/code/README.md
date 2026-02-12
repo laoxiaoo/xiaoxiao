@@ -189,3 +189,79 @@ description: 描述这个工作流程...
 **用户请求：**
 ```
 
+# Openspec
+
+## 什么是OpenSpec？
+
+让人类和AI在开始工作前对规范达成一致(反复交流)
+
+OpenSpec帮助人和AI编码助手在编写任何代码之前就构建什么达成一致。
+
+## 工作流程
+
+工作流程遵循一个简单的模式：
+
+```
+┌────────────────────┐
+│ 开始一个变更    	  │  		/opsx:new
+└────────┬───────────┘
+         │
+         ▼
+┌────────────────────┐
+│ Create Artifacts   │  /opsx:ff or /opsx:continue
+│ (proposal, specs,  │
+│  design, tasks)    │
+└────────┬───────────┘
+         │
+         ▼
+┌────────────────────┐
+│ Implement Tasks    │  /opsx:apply
+│ (AI writes code)   │
+└────────┬───────────┘
+         │
+         ▼
+┌────────────────────┐
+│ Archive & Merge    │  /opsx:archive
+│ Specs              │
+└────────────────────┘
+```
+
+每个步骤都可以重复的进行
+
+```
+proposal ──► specs ──► design ──► tasks ──► implement
+   ▲           ▲          ▲                    │
+   └───────────┴──────────┴────────────────────┘
+            update as you learn
+```
+
+## 初始化
+
+在项目文件执行初始化，选择对应的AI工具
+
+```shell
+openspec init
+```
+
+比如这里选择opencode，在对应的命令，和skill下，能看到对应openspec操作的命令
+
+![image-20260212195803884](README/image-20260212195803884.png)
+
+在打开opencode后，就能看到对应的命令了
+
+![image-20260212195911611](README/image-20260212195911611.png)
+
+## 命令详情
+
+| Command              | Purpose                                                      |
+| -------------------- | ------------------------------------------------------------ |
+| `/opsx:explore`      | 如果我们不知道该做什么时候，可以先使用一个命令，AI会提示我们下面做什么 |
+| `/opsx:new`          | 开始一个变更                                                 |
+| `/opsx:continue`     | 创建计划（一个个的创建）                                     |
+| `/opsx:ff`           | 一次性创建所有的计划                                         |
+| `/opsx:apply`        | 实现任务                                                     |
+| `/opsx:verify`       | Validate implementation matches artifacts                    |
+| `/opsx:sync`         | Merge delta specs into main specs                            |
+| `/opsx:archive`      | 归档                                                         |
+| `/opsx:bulk-archive` | Archive multiple changes at once                             |
+| `/opsx:onboard`      | Guided tutorial through the complete workflow                |
