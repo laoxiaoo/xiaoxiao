@@ -24,14 +24,17 @@
 
 ## 基本结构
 
+
+
 ```shell
 my-skill/
-├── SKILL.md               ← 唯一必需文件（全大写）
-├── scripts/
-│   └── generate_ui.py     ← 可执行脚本（Python/Bash等）
-├── references/
+├── SKILL.md               ← 唯一必需文件（全大写）#核心指令:触发条件、任务流程、执行指引
+├── scripts/                 #可执行代码:AI直接运行的固定脚本程序
+│   └── generate_ui.py     ← 可执行脚本（Python/Bash等） 
+├── references/  					#参考文档，给AI看的:技术规范、API文档、专业指南
 │   ├── template.md        ← 参考模板
 │   └── examples/          ← 示例输出
+|—— assets/						#素材资源，拿来用的，会被复制、修改:模板、图片...
 └── README.md              ← 人类可读说明（非必需）
 ```
 
