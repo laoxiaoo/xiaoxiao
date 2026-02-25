@@ -808,7 +808,7 @@ public class Client {
 
 代码地址：
 
-![image-20211023175711826](https://gitee.com/xiaojihao/pubImage/raw/master/image/java/gof/20211023175711.png)
+![image-20211023175711826](./image/20211023175711.png)
 
 
 

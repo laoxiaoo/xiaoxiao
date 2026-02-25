@@ -1,7 +1,4 @@
-# 
-
 # Rules vs Spec vs Skills
-
 
 * **Rules** 管  **“怎么写代码”** （风格、规范、禁忌）
 * **[Specs](https://zhida.zhihu.com/search?content_id=267842293&content_type=Article&match_order=1&q=Specs&zhida_source=entity)** 管  **“要做什么”** （需求、功能定义、数据库设计）
@@ -23,8 +20,6 @@
 3. 可维护 - 集中管理专业知识，便于迭代更新
 
 ## 基本结构
-
-
 
 ```shell
 my-skill/
@@ -112,11 +107,11 @@ SKILL.md 控制5000 字以内，
 超过则：
 
 - 把详细内容移到 `references/` 目录，
+
   - 比如说，达到某个条件，出触发某个环节，读取某个文件再去实现一些细节（节省token）
-
 - 把代码移到 `scripts/` 目录
-  - 比如说，达到某个条件运行某个脚本
 
+  - 比如说，达到某个条件运行某个脚本
 - SKILL.md 只保留核心流程
 
 ### 提供完整示例
@@ -208,8 +203,6 @@ description: 描述这个工作流程...
 
 AI 会引导你定义输入/输出/步骤，并生成完整 `SKILL.md` + 脚本。
 
-
-
 ## 生成代码SKILL示例
 
 ```markdown
@@ -250,23 +243,23 @@ import com.xxx.common.base.response.ResponseData;
 @RestController
 @Api(tags = "付款计划", value = "付款计划")
 public class PaymentPlanController {
-    
+  
     @Autowired
     private PaymentPlanService paymentPlanService;
 
-    
+  
     @ApiOperation(value = "分页查询付款计划")
     @PostMapping("/queryPage")
     public ResponseData<IPage<PaymentPlanPageDto>> queryPage(@RequestBody PaymentPlanPageParam param) {
         return ResponseData.success(paymentPlanService.queryPage(param));
     }
-    
+  
 }
-​```
+```
 
 3. 实体类输出目录：xxx项目/xxx子项目1/src/main/java/com/xxx/api/model
 
-​```
+```
 package com.xxx.api.model;
 
 @Getter
@@ -284,13 +277,13 @@ public class PaymentPlan extends TableFieldModel {
      */
     private String paymentPlanCode;
 }
-​```
+```
 
 4. 返回的查询dto输出目录：xxx项目/xxx子项目1/src/main/java/xxx/api/dto
    1. 分页查询将所有字段都返回
    2. 字段带上swagger注解
 
-​```
+```
 package com.itl.isrm.pur.api.dto;
 
 @Getter
@@ -300,23 +293,21 @@ package com.itl.isrm.pur.api.dto;
 public class PaymentPlanPageDto implements Serializable {
 
 }
-​```
+```
 
 5. 查询param目录：xxx子项目/xxx子项目1/src/main/java/com/xxx/api/param
    1. 如果是分页查询，必有一个page字段
    2. 如果有公司id字段，公司id字段必传
 
-​```
+```
 @Getter
 @Setter
 @ApiModel("xxx分页查询")
 public class PaymentPlanPageParam implements Serializable {
 	private Page<PaymentPlanPageDTO> page;
 }
-​```
-
-
 ```
+
 
 
 
@@ -372,17 +363,17 @@ proposal ──► specs ──► design ──► tasks ──► implement
 
 先提想法 → 再写规范 → 再做设计 → 再拆任务 → 最后编码实现
 
-| 阶段         | 核心定义（是什么）| 核心内容                                                                 | 对应开发环节                     | 输出物                     |
-|--------------|---------------------------------|--------------------------------------------------------------------------|----------------------------------|----------------------------|
-| proposal（提案） | 想法、方向、要不要做、解决什么问题 | 背景、目标、价值、大致思路                                               | 需求讨论、技术预研、评估功能必要性 | 提案文档（结论：做/不做）  |
-| specs（规范/规格） | 做什么，定义清楚边界、行为、接口 | 输入输出、字段定义、约束、异常、兼容、不实现什么（重点）| API 文档、协议定义、数据结构定义 | 不可随意改动的规范文档     |
-| design（设计）| 怎么做，技术方案、架构、模块划分 | 模块结构、类/接口设计、流程/时序图、依赖、存储、性能                     | 概要设计 + 详细设计              | 技术设计文档               |
-| tasks（任务）| 把设计拆成可开发的最小单元       | 拆分为 Jira/任务、责任人、排期、依赖关系、验收标准                       | 迭代拆分、开发排期               | 任务列表                   |
-| implement（实现） | 写代码、测试、上线               | 编码、单元测试/集成测试（UT/IT）、联调、问题修复                         | 编写业务代码、逻辑开发、部署上线 | 可运行的功能、上线的服务   |
+| 阶段               | 核心定义（是什么）                 | 核心内容                                                 | 对应开发环节                       | 输出物                    |
+| ------------------ | ---------------------------------- | -------------------------------------------------------- | ---------------------------------- | ------------------------- |
+| proposal（提案）   | 想法、方向、要不要做、解决什么问题 | 背景、目标、价值、大致思路                               | 需求讨论、技术预研、评估功能必要性 | 提案文档（结论：做/不做） |
+| specs（规范/规格） | 做什么，定义清楚边界、行为、接口   | 输入输出、字段定义、约束、异常、兼容、不实现什么（重点） | API 文档、协议定义、数据结构定义   | 不可随意改动的规范文档    |
+| design（设计）     | 怎么做，技术方案、架构、模块划分   | 模块结构、类/接口设计、流程/时序图、依赖、存储、性能     | 概要设计 + 详细设计                | 技术设计文档              |
+| tasks（任务）      | 把设计拆成可开发的最小单元         | 拆分为 Jira/任务、责任人、排期、依赖关系、验收标准       | 迭代拆分、开发排期                 | 任务列表                  |
+| implement（实现）  | 写代码、测试、上线                 | 编码、单元测试/集成测试（UT/IT）、联调、问题修复         | 编写业务代码、逻辑开发、部署上线   | 可运行的功能、上线的服务  |
 
 ## 退回某个步骤
 
-可以直接输入，比如  
+可以直接输入，比如
 
 ```
  退回 Proposal
@@ -402,13 +393,11 @@ openspec status --change xxx任务
 
 注意的是，如果改了proposal提案，我们则需要重新更AI交互修改specs/design等
 
-
-
 ## 初始化
 
 在项目文件执行初始化，选择对应的AI工具
 
-```shell
+​```shell
 openspec init
 ```
 
@@ -422,15 +411,31 @@ openspec init
 
 ## 命令详情
 
-| Command              | Purpose                                                      |
-| -------------------- | ------------------------------------------------------------ |
+| Command                | Purpose                                                                |
+| ---------------------- | ---------------------------------------------------------------------- |
 | `/opsx:explore`      | 如果我们不知道该做什么时候，可以先使用一个命令，AI会提示我们下面做什么 |
-| `/opsx:new`          | 开始一个变更                                                 |
-| `/opsx:continue`     | 创建计划（一个个的创建）                                     |
-| `/opsx:ff`           | 一次性创建所有的计划                                         |
-| `/opsx:apply`        | 实现任务                                                     |
-| `/opsx:verify`       | Validate implementation matches artifacts                    |
-| `/opsx:sync`         | Merge delta specs into main specs                            |
-| `/opsx:archive`      | 归档                                                         |
-| `/opsx:bulk-archive` | Archive multiple changes at once                             |
-| `/opsx:onboard`      | Guided tutorial through the complete workflow                |
+| `/opsx:new`          | 开始一个变更                                                           |
+| `/opsx:continue`     | 创建计划（一个个的创建）                                               |
+| `/opsx:ff`           | 一次性创建所有的计划                                                   |
+| `/opsx:apply`        | 实现任务                                                               |
+| `/opsx:verify`       | Validate implementation matches artifacts                              |
+| `/opsx:sync`         | Merge delta specs into main specs                                      |
+| `/opsx:archive`      | 归档                                                                   |
+| `/opsx:bulk-archive` | Archive multiple changes at once                                       |
+| `/opsx:onboard`      | Guided tutorial through the complete workflow                          |
+
+
+## 中文交互
+
+每次使用openspec时候，AI的思考和交付都是英文的，如果我们需要使用中文，需要每次强调使用中文，如何才能每次都不需要输入，	AI自动使用中文交互呢
+
+可以再全局或者局部的AGENTS.md中定义规范，规范内容
+
+```markdown
+## 交互要求
+
+- 思考过程用中文表述
+- 回答也要用中文回复
+```
+
+全局路径：C:\Users\xxx用户 \ .config\opencode
