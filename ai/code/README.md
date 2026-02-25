@@ -1,3 +1,15 @@
+# 
+
+# OpenCode
+
+OpenCode是一个开源的 AI 编码代理。通过它，我们可以配置好各个大模型的API，进行AI的交互来实现我们的编码需求或其他需求，具体可参考文档[简介 | OpenCode](https://opencode.ai/docs/zh-cn)
+
+## OpenCode与大模型关系
+
+OpenCode是操作工具，大模型是大脑
+
+OpenCode用于与用户交互，大模型承接OpenCode整理的交互内容输出思考后的结果
+
 # Rules vs Spec vs Skills
 
 * **Rules** 管  **“怎么写代码”** （风格、规范、禁忌）
@@ -397,7 +409,7 @@ openspec status --change xxx任务
 
 在项目文件执行初始化，选择对应的AI工具
 
-​```shell
+```shell
 openspec init
 ```
 
@@ -410,6 +422,7 @@ openspec init
 ![image-20260212195911611](README/image-20260212195911611.png)
 
 ## 命令详情
+
 
 | Command                | Purpose                                                                |
 | ---------------------- | ---------------------------------------------------------------------- |
@@ -429,6 +442,8 @@ openspec init
 
 每次使用openspec时候，AI的思考和交付都是英文的，如果我们需要使用中文，需要每次强调使用中文，如何才能每次都不需要输入，	AI自动使用中文交互呢
 
+> 假定我们使用的事OpenCode
+
 可以再全局或者局部的AGENTS.md中定义规范，规范内容
 
 ```markdown
@@ -439,3 +454,4 @@ openspec init
 ```
 
 全局路径：C:\Users\xxx用户 \ .config\opencode
+
