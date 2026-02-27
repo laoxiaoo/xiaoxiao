@@ -35,15 +35,31 @@ File -> Preferences -> setting
 
 ### Git Graph
 
-显示git分支相关信息
+1. 点击Graph图标，进入界面
+
+![image-20260227155439196](vscode/image-20260227155439196.png
+
+2. 显示git分支相关信息
 
 ![image-20231231114229889](image/vscode/image-20231231114229889.png)
 
-## Git History
+### Git History
 
 显示历史
 
 ![image-20231231114433747](image/vscode/image-20231231114433747.png)
+
+### Git Brains
+
+> 可以对Git 冲突合并类似jetbrains一样的操作
+
+1. 借助git graph对冲突分支合并
+
+![image-20260227161121361](vscode/image-20260227161121361.png
+
+2. 进入冲突解决界面
+
+![image-20260227161236679](vscode/image-20260227161236679.png)
 
 # 折叠代码块
 
@@ -90,6 +106,8 @@ json格式化/压缩
 
 
 # 配置终端为Git
+
+> 如何在vscode上将终端配置成git命令行
 
 1. 在设置中搜索：profiles.windows
 
