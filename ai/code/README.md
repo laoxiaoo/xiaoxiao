@@ -489,3 +489,42 @@ openspec init
 }
 ```
 
+## 安装一个连接数据库的MCP
+
+1. 比如我有如下mcp，一个列举数据库的python脚本（ .opencode/plugins/db-schema-mcp/server.py）
+
+![image-20260303105422206](README/image-20260303105422206.png)
+
+2. 在opencode安装mcp
+
+```shell
+opencode mcp add
+
+
+
+┌  Add MCP server
+│
+◇  Location
+│  Current project
+│
+◇  Enter MCP server name
+│  db-schema
+│
+◇  Select MCP server type
+│  Local
+│
+◇  Enter command to run
+│  python .opencode/plugins/db-schema-mcp/server.py
+│
+◆  MCP server "db-schema" added to xxx项目\opencode.json
+│
+└  MCP server added successfully
+
+```
+
+3. 使用mcp，在OpenCode 输入如下指令, <b id="blue">db-schema</b>为mcp名称
+
+```
+使用db-schema，获取t_student信息
+```
+
