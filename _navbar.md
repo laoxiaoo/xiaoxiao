@@ -2,6 +2,7 @@
      - [JAVA](/README)
      - [C++](/c++/README)
      - [GO语言](/golang/README) 
+     - [AI编程](/ai/code/README) 
 
 * Language
     * [JAVA](/README)
