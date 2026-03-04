@@ -37,7 +37,7 @@ File -> Preferences -> setting
 
 1. 点击Graph图标，进入界面
 
-![image-20260227155439196](vscode/image-20260227155439196.png
+![image-20260227223408137](image/vscode/image-20260227223408137.png)
 
 2. 显示git分支相关信息
 
@@ -55,11 +55,17 @@ File -> Preferences -> setting
 
 1. 借助git graph对冲突分支合并
 
-![image-20260227161121361](vscode/image-20260227161121361.png
+![image-20260227223910989](image/vscode/image-20260227223910989.png)
 
 2. 进入冲突解决界面
 
-![image-20260227161236679](vscode/image-20260227161236679.png)
+![image-20260227224159606](image/vscode/image-20260227224159606.png)
+
+![image-20260227224219860](image/vscode/image-20260227224219860.png)
+
+3. 冲突解决的界面和jetbrains一样
+
+![image-20260227224400168](image/vscode/image-20260227224400168.png)
 
 # 折叠代码块
 

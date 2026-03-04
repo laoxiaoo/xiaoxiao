@@ -1621,3 +1621,45 @@ abortFile=F:\\git\\gitee\\rocketmq\\dataDir\\abort
 6. 测试发送消息
 
 进入example模块的 org.apache.rocketmq.example.quickstart，发送消息
+
+## nameserver解读
+
+### 启动流程
+
+1. 启动类：<b id="blue">NamesrvStartup</b>
+
+2. <b id="blue">createNamesrvController</b>：通过netty,创建一个controller
+
+   1. 封装netty相关的参数
+   2. 指定端口为9876
+   3. 如果有-c则证明有指定配置文件，则读取指定的配置文件，将其封装到NamesrvConfig中
+   4. <b id="blue">MixAll.properties2Object</b>：将命令行参数封装到NamesrvConfig中
+
+3. <b id="blue">start</b>：启动
+
+   1. <b id="blue">controller.initialize</b>：初始化controller
+
+   ```java
+   //扫描不活跃broker   
+   this.scheduledExecutorService.scheduleAtFixedRate(new Runnable() {
+          @Override
+          public void run() {
+              NamesrvController.this.routeInfoManager.scanNotActiveBroker();
+          }
+      }, 5, 10, TimeUnit.SECONDS);
+   ```
+
+   
+
+   
+
+   1. <b id="blue">ShutdownHookThread</b>：添加关闭的钩子函数
+
+### NamesrvConfig
+
+1.  <b id="blue">rocketmqHome</b>:rocketmq主目录
+
+### NettyServerConfig
+
+
+
