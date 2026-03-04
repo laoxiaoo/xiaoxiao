@@ -1661,5 +1661,96 @@ abortFile=F:\\git\\gitee\\rocketmq\\dataDir\\abort
 
 ### NettyServerConfig
 
+## 路由管理
 
+### 路由元信息RouteInfoManager
 
+```java
+// topic对应的队列集合
+private final HashMap<String/* topic */, List<QueueData>> topicQueueTable;
+// brocker对应的位置信息
+private final HashMap<String/* brokerName */, BrokerData> brokerAddrTable;
+//集群对应的brocker
+private final HashMap<String/* clusterName */, Set<String/* brokerName */>> clusterAddrTable;
+private final HashMap<String/* brokerAddr */, BrokerLiveInfo> brokerLiveTable;
+private final HashMap<String/* brokerAddr */, List<String>/* Filter Server */> filterServerTable;
+```
+
+### BrokerLiveInfo
+
+> 是 RocketMQ 中用于**描述 Broker 节点实时存活状态**的核心数据结构，主要由 NameServer 维护和管理
+
+```java
+public class BrokerLiveInfo {
+    // 1. Broker 上次发送心跳的时间戳（毫秒），NameServer 据此判断 Broker 是否存活
+    private long lastUpdateTimestamp;
+    // 2. Broker 处理客户端请求的核心端口（默认 10911），客户端通过该端口与 Broker 通信
+    private int port;
+    // 3. Broker 的版本号（用于兼容不同版本的 RocketMQ 协议）
+    private int version;
+    // 4. Broker 的 HA 服务器地址（主从复制时，从节点连接主节点的地址）
+    private String haServerAddr;
+    // 5. Broker 的私有扩展字段（可自定义存储额外信息）
+    private HashMap<String, String> putProperty;
+```
+
+## brocker启动流程
+
+1. 找到org.apache.rocketmq.broker.BrokerStartup#createBrokerController
+2. 之所以有server和client，是因为client去连接nameserver,处理心跳注册信息
+
+```java
+final NettyServerConfig nettyServerConfig = new NettyServerConfig();
+final NettyClientConfig nettyClientConfig = new NettyClientConfig();
+```
+
+3. 设置写死的broker监听端口号
+
+```java
+nettyServerConfig.setListenPort(10911);
+```
+
+4. 检查nameserver的地址配置是否正确
+
+```java
+String namesrvAddr = brokerConfig.getNamesrvAddr();
+if (null != namesrvAddr) {
+    try {
+        String[] addrArray = namesrvAddr.split(";");
+        for (String addr : addrArray) {
+            RemotingUtil.string2SocketAddress(addr);
+        }
+    } catch (Exception e) {
+        System.out.printf(
+            "The Name Server Address[%s] illegal, please set it as follows, \"127.0.0.1:9876;192.168.0.1:9876\"%n",
+            namesrvAddr);
+        System.exit(-3);
+    }
+}
+```
+
+5. 如果broker配置是master,则设置brokerId=0,如果是slave,配置的brockerId<=0,立马退出
+
+```java
+switch (messageStoreConfig.getBrokerRole()) {
+    case ASYNC_MASTER:
+    case SYNC_MASTER:
+        brokerConfig.setBrokerId(MixAll.MASTER_ID);
+        break;
+    case SLAVE:
+        if (brokerConfig.getBrokerId() <= 0) {
+            System.out.printf("Slave's brokerId must be > 0");
+            System.exit(-3);
+        }
+
+        break;
+    default:
+        break;
+}
+```
+
+6. 10911是与客户端的通信端口，10912是与slave的通信端口
+
+```java
+messageStoreConfig.setHaListenPort(nettyServerConfig.getListenPort() + 1);
+```
