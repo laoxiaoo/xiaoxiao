@@ -706,6 +706,32 @@ git branch -vv
 
 ```
 
+## 拉取远程分支的代码
+
+假定 comment是关联了远程分支的本地分支
+
+1. fetch方式
+
+```shell
+git fetch origin comment
+```
+
+2. pull 方式
+
+```shell
+git pull origin comment
+```
+
+> pull 和 fetch有什么区别
+
+1. **合并行为**：*git fetch* 只拉取更新，不会自动合并；*git pull* 会拉取并合并更新。
+2. **适用场景**：*git fetch* 更适合需要审查更新的场景，而 *git pull* 适合快速同步更新
+3. pull = fetch + merge
+
+
+
+
+
 ## 解决冲突
 
 ```shell
@@ -758,7 +784,7 @@ git push
 
 ## pull request
 
-如果你想要参与某个项目，当时没有推送权限，这时可以对这个项目进行“派生”(fork)，派生：jiang 在自己的空间中创建一个你的项目副本
+如果你想要参与某个项目，当时没有推送权限，这时可以对这个项目进行“派生”(fork)，派生： 在自己的空间中创建一个你的项目副本
 
 ```shell
 #先fork一个项目， 修改后push到fork的项目中
