@@ -235,6 +235,8 @@ public void test2() throws Exception {
 
 # 建造者模式
 
+## 使用场景
+
 使用场景：比如，一个配置类，我们有许多属性需要设置
 
 ```java
@@ -282,7 +284,12 @@ public class ResourceConfig {
 }
 ```
 
+## Guava的建造者模式
 
+我们可以发现，Guava的Cache 对象是通过 CacheBuilder 这样一个 Builder 类来创建的。为什么要由 Builder 类来创建 Cache 对象呢？
+
+1. 在真正构造 Cache 对象的时候，我们必须做一些必要的参数校验，也就是 build() 函数中前两行代码要做的工作。而不经过校验，创建的 Cache 对象有可能是不合法、不可用的。
+2. Cache初始化值之后，不再进行
 
 # 原型模式
 
