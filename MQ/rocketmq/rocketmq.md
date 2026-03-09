@@ -1754,3 +1754,35 @@ switch (messageStoreConfig.getBrokerRole()) {
 ```java
 messageStoreConfig.setHaListenPort(nettyServerConfig.getListenPort() + 1);
 ```
+
+7. start过程
+8. 将brocker注册到nameserver
+
+```java
+this.registerBrokerAll(true, false, true);
+```
+
+9. 通过多线程的方式，使用netty往nameserver注册
+
+## brocker注册过程
+
+1. 在org.apache.rocketmq.broker.out.BrokerOuterAPI#registerBrokerAll方法中，可以看到注册代码
+
+```java
+RegisterBrokerResult result = registerBroker(namesrvAddr,oneway, timeoutMills,requestHeader,body);
+```
+
+2. 在nameserver中，DefaultRequestProcessor是专门用于服务请求处理的
+   1.  registerBrokerWithFilterServer对brocker 信息交给getRouteInfoManager处理
+
+```java
+//处理brocker的注册信息 
+case RequestCode.REGISTER_BROKER:
+                Version brokerVersion = MQVersion.value2Version(request.getVersion());
+                if (brokerVersion.ordinal() >= MQVersion.Version.V3_0_11.ordinal()) {
+                    return this.registerBrokerWithFilterServer(ctx, request);
+                } else {
+                    return this.registerBroker(ctx, request);
+                }
+```
+
